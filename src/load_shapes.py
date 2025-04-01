@@ -12,8 +12,7 @@ def load_all_shape_datasets():
         datasets (dict): Mapping from dataset prefix to tuple (X, y) as NumPy arrays.
     """
     data_dir = os.path.join("..", "_data", "shapes")
-    print("Starting CSV file loading process from '_data/shapes'...")
-    print(f"Data directory set to: {data_dir}\n")
+    print(f"Starting CSV file loading process from {data_dir}\n")
     files = {}
 
     if os.path.exists(data_dir):
@@ -28,13 +27,11 @@ def load_all_shape_datasets():
                             # Store using the file name without extension as key
                             key = os.path.splitext(file)[0].replace(" ", "_")
                             files[key] = df
-                            print(f"Loaded '{file}' as '{key}' with shape {df.shape}")
+                            # print(f"Loaded '{file}' as '{key}' with shape {df.shape}")
                         except Exception as e:
                             print(f"Error loading '{file}' from '{subfolder_path}': {e}")
     else:
         print("ERROR: Data directory not found.")
-
-    print("\nCSV file loading complete.")
 
     # Pair files that share the same prefix (before the last underscore)
     datasets = {}
