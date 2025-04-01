@@ -4,11 +4,11 @@ Dispatcher module for model converters.
 Provides a single interface to convert different model types into the standardized DecisionTree.
 """
 
-from .hhcart_converter import convert_hhcart
-from .randcart_converter import convert_randcart
-from .co2_converter import convert_co2
-from .oc1_converter import convert_oc1
-from .wodt_converter import convert_wodt
+from D_restructured.converters.hhcart_converter import convert_hhcart
+from D_restructured.converters.randcart_converter import convert_randcart
+from D_restructured.converters.co2_converter import convert_co2
+from D_restructured.converters.oc1_converter import convert_oc1
+from D_restructured.converters.wodt_converter import convert_wodt
 
 
 def convert_tree(model, model_type):

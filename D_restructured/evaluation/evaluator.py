@@ -1,3 +1,9 @@
+"""
+Evaluator module for decision trees.
+
+Computes various performance and interpretability metrics for a given decision tree.
+"""
+
 from .metrics import (
     compute_accuracy,
     compute_coverage,

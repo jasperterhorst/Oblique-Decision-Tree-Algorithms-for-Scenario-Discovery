@@ -1,8 +1,24 @@
-# D_oblique_decision_trees/converters/oc1_converter.py
-from D_oblique_decision_trees.tree import DecisionTree, DecisionNode, LeafNode
+"""
+Converter module for OC1 models.
+
+Converts a trained OC1 model into a standardized DecisionTree.
+"""
+
+from D_restructured.core.tree import DecisionTree, DecisionNode, LeafNode
 
 
 def convert_oc1(model):
+    """
+    Convert a trained OC1 model into a standardized DecisionTree.
+
+    Parameters:
+        model: An OC1 model with an attribute 'tree_' containing a 'root_node'.
+               Non-leaf nodes should have attributes: is_leaf(), w, b, left_child, right_child.
+               Leaf nodes should have a 'value' attribute.
+
+    Returns:
+        DecisionTree: The standardized decision tree.
+    """
     def recurse(node, node_id=0, depth=0):
         if node.is_leaf():
             return LeafNode(node_id=node_id, prediction=node.value, depth=depth)
