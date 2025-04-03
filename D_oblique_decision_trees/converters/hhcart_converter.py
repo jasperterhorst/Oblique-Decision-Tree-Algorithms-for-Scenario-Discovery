@@ -1,11 +1,24 @@
-# D_oblique_decision_trees/converters/hhcart_converter.py
+"""
+Converter module for HHCart models.
 
-from D_oblique_decision_trees.tree import DecisionTree, DecisionNode, LeafNode
+Converts a trained HHCartClassifier model into a standardized DecisionTree.
+"""
+
+from D_oblique_decision_trees.core.tree import DecisionTree, DecisionNode, LeafNode
 
 
 def convert_hhcart(model):
     """
-    Convert a trained HHCartClassifier into a TAO-compatible DecisionTree.
+    Convert a trained HHCartClassifier model into a standardized DecisionTree.
+
+    Parameters:
+        model: A HHCartClassifier model with attributes:
+               - _root: The root node.
+               - For non-leaf nodes, _weights, _left_child, _right_child.
+               - For leaf nodes, a label attribute.
+
+    Returns:
+        DecisionTree: The standardized decision tree.
     """
     def recurse(node, node_id=0, depth=0):
         if node.is_leaf:

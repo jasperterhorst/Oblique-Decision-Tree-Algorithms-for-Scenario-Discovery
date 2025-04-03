@@ -1,5 +1,6 @@
 import os
 import pandas as pd
+from src.config.paths import DATA_DIR
 
 
 def load_all_shape_datasets():
@@ -11,7 +12,7 @@ def load_all_shape_datasets():
     Returns:
         datasets (dict): Mapping from dataset prefix to tuple (X, y) as NumPy arrays.
     """
-    data_dir = os.path.join("..", "_data", "shapes")
+    data_dir = os.path.join(DATA_DIR, "shapes")
     print(f"Starting CSV file loading process from {data_dir}\n")
     files = {}
 

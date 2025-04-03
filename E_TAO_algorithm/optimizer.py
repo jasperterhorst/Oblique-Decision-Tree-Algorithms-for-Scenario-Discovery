@@ -11,7 +11,7 @@ import numpy as np
 from E_TAO_algorithm.losses import logistic_loss, logistic_loss_gradient
 from E_TAO_algorithm.regularizers import l1_subgradient
 from E_TAO_algorithm.utils import compute_reduced_sets
-from D_oblique_decision_trees.tree import DecisionNode, LeafNode
+from D_choosing_oblique_decision_trees.tree import DecisionNode, LeafNode
 
 
 class TAOOptimizer:

@@ -7,48 +7,51 @@ def beautify_plot(ax, title=None, xlabel=None, ylabel=None, save_path=None):
     """
     Apply standardized beautification to a Matplotlib plot.
 
-    Parameters:
-    — ax: The matplotlib Axes object.
-    — title: str, optional title to display.
-    — xlabel: str, optional label for the x-axis.
-    — ylabel: str, optional label for the y-axis.
-    — save_path: str, optional path to save the figure as PDF.
+    - Respects custom legend passed externally.
+    - Replaces underscores in legend labels.
+    - Adds vertical spacing between legend entries.
     """
-    # Set global font settings before any text is rendered.
     plt.rcParams['text.usetex'] = False
     plt.rcParams['font.family'] = 'serif'
     plt.rcParams['font.serif'] = ['Times New Roman']
 
     fig = ax.get_figure()
 
-    # Set plot title if provided.
     if title:
-        ax.set_title(title, fontsize=24, pad=15)
+        ax.set_title(title, fontsize=24, pad=20, wrap=True)
 
-    # Set x-axis label; use provided xlabel or default.
     if xlabel:
-        ax.set_xlabel(xlabel, fontsize=20)
+        ax.set_xlabel(xlabel, fontsize=20, labelpad=10)
     else:
-        ax.set_xlabel(ax.get_xlabel() or 'X-axis', fontsize=20)
+        ax.set_xlabel(ax.get_xlabel() or 'X-axis', fontsize=20, labelpad=10)
 
-    # Set y-axis label; use provided ylabel or default.
     if ylabel:
-        ax.set_ylabel(ylabel, fontsize=20)
+        ax.set_ylabel(ylabel, fontsize=20, labelpad=10)
     else:
-        ax.set_ylabel(ax.get_ylabel() or 'Y-axis', fontsize=20)
+        ax.set_ylabel(ax.get_ylabel() or 'Y-axis', fontsize=20, labelpad=10)
 
-    handles, labels = ax.get_legend_handles_labels()
-    new_labels = [label.replace('_', ' ') for label in labels]
-    ax.legend(handles, new_labels, loc='upper right', fontsize=15)
+    # === Legend formatting ===
+    legend = ax.get_legend()
+    if legend:
+        # Replace underscores with spaces in labels
+        for text in legend.get_texts():
+            text.set_text(text.get_text().replace("_", " "))
+            text.set_fontsize(15)
 
-    ax.legend(loc='upper right', fontsize=15)
+        # Optional: add spacing between entries
+        legend._legend_box.sep = 8  # vertical spacing between entries
+        legend.get_frame().set_facecolor("white")
+        legend.get_frame().set_edgecolor("gray")
+
     ax.xaxis.set_tick_params(labelsize=16)
     ax.yaxis.set_tick_params(labelsize=16)
+    ax.set_facecolor("white")
 
     ax.spines['top'].set_visible(False)
     ax.spines['right'].set_visible(False)
     ax.spines['left'].set_color(AXIS_LINE_COLOR)
     ax.spines['bottom'].set_color(AXIS_LINE_COLOR)
+
     ax.grid(True, linestyle='dashed', color='grey', linewidth=0.5)
     ax.tick_params(axis='both', colors=AXIS_LINE_COLOR)
 
