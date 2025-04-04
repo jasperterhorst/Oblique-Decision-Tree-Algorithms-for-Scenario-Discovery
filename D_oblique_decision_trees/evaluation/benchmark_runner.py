@@ -48,7 +48,7 @@ class DepthSweepRunner:
         self.results = []
 
     @staticmethod
-    def _build_registry_for_depth(depth):
+    def _build_registry_for_depth(depth, random_state=None):
         """
         Build a registry of model constructors for a given tree depth.
 
@@ -56,11 +56,13 @@ class DepthSweepRunner:
             dict: Mapping of model type strings with functions instantiating models.
         """
         return {
-            "hhcart": lambda: HHCartClassifier(impurity=gini, segmentor=MeanSegmentor(), max_depth=depth),
-            "randcart": lambda: RandCARTClassifier(impurity=gini, segmentor=MeanSegmentor(), max_depth=depth),
-            "oc1": lambda: ObliqueClassifier1(max_depth=depth, min_samples_split=2),
+            "hhcart": lambda: HHCartClassifier(impurity=gini, segmentor=MeanSegmentor(), max_depth=depth,
+                                               random_state=random_state),
+            "randcart": lambda: RandCARTClassifier(impurity=gini, segmentor=MeanSegmentor(), max_depth=depth,
+                                                   random_state=random_state),
+            "oc1": lambda: ObliqueClassifier1(max_depth=depth, min_samples_split=2, random_state=random_state),
             "wodt": lambda: WeightedObliqueDecisionTreeClassifier(max_depth=depth, min_samples_split=2,
-                                                                  max_features='all'),
+                                                                  max_features='all', random_state=random_state),
         }
 
     def run(self, auto_export=True, filename="depth_sweep_result.csv", n_seeds=1, fixed_seed=None):
@@ -71,7 +73,7 @@ class DepthSweepRunner:
             auto_export (bool): If True, the results will be reordered, printed, and saved.
             filename (str): The filename for saving the CSV results.
             n_seeds (int): Number of seeds to vary over (taken from settings.vary_seeds)
-
+            fixed_seed (int): If one wants to choose a seed.
         Returns:
             pd.DataFrame: A DataFrame containing the benchmark results.
         """
@@ -84,12 +86,13 @@ class DepthSweepRunner:
         pbar = tqdm(total=total_loops, desc="Depth Sweeping")
 
         for seed in seeds:
-            np.random.seed(seed)  # for other algorithms
-            random.seed(seed)  # for WODT
+            np.random.seed(seed)  # affects numpy randomness (e.g., np.random.rand, PCA if no local seed is given)
+            random.seed(seed)  # affects Python's random module (used by WODT's random.sample)
             for depth in range(0, self.max_depth + 1):
-                registry = self._build_registry_for_depth(depth)
+                registry = self._build_registry_for_depth(depth, random_state=seed)
                 for model_name, constructor in registry.items():
                     for dataset_name, (X, y) in self.datasets:
+
                         model = constructor()
                         start_t = time.time()
                         model.fit(X, y)
