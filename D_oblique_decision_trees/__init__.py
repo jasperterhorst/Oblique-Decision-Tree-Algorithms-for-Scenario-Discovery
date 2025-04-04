@@ -15,8 +15,9 @@ from .visualization import (
     print_tree_structure,
     plot_decision_boundaries,
     plot_tradeoff_for_oblique_tree,
-    plot_separate_metric_against_depth,
-    plot_aggregated_metric_against_depth
+    plot_metric_vs_depth_per_dataset_and_algorithm,
+    plot_metric_vs_depth_per_algorithm,
+    plot_metric_vs_depth_per_shape
 )
 
 __all__ = [
@@ -24,5 +25,6 @@ __all__ = [
     "convert_tree",
     "evaluate_tree", "DepthSweepRunner",
     "print_tree_structure", "plot_decision_boundaries", "plot_tradeoff_for_oblique_tree",
-    "plot_separate_metric_against_depth", "plot_aggregated_metric_against_depth"
+    "plot_metric_vs_depth_per_dataset_and_algorithm", "plot_metric_vs_depth_per_algorithm",
+    "plot_metric_vs_depth_per_shape"
 ]

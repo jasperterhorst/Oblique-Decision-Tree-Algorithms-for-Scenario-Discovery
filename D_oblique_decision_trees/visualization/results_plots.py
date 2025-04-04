@@ -11,8 +11,8 @@ from src.config.plot_settings import beautify_plot
 import pandas as pd
 
 
-def plot_separate_metric_against_depth(df, metric="accuracy", title=None, xlabel="Depth", ylabel=None,
-                                       x_lim=None, y_lim=None, save_name=None):
+def plot_metric_vs_depth_per_dataset_and_algorithm(df, metric="accuracy", title=None, xlabel="Depth", ylabel=None,
+                                                   x_lim=None, y_lim=None, save_name=None):
     """
     Plot a given metric as a function of tree depth for each algorithm and dataset.
 
@@ -67,7 +67,7 @@ def plot_separate_metric_against_depth(df, metric="accuracy", title=None, xlabel
     return ax
 
 
-def plot_aggregated_metric_against_depth(df, metric="accuracy", title=None, xlabel="Depth", ylabel=None,
+def plot_metric_vs_depth_per_algorithm(df, metric="accuracy", title=None, xlabel="Depth", ylabel=None,
                                          x_lim=None, y_lim=None, save_name=None, show_bands=False):
     """
     Plot an aggregated metric (averaged over datasets) as a function of tree depth,
@@ -129,7 +129,7 @@ def plot_aggregated_metric_against_depth(df, metric="accuracy", title=None, xlab
     return ax
 
 
-def plot_metric_by_depth_per_shape(df, metric="accuracy", title=None, xlabel="Depth", ylabel=None,
+def plot_metric_vs_depth_per_shape(df, metric="accuracy", title=None, xlabel="Depth", ylabel=None,
                                    x_lim=None, y_lim=None, save_name=None, show_bands=True):
     """
     Plot a given metric as a function of tree depth, with one line per dataset (shape).

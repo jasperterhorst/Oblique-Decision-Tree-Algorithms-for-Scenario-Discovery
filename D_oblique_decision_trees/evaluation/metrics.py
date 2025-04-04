@@ -23,47 +23,102 @@ def compute_accuracy(tree, X, y):
 
 def compute_coverage(tree, X, y):
     """
-    Compute the coverage metric as the proportion of relevant instances (where y == 1)
-    that are correctly captured by the model.
+    Compute the coverage metric. If the tree has depth 0, return 1.0.
+    Otherwise, compute the proportion of relevant (y == 1) instances captured.
 
     Parameters:
-        tree: A trained model with a `predict` method.
-        X (iterable): An iterable of input feature vectors.
-        y (iterable): An iterable of true labels.
+        tree: A trained decision tree with `predict` and `depth` attributes.
+        X (iterable): Input features.
+        y (iterable): True binary labels.
 
     Returns:
-        float: The coverage metric as a fraction, or np.nan if no relevant instances exist.
+        float: Coverage score.
     """
     y = np.array(y)
+    if tree.max_depth == 0:
+        return 1.0
+
     y_pred = np.array([tree.predict(x) for x in X])
     relevant = (y == 1)
     selected = (y_pred == 1)
+
     total_relevant = np.sum(relevant)
     if total_relevant == 0:
         return np.nan
+
     return np.sum(relevant & selected) / total_relevant
 
 
 def compute_density(tree, X, y):
     """
-    Compute the density metric as the proportion of instances within the selected region
-    (where the model predicts 1) that are actually of interest (where y == 1).
+    Compute the density metric. If tree has depth 0, return the average of y.
+    Otherwise, compute the proportion of selected instances that are relevant.
 
     Parameters:
-        tree: A trained model with a `predict` method.
-        X (iterable): An iterable of input feature vectors.
-        y (iterable): An iterable of true binary labels.
+        tree: A trained decision tree with `predict` and `depth` attributes.
+        X (iterable): Input features.
+        y (iterable): True binary labels.
 
     Returns:
-        float: The density metric as a fraction, or np.nan if no instances are selected.
+        float: Density score.
     """
     y = np.array(y)
+    if tree.max_depth == 0:
+        return np.mean(y)
+
     y_pred = np.array([tree.predict(x) for x in X])
     selected = (y_pred == 1)
+
     total_selected = np.sum(selected)
     if total_selected == 0:
         return np.nan
+
     return np.sum((y == 1) & selected) / total_selected
+
+
+# def compute_coverage(tree, X, y):
+#     """
+#     Compute the coverage metric as the proportion of relevant instances (where y == 1)
+#     that are correctly captured by the model.
+#
+#     Parameters:
+#         tree: A trained model with a `predict` method.
+#         X (iterable): An iterable of input feature vectors.
+#         y (iterable): An iterable of true labels.
+#
+#     Returns:
+#         float: The coverage metric as a fraction, or np.nan if no relevant instances exist.
+#     """
+#     y = np.array(y)
+#     y_pred = np.array([tree.predict(x) for x in X])
+#     relevant = (y == 1)
+#     selected = (y_pred == 1)
+#     total_relevant = np.sum(relevant)
+#     if total_relevant == 0:
+#         return np.nan
+#     return np.sum(relevant & selected) / total_relevant
+#
+#
+# def compute_density(tree, X, y):
+#     """
+#     Compute the density metric as the proportion of instances within the selected region
+#     (where the model predicts 1) that are actually of interest (where y == 1).
+#
+#     Parameters:
+#         tree: A trained model with a `predict` method.
+#         X (iterable): An iterable of input feature vectors.
+#         y (iterable): An iterable of true binary labels.
+#
+#     Returns:
+#         float: The density metric as a fraction, or np.nan if no instances are selected.
+#     """
+#     y = np.array(y)
+#     y_pred = np.array([tree.predict(x) for x in X])
+#     selected = (y_pred == 1)
+#     total_selected = np.sum(selected)
+#     if total_selected == 0:
+#         return np.nan
+#     return np.sum((y == 1) & selected) / total_selected
 
 
 def compute_f_score(tree, X, y):

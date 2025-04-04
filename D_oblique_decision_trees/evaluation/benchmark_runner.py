@@ -8,6 +8,7 @@ across different depths and datasets.
 import os
 import time
 import pickle
+import random
 import pandas as pd
 import numpy as np
 from tqdm import tqdm
@@ -21,6 +22,7 @@ from Ensembles_of_Oblique_Decision_Trees.Decision_trees.WODT import WeightedObli
 from Ensembles_of_Oblique_Decision_Trees.Decision_trees.segmentor import MeanSegmentor
 from Ensembles_of_Oblique_Decision_Trees.Decision_trees.split_criteria import gini
 from src.config.settings import DEFAULT_VARIABLE_SEEDS
+from src.config.paths import DEPTH_SWEEP_BATCH_RESULTS_OUTPUTS_DIR
 
 
 class DepthSweepRunner:
@@ -61,7 +63,7 @@ class DepthSweepRunner:
                                                                   max_features='all'),
         }
 
-    def run(self, auto_export=True, filename="depth_sweep_result.csv", n_seeds=1):
+    def run(self, auto_export=True, filename="depth_sweep_result.csv", n_seeds=1, fixed_seed=None):
         """
         Execute depth sweep experiments over the specified datasets, model types, and random seeds.
 
@@ -73,15 +75,17 @@ class DepthSweepRunner:
         Returns:
             pd.DataFrame: A DataFrame containing the benchmark results.
         """
-        seeds = DEFAULT_VARIABLE_SEEDS[:n_seeds]
-        total_loops = len(self.datasets) * self.max_depth * len(seeds) * 4
-        save_base = os.path.join("..", "_data", "depth_sweep_batch_results", "saved_trees")
+        seeds = [fixed_seed] if fixed_seed is not None else DEFAULT_VARIABLE_SEEDS[:n_seeds]
+        total_loops = len(self.datasets) * (self.max_depth + 1) * len(seeds) * 4
+
+        save_base = os.path.join(DEPTH_SWEEP_BATCH_RESULTS_OUTPUTS_DIR, "saved_trees")
         os.makedirs(save_base, exist_ok=True)
 
         pbar = tqdm(total=total_loops, desc="Depth Sweeping")
 
         for seed in seeds:
-            np.random.seed(seed)
+            np.random.seed(seed)  # for other algorithms
+            random.seed(seed)  # for WODT
             for depth in range(0, self.max_depth + 1):
                 registry = self._build_registry_for_depth(depth)
                 for model_name, constructor in registry.items():
@@ -108,7 +112,6 @@ class DepthSweepRunner:
                         self.results.append(metrics)
                         pbar.update(1)
 
-        pbar.close()
         df = pd.DataFrame(self.results)
 
         if auto_export:
@@ -122,12 +125,13 @@ class DepthSweepRunner:
             ]
             existing = [col for col in desired_cols if col in df.columns]
             df = df[existing]
+
+            existing = [col for col in desired_cols if col in df.columns]
+            df = df[existing]
             print("\n===== Depth Sweep Results =====\n")
             print(df)
 
-            export_dir = os.path.join("..", "_data", "depth_sweep_batch_results")
-            os.makedirs(export_dir, exist_ok=True)
-            path = os.path.join(export_dir, filename)
+            path = os.path.join(DEPTH_SWEEP_BATCH_RESULTS_OUTPUTS_DIR, filename)
             df.to_csv(path, index=False)
             print(f"Saved results to: {path}")
 
