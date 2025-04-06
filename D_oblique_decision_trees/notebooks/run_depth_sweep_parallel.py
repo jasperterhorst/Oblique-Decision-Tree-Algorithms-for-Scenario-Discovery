@@ -25,7 +25,7 @@ parser = argparse.ArgumentParser(description="Run depth sweep for selected datas
 parser.add_argument("--dataset", type=str, required=True, help="Specify one dataset to run")
 parser.add_argument("--seed-index", type=int, default=0, help="Index into DEFAULT_VARIABLE_SEEDS")
 parser.add_argument("--model", type=str, choices=["hhcart", "randcart", "oc1", "wodt"], help="Model to use")
-parser.add_argument("--max-depth", type=int, default=15, help="Maximum depth to sweep over")
+parser.add_argument("--max-depth", type=int, default=20, help="Maximum depth to sweep over")
 parser.add_argument("--output-filename", type=str, required=True, help="Output CSV filename")
 args = parser.parse_args()
 print(f"Arguments received: {args}")

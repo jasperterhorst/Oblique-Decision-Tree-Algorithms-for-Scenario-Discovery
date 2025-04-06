@@ -62,3 +62,39 @@ def beautify_plot(ax, title=None, xlabel=None, ylabel=None, save_path=None):
 
     plt.show()
     plt.close(fig)
+
+
+def beautify_subplot(ax, title=None, xlabel=None, ylabel=None):
+    """
+    Apply beautification to individual subplots.
+
+    Parameters:
+        ax (matplotlib.axes.Axes): The subplot axis to beautify.
+        title (str): Title of the subplot.
+        xlabel (str): Label for the x-axis.
+        ylabel (str): Label for the y-axis.
+    """
+    plt.rcParams['text.usetex'] = False
+    plt.rcParams['font.family'] = 'serif'
+    plt.rcParams['font.serif'] = ['Times New Roman']
+
+    if title:
+        ax.set_title(title, fontsize=12)
+
+    if xlabel:
+        ax.set_xlabel(xlabel, fontsize=10)
+    if ylabel:
+        ax.set_ylabel(ylabel, fontsize=10)
+
+    ax.xaxis.set_tick_params(labelsize=9)
+    ax.yaxis.set_tick_params(labelsize=9)
+    ax.set_facecolor("white")
+
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+    ax.spines['left'].set_color(AXIS_LINE_COLOR)
+    ax.spines['bottom'].set_color(AXIS_LINE_COLOR)
+
+    ax.grid(True, linestyle='dashed', color='grey', linewidth=0.5)
+    ax.tick_params(axis='both', colors=AXIS_LINE_COLOR)
+

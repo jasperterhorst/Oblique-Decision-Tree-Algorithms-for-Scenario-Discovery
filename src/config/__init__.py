@@ -6,3 +6,4 @@ Import specific items from here as needed.
 from .colors import *
 from .paths import *
 from .settings import *
+from .plot_settings import *

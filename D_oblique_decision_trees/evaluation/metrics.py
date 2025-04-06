@@ -71,7 +71,7 @@ def compute_density(tree, X, y):
 
     total_selected = np.sum(selected)
     if total_selected == 0:
-        return np.nan
+        return 0.0
 
     return np.sum((y == 1) & selected) / total_selected
 

@@ -3,22 +3,23 @@ shape_generators.py
 
 This module generates sample points for various 2D and 3D shapes using Latin Hypercube Sampling (LHS).
 It provides functions for:
-  - 2D Radial Segment
-  - 2D Barbell
-  - 2D Sine Wave
-  - 2D Star
-  - 3D Saddle
-  - 3D Radial Segment
-  - 3D Barbell
+  – 2D Radial Segment
+  – 2D Barbell
+  – 2D Sine Wave
+  – 2D Star
+  – 3D Saddle
+  – 3D Radial Segment
+  – 3D Barbell
+  – 2d Rectangle
 
 Each function returns:
-  - df_x: A pandas DataFrame with sample coordinates.
-  - y: A binary classification array (1 = inside the shape, 0 = outside).
-  - samples: The raw sample points as a NumPy array.
+  – df_x: A pandas DataFrame with sample coordinates.
+  – y: A binary classification array (1 = inside the shape, 0 = outside).
+  – samples: The raw sample points as a NumPy array.
 
 All functions use:
-  - LHS for 2D and 3D sampling.
-  - Rotation functions for consistent transformations.
+  – LHS for 2D and 3D sampling.
+  – Rotation functions for consistent transformations.
 
 """
 
