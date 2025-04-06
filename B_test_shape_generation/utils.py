@@ -136,12 +136,6 @@ def plot_3d_shape(samples, y, title="3D Shape", save_path=None, note=""):
 # --------------------------------------------------------
 
 
-# def save_data(df_x, y, file_prefix, save_dir):
-#     os.makedirs(save_dir, exist_ok=True)
-#     df_x.to_csv(os.path.join(save_dir, f"{file_prefix}_x.csv"), index=False)
-#     pd.DataFrame({"y": y}).to_csv(os.path.join(save_dir, f"{file_prefix}_y.csv"), index=False)
-#     print(f"Data saved to: {save_dir}")
-
 def save_data(df_x, y, file_prefix, save_dir):
     os.makedirs(save_dir, exist_ok=True)
     # Save the individual _data files for x and y

@@ -29,6 +29,7 @@ from pyDOE2 import lhs
 from scipy.spatial.transform import Rotation as R
 from shapely.geometry import Point, Polygon
 from math import radians, pi
+from src.config.settings import DEFAULT_VARIABLE_SEEDS
 
 
 # --------------------------------------------------------
@@ -66,11 +67,35 @@ def apply_rotation_3d(points, rotation_angles):
 
 
 # --------------------------------------------------------
+# Helper Functions - Apply Noise to Labels in and Outside Shape
+# --------------------------------------------------------
+
+def apply_label_noise(y, noise_inside=0.0, noise_outside=0.0, random_state=None):
+    """Flip a fraction of inside/outside labels to introduce noise."""
+    rng = np.random.default_rng(random_state)
+    y_noisy = y.copy()
+
+    inside_indices = np.where(y == 1)[0]
+    outside_indices = np.where(y == 0)[0]
+
+    num_flip_inside = int(noise_inside * len(inside_indices))
+    num_flip_outside = int(noise_outside * len(outside_indices))
+
+    flip_inside = rng.choice(inside_indices, size=num_flip_inside, replace=False) if num_flip_inside > 0 else []
+    flip_outside = rng.choice(outside_indices, size=num_flip_outside, replace=False) if num_flip_outside > 0 else []
+
+    y_noisy[flip_inside] = 0
+    y_noisy[flip_outside] = 1
+    return y_noisy
+
+
+# --------------------------------------------------------
 # 2D Shape Generation Functions (Using Inverse Rotation for Boundary Evaluation)
 # --------------------------------------------------------
 
 
-def generate_2d_rectangle(num_samples=1000, center=(0.5, 0.5), ribs=(0.4, 0.2), rotation=0, samples=None):
+def generate_2d_rectangle(num_samples=1000, center=(0.5, 0.5), ribs=(0.4, 0.2), rotation=0, samples=None,
+                          noise_inside=0.0, noise_outside=0.0, random_state=DEFAULT_VARIABLE_SEEDS[0]):
     """
     Generate 2D sample points for a rotatable rectangle.
 
@@ -102,11 +127,14 @@ def generate_2d_rectangle(num_samples=1000, center=(0.5, 0.5), ribs=(0.4, 0.2), 
         if abs(p_transformed[0]) <= half_width and abs(p_transformed[1]) <= half_height:
             y[i] = 1
 
+    y = apply_label_noise(y, noise_inside=noise_inside, noise_outside=noise_outside, random_state=random_state)
+
     return df_x, y, samples
 
 
 def generate_2d_radial_segment(num_samples=1000, center=(0.5, 0.5), outer_radius=0.4, inner_radius=0.2,
-                               arc_span_degrees=180, rotation=0, samples=None):
+                               arc_span_degrees=180, rotation=0, samples=None, noise_inside=0.0, noise_outside=0.0,
+                               random_state=DEFAULT_VARIABLE_SEEDS[0]):
     """
     Generate 2D sample points for a radial segment (partial annulus).
 
@@ -133,11 +161,14 @@ def generate_2d_radial_segment(num_samples=1000, center=(0.5, 0.5), outer_radius
         if inner_radius <= distance <= outer_radius and in_arc:
             y[i] = 1
 
+    y = apply_label_noise(y, noise_inside=noise_inside, noise_outside=noise_outside, random_state=random_state)
+
     return df_x, y, samples
 
 
 def generate_2d_barbell(num_samples=1000, center=(0.5, 0.5), barbell_length=0.3, sphere_radius=0.15,
-                        connector_thickness=0.07, rotation=0, samples=None):
+                        connector_thickness=0.07, rotation=0, samples=None, noise_inside=0.0, noise_outside=0.0,
+                        random_state=DEFAULT_VARIABLE_SEEDS[0]):
     """
     Generate 2D sample points for a barbell shape.
 
@@ -169,11 +200,13 @@ def generate_2d_barbell(num_samples=1000, center=(0.5, 0.5), barbell_length=0.3,
         if in_circle_A or in_circle_B or in_rectangle:
             y[i] = 1
 
+    y = apply_label_noise(y, noise_inside=noise_inside, noise_outside=noise_outside, random_state=random_state)
+
     return df_x, y, samples
 
 
 def generate_2d_sine_wave(num_samples=1000, x_range=(0.2, 0.8), vertical_offset=0.5, amplitude=0.1, frequency=1,
-                          thickness=0.05, rotation=0, samples=None):
+                          thickness=0.05, rotation=0, samples=None, noise_inside=0.0, noise_outside=0.0, random_state=DEFAULT_VARIABLE_SEEDS[0]):
     """
     Generate 2D sample points for a sine wave.
 
@@ -194,13 +227,15 @@ def generate_2d_sine_wave(num_samples=1000, x_range=(0.2, 0.8), vertical_offset=
             f_val = vertical_offset + amplitude * np.sin(2 * np.pi * frequency * (x_rot - x_min) / (x_max - x_min))
             if abs(y_rot - f_val) < thickness:
                 y[i] = 1
+
+    y = apply_label_noise(y, noise_inside=noise_inside, noise_outside=noise_outside, random_state=random_state)
+
     return df_x, y, samples
 
 
-def generate_2d_star(num_samples=2000, center=(0.5, 0.5),
-                     num_points=5, star_size=0.8,
-                     outer_radius=0.4, inner_radius=0.2,
-                     rotation=0, samples=None):
+def generate_2d_star(num_samples=2000, center=(0.5, 0.5), num_points=5, star_size=0.8,
+                     outer_radius=0.4, inner_radius=0.2, rotation=0, samples=None, noise_inside=0.0, noise_outside=0.0,
+                     random_state=DEFAULT_VARIABLE_SEEDS[0]):
     """
     Generate 2D sample points for a star shape.
 
@@ -226,6 +261,9 @@ def generate_2d_star(num_samples=2000, center=(0.5, 0.5),
 
     star_polygon = Polygon(zip(final_star_x, final_star_y))
     y = np.array([1 if star_polygon.contains(Point(x, y)) else 0 for x, y in samples], dtype=int)
+
+    y = apply_label_noise(y, noise_inside=noise_inside, noise_outside=noise_outside, random_state=random_state)
+
     return df_x, y, samples
 
 
@@ -233,10 +271,9 @@ def generate_2d_star(num_samples=2000, center=(0.5, 0.5),
 # 3D Shape Generation Functions (Using Inverse Rotation for Boundary Evaluation)
 # --------------------------------------------------------
 
-def generate_3d_radial_segment(num_samples=2000, center=(0.5, 0.5, 0.5),
-                               outer_radius=0.5, inner_radius=0.2,
-                               arc_span_degrees=180,
-                               rotation_x=0, rotation_y=0, rotation_z=0, samples=None):
+def generate_3d_radial_segment(num_samples=2000, center=(0.5, 0.5, 0.5), outer_radius=0.5, inner_radius=0.2,
+                               arc_span_degrees=180, rotation_x=0, rotation_y=0, rotation_z=0, samples=None,
+                               noise_inside=0.0, noise_outside=0.0, random_state=DEFAULT_VARIABLE_SEEDS[0]):
     """
     Generate 3D sample points for a radial segment (partial torus).
 
@@ -271,13 +308,14 @@ def generate_3d_radial_segment(num_samples=2000, center=(0.5, 0.5, 0.5),
         if inside_torus and in_arc:
             y[i] = 1
 
+    y = apply_label_noise(y, noise_inside=noise_inside, noise_outside=noise_outside, random_state=random_state)
+
     return df_x, y, samples
 
 
-def generate_3d_barbell(num_samples=2000, center=(0.5, 0.5, 0.5),
-                        barbell_length=0.3, sphere_radius=0.15,
-                        connector_thickness=0.07,
-                        rotation_angle_x=0, rotation_angle_y=0, rotation_angle_z=0, samples=None):
+def generate_3d_barbell(num_samples=2000, center=(0.5, 0.5, 0.5), barbell_length=0.3, sphere_radius=0.15,
+                        connector_thickness=0.07, rotation_angle_x=0, rotation_angle_y=0, rotation_angle_z=0,
+                        samples=None, noise_inside=0.0, noise_outside=0.0, random_state=DEFAULT_VARIABLE_SEEDS[0]):
     """
     Generate 3D sample points for a barbell shape.
 
@@ -302,12 +340,16 @@ def generate_3d_barbell(num_samples=2000, center=(0.5, 0.5, 0.5),
         return in_sphere_A or in_sphere_B or in_cylinder
 
     y = np.array([1 if is_inside_barbell(point) else 0 for point in samples], dtype=int)
+
+    y = apply_label_noise(y, noise_inside=noise_inside, noise_outside=noise_outside, random_state=random_state)
+
     return df_x, y, samples
 
 
-def generate_3d_saddle(num_samples=2000, center=(0.5, 0.5, 0.5),
-                       saddle_height=0.5, curve_sharpness_x=1.0, curve_sharpness_y=1.0,
-                       surface_thickness=0.05, rotate_x_deg=0, rotate_y_deg=0, rotate_z_deg=0, samples=None):
+def generate_3d_saddle(num_samples=2000, center=(0.5, 0.5, 0.5), saddle_height=0.5,
+                       curve_sharpness_x=1.0, curve_sharpness_y=1.0, surface_thickness=0.05,
+                       rotate_x_deg=0, rotate_y_deg=0, rotate_z_deg=0, samples=None,
+                       noise_inside=0.0, noise_outside=0.0, random_state=DEFAULT_VARIABLE_SEEDS[0]):
     """
     Generate 3D sample points for a saddle shape.
 
@@ -331,4 +373,7 @@ def generate_3d_saddle(num_samples=2000, center=(0.5, 0.5, 0.5),
     y = np.array([1 if abs(samples[i, 2] - saddle_z[i]) < surface_thickness else 0 for i in range(len(samples))],
                  dtype=int)
     df_x = pd.DataFrame(samples, columns=['x1', 'x2', 'x3'])
+
+    y = apply_label_noise(y, noise_inside=noise_inside, noise_outside=noise_outside, random_state=random_state)
+
     return df_x, y, samples
