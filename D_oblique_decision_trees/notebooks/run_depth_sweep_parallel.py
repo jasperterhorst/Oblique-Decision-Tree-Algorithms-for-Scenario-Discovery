@@ -10,7 +10,7 @@ import sys
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"))
 sys.path.insert(0, project_root)
 
-from src.load_shapes import load_all_shape_datasets
+from src.load_shapes import load_shape_dataset
 from D_oblique_decision_trees.evaluation.benchmark_runner import DepthSweepRunner
 from src.config.paths import DEPTH_SWEEP_BATCH_RESULTS_OUTPUTS_DIR
 from src.config.settings import DEFAULT_VARIABLE_SEEDS
@@ -31,7 +31,7 @@ args = parser.parse_args()
 print(f"Arguments received: {args}")
 
 print("Loading all datasets...")
-all_data = load_all_shape_datasets()
+all_data = load_shape_dataset()
 print(f"Datasets loaded: {list(all_data.keys())}")
 
 if args.dataset not in all_data:

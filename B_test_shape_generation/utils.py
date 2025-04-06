@@ -51,8 +51,8 @@ def plot_2d_shape(samples, y, title="2D Shape", save_path=None, note=""):
                label='Of Interest', alpha=0.6)
 
     ax.set_title(title, fontsize=24, pad=10)
-    ax.set_xlabel('X-axis', fontsize=20)
-    ax.set_ylabel('Y-axis', fontsize=20)
+    ax.set_xlabel('X1', fontsize=20)
+    ax.set_ylabel('X2', fontsize=20)
     ax.legend(loc='upper right', fontsize=15)
     ax.xaxis.set_tick_params(labelsize=16)
     ax.yaxis.set_tick_params(labelsize=16)
@@ -98,9 +98,9 @@ def plot_3d_shape(samples, y, title="3D Shape", save_path=None, note=""):
                c=PRIMARY_DARK, label='Of Interest', alpha=1.0, s=10)
 
     ax.set_title(title, fontsize=22, pad=10)
-    ax.set_xlabel('X-axis', fontsize=18, labelpad=10)
-    ax.set_ylabel('Y-axis', fontsize=18, labelpad=10)
-    ax.set_zlabel('Z-axis', fontsize=18, labelpad=10)
+    ax.set_xlabel('X1', fontsize=18, labelpad=8)
+    ax.set_ylabel('X2', fontsize=18, labelpad=8)
+    ax.set_zlabel('X3', fontsize=18, labelpad=8)
     ax.legend(loc='upper right', fontsize=14)
 
     ax.xaxis.set_tick_params(labelsize=14, colors=AXIS_LINE_COLOR)
@@ -116,7 +116,7 @@ def plot_3d_shape(samples, y, title="3D Shape", save_path=None, note=""):
     ax.set_zlim(0, 1)
 
     ax.grid(True, linestyle='--', linewidth=0.5, color=GRID_COLOR)
-    ax.set_box_aspect([1, 1, 1], zoom=0.9)
+    ax.set_box_aspect([1, 1, 1], zoom=0.89)
 
     if note:
         formatted_note = format_note_text(note, dimension="3D")

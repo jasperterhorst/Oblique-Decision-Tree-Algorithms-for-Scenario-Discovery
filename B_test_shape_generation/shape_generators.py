@@ -102,18 +102,6 @@ def generate_2d_rectangle(num_samples=1000, center=(0.5, 0.5), ribs=(0.4, 0.2), 
                           noise_inside=0.0, noise_outside=0.0, random_state=DEFAULT_VARIABLE_SEEDS[0]):
     """
     Generate 2D sample points for a rotatable rectangle.
-
-    Parameters:
-        num_samples (int): Number of sample points.
-        center (tuple): The (x, y) coordinates of the rectangle's center.
-        ribs (tuple): A tuple (width, height) representing the rectangle dimensions.
-        rotation (float): Rotation angle in degrees.
-        samples (np.array, optional): Precomputed sample points.
-
-    Returns:
-        df_x (pd.DataFrame): DataFrame with sample points.
-        y (np.array): Binary array (1 if point is inside the rectangle, 0 otherwise).
-        samples (np.array): The raw sample points.
     """
     if samples is None:
         samples = sample_points_2d(num_samples, random_state=random_state)
@@ -210,7 +198,8 @@ def generate_2d_barbell(num_samples=1000, center=(0.5, 0.5), barbell_length=0.3,
 
 
 def generate_2d_sine_wave(num_samples=1000, x_range=(0.2, 0.8), vertical_offset=0.5, amplitude=0.1, frequency=1,
-                          thickness=0.05, rotation=0, samples=None, noise_inside=0.0, noise_outside=0.0, random_state=DEFAULT_VARIABLE_SEEDS[0]):
+                          thickness=0.05, rotation=0, samples=None, noise_inside=0.0, noise_outside=0.0,
+                          random_state=DEFAULT_VARIABLE_SEEDS[0]):
     """
     Generate 2D sample points for a sine wave.
 
@@ -252,18 +241,18 @@ def generate_2d_star(num_samples=2000, center=(0.5, 0.5), num_points=5, star_siz
 
     angles = np.linspace(0, 2 * pi, num_points * 2, endpoint=False)
     radii = np.array([outer_radius if i % 2 == 0 else inner_radius for i in range(len(angles))])
-    star_x = radii * np.cos(angles) * star_size
-    star_y = radii * np.sin(angles) * star_size
-    star_x = np.append(star_x, star_x[0])
-    star_y = np.append(star_y, star_y[0])
+    star_x1 = radii * np.cos(angles) * star_size
+    star_x2 = radii * np.sin(angles) * star_size
+    star_x1 = np.append(star_x1, star_x1[0])
+    star_x2 = np.append(star_x2, star_x2[0])
 
     rotation_rad = radians(rotation)
-    rotated_coords = [apply_rotation_2d(np.array([x, y]), -rotation_rad) for x, y in zip(star_x, star_y)]
-    rotated_star_x, rotated_star_y = zip(*rotated_coords)
-    final_star_x = np.array(rotated_star_x) + center[0]
-    final_star_y = np.array(rotated_star_y) + center[1]
+    rotated_coords = [apply_rotation_2d(np.array([x, y]), -rotation_rad) for x, y in zip(star_x1, star_x2)]
+    rotated_star_x1, rotated_star_x2 = zip(*rotated_coords)
+    final_star_x1 = np.array(rotated_star_x1) + center[0]
+    final_star_x2 = np.array(rotated_star_x2) + center[1]
 
-    star_polygon = Polygon(zip(final_star_x, final_star_y))
+    star_polygon = Polygon(zip(final_star_x1, final_star_x2))
     y = np.array([1 if star_polygon.contains(Point(x, y)) else 0 for x, y in samples], dtype=int)
 
     y = apply_label_noise(y, noise_inside=noise_inside, noise_outside=noise_outside, random_state=random_state)
@@ -276,7 +265,7 @@ def generate_2d_star(num_samples=2000, center=(0.5, 0.5), num_points=5, star_siz
 # --------------------------------------------------------
 
 def generate_3d_radial_segment(num_samples=2000, center=(0.5, 0.5, 0.5), outer_radius=0.5, inner_radius=0.2,
-                               arc_span_degrees=180, rotation_x=0, rotation_y=0, rotation_z=0, samples=None,
+                               arc_span_degrees=180, rotation_x1=0, rotation_x2=0, rotation_x3=0, samples=None,
                                noise_inside=0.0, noise_outside=0.0, random_state=DEFAULT_VARIABLE_SEEDS[0]):
     """
     Generate 3D sample points for a radial segment (partial torus).
@@ -291,7 +280,7 @@ def generate_3d_radial_segment(num_samples=2000, center=(0.5, 0.5, 0.5), outer_r
     R_val = outer_radius
     r_val = outer_radius - inner_radius
     y = np.zeros(len(samples), dtype=int)
-    inv_rot_angles = (-rotation_x, -rotation_y, -rotation_z)
+    inv_rot_angles = (-rotation_x1, -rotation_x2, -rotation_x3)
 
     for i, sample in enumerate(samples):
         rel_point = sample - center
@@ -318,7 +307,7 @@ def generate_3d_radial_segment(num_samples=2000, center=(0.5, 0.5, 0.5), outer_r
 
 
 def generate_3d_barbell(num_samples=2000, center=(0.5, 0.5, 0.5), barbell_length=0.3, sphere_radius=0.15,
-                        connector_thickness=0.07, rotation_angle_x=0, rotation_angle_y=0, rotation_angle_z=0,
+                        connector_thickness=0.07, rotation_angle_x1=0, rotation_angle_x2=0, rotation_angle_x3=0,
                         samples=None, noise_inside=0.0, noise_outside=0.0, random_state=DEFAULT_VARIABLE_SEEDS[0]):
     """
     Generate 3D sample points for a barbell shape.
@@ -332,7 +321,7 @@ def generate_3d_barbell(num_samples=2000, center=(0.5, 0.5, 0.5), barbell_length
     center = np.array(center)
     sphere_center_A = np.array([-barbell_length / 2, 0, 0])
     sphere_center_B = np.array([barbell_length / 2, 0, 0])
-    inv_rot_angles = (-rotation_angle_x, -rotation_angle_y, -rotation_angle_z)
+    inv_rot_angles = (-rotation_angle_x1, -rotation_angle_x2, -rotation_angle_x3)
 
     def is_inside_barbell(point):
         rel_point = point - center
@@ -351,8 +340,8 @@ def generate_3d_barbell(num_samples=2000, center=(0.5, 0.5, 0.5), barbell_length
 
 
 def generate_3d_saddle(num_samples=2000, center=(0.5, 0.5, 0.5), saddle_height=0.5,
-                       curve_sharpness_x=1.0, curve_sharpness_y=1.0, surface_thickness=0.05,
-                       rotate_x_deg=0, rotate_y_deg=0, rotate_z_deg=0, samples=None,
+                       curve_sharpness_x1=1.0, curve_sharpness_x2=1.0, surface_thickness=0.05,
+                       rotate_x1_deg=0, rotate_x2_deg=0, rotate_x3_deg=0, samples=None,
                        noise_inside=0.0, noise_outside=0.0, random_state=DEFAULT_VARIABLE_SEEDS[0]):
     """
     Generate 3D sample points for a saddle shape.
@@ -366,10 +355,10 @@ def generate_3d_saddle(num_samples=2000, center=(0.5, 0.5, 0.5), saddle_height=0
     if samples is None:
         samples = sample_points_3d(num_samples, random_state=random_state)
     rel_points = samples - np.array(center)
-    rotation = R.from_euler('xyz', [-rotate_x_deg, -rotate_y_deg, -rotate_z_deg], degrees=True)
+    rotation = R.from_euler('xyz', [-rotate_x1_deg, -rotate_x2_deg, -rotate_x3_deg], degrees=True)
     inv_rotated_points = rotation.apply(rel_points) + np.array(center)
-    saddle_z = (curve_sharpness_x * ((inv_rotated_points[:, 0] - center[0]) ** 2) -
-                curve_sharpness_y * ((inv_rotated_points[:, 1] - center[1]) ** 2))
+    saddle_z = (curve_sharpness_x1 * ((inv_rotated_points[:, 0] - center[0]) ** 2) -
+                curve_sharpness_x2 * ((inv_rotated_points[:, 1] - center[1]) ** 2))
     min_z = center[2] - saddle_height / 2
     max_z = center[2] + saddle_height / 2
     saddle_z = (saddle_z - np.min(saddle_z)) / (np.max(saddle_z) - np.min(saddle_z)) * (max_z - min_z) + min_z

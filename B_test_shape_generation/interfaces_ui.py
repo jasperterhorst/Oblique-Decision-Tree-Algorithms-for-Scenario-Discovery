@@ -117,7 +117,7 @@ def update_interface_3d(generate_function, plot_title, output, **kwargs):
     with output:
         output.clear_output()
         print(f"{plot_title}: {sum(y)} points inside out of {num_samples} samples.")
-        plot_3d_shape(samples, y, title=f"3D {plot_title}")
+        plot_3d_shape(samples, y, title=f"{plot_title}")
     return df_x, y, samples
 
 
@@ -132,9 +132,9 @@ def save_interface_data(interactive_widget, file_prefix, plot_title, save_dir, o
     # Save PDF figure
     image_path = os.path.join(save_dir, f"{fp}.pdf")
     plot_function = plot_2d_shape if dimension == "2D" else plot_3d_shape
-    plot_function(samples, y, title=f"{dimension} {plot_title}", save_path=image_path, note=note)
+    plot_function(samples, y, title=f"{plot_title}", save_path=image_path, note=note)
     with output:
-        print(f"{dimension} {plot_title} data and image saved successfully to: {save_dir}")
+        print(f"{plot_title} data and image saved successfully to: {save_dir}")
 
 
 def handle_save(interactive_widget, file_prefix, plot_title, save_dir, output, dimension, defaults, param_list):
@@ -170,8 +170,8 @@ def create_2d_rectangle_interface(defaults=None, save_dir=None):
             "width": 0.5,
             "height": 0.5,
             "rotation": 45,
-            "center_x": 0.5,
-            "center_y": 0.5,
+            "center_x1": 0.5,
+            "center_x2": 0.5,
             "noise_inside": 0.0,
             "noise_outside": 0.0
         }
@@ -179,8 +179,8 @@ def create_2d_rectangle_interface(defaults=None, save_dir=None):
     plot_title = "Rectangle 2D"   # for display in plot
     defaults, _, output, suffix_widget = setup_interface(defaults, save_dir, base_name, "2D")
 
-    def update(num_samples, width, height, rotation, center_x, center_y, noise_inside, noise_outside):
-        center = (center_x, center_y)
+    def update(num_samples, width, height, rotation, center_x1, center_x2, noise_inside, noise_outside):
+        center = (center_x1, center_x2)
         return update_interface_2d(
             generate_function=generate_2d_rectangle,
             plot_title=plot_title,
@@ -207,12 +207,12 @@ def create_2d_rectangle_interface(defaults=None, save_dir=None):
         rotation=widgets.IntSlider(value=defaults["rotation"], min=0, max=360, step=5,
                                    description="Rotation (°)", style={'description_width': DESCRIPTION_WIDTH},
                                    layout={'width': SLIDER_WIDTH}),
-        center_x=widgets.FloatSlider(value=defaults["center_x"], min=0.0, max=1.0, step=0.05,
-                                     description="Center X", style={'description_width': DESCRIPTION_WIDTH},
-                                     layout={'width': SLIDER_WIDTH}),
-        center_y=widgets.FloatSlider(value=defaults["center_y"], min=0.0, max=1.0, step=0.05,
-                                     description="Center Y", style={'description_width': DESCRIPTION_WIDTH},
-                                     layout={'width': SLIDER_WIDTH}),
+        center_x1=widgets.FloatSlider(value=defaults["center_x1"], min=0.0, max=1.0, step=0.05,
+                                      description="Center X1", style={'description_width': DESCRIPTION_WIDTH},
+                                      layout={'width': SLIDER_WIDTH}),
+        center_x2=widgets.FloatSlider(value=defaults["center_x2"], min=0.0, max=1.0, step=0.05,
+                                      description="Center X2", style={'description_width': DESCRIPTION_WIDTH},
+                                      layout={'width': SLIDER_WIDTH}),
         noise_inside=widgets.FloatSlider(value=defaults["noise_inside"], min=0.0, max=0.5, step=0.05,
                                          description="Noise Inside", style={'description_width': DESCRIPTION_WIDTH},
                                          layout={'width': SLIDER_WIDTH}),
@@ -227,8 +227,8 @@ def create_2d_rectangle_interface(defaults=None, save_dir=None):
             ("width", "Width", "{:.2f}"),
             ("height", "Height", "{:.2f}"),
             ("rotation", "Rotation", "{}"),
-            ("center_x", "Center X", "{:.2f}"),
-            ("center_y", "Center Y", "{:.2f}"),
+            ("center_x1", "Center X1", "{:.2f}"),
+            ("center_x2", "Center X2", "{:.2f}"),
             ("noise_inside", "Noise Inside", "{:.2f}"),
             ("noise_outside", "Noise Outside", "{:.2f}")
         ]
@@ -626,9 +626,9 @@ def create_3d_radial_segment_interface(defaults=None, save_dir=None):
             "outer_radius": 0.4,
             "inner_radius": 0.2,
             "arc_span_degrees": 300,
-            "rotation_x": 35,
-            "rotation_y": 0,
-            "rotation_z": 60,
+            "rotation_x1": 35,
+            "rotation_x2": 0,
+            "rotation_x3": 60,
             "center": (0.5, 0.5, 0.5),
             "noise_inside": 0.0,
             "noise_outside": 0.0
@@ -638,7 +638,7 @@ def create_3d_radial_segment_interface(defaults=None, save_dir=None):
     defaults, _, output, suffix_widget = setup_interface(defaults, save_dir, base_name, "3D")
 
     def update(num_samples, outer_radius, inner_radius, arc_span_degrees,
-               rotation_x, rotation_y, rotation_z, noise_inside, noise_outside):
+               rotation_x1, rotation_x2, rotation_x3, noise_inside, noise_outside):
         return update_interface_3d(
             generate_function=generate_3d_radial_segment,
             plot_title=plot_title,
@@ -648,9 +648,9 @@ def create_3d_radial_segment_interface(defaults=None, save_dir=None):
             outer_radius=outer_radius,
             inner_radius=inner_radius,
             arc_span_degrees=arc_span_degrees,
-            rotation_x=rotation_x,
-            rotation_y=rotation_y,
-            rotation_z=rotation_z,
+            rotation_x1=rotation_x1,
+            rotation_x2=rotation_x2,
+            rotation_x3=rotation_x3,
             noise_inside=noise_inside,
             noise_outside=noise_outside
         )
@@ -669,15 +669,15 @@ def create_3d_radial_segment_interface(defaults=None, save_dir=None):
         arc_span_degrees=widgets.IntSlider(value=defaults["arc_span_degrees"], min=0, max=360, step=5,
                                            description="Arc Span (°)", style={'description_width': DESCRIPTION_WIDTH},
                                            layout={'width': SLIDER_WIDTH}),
-        rotation_x=widgets.IntSlider(value=defaults["rotation_x"], min=0, max=360, step=5,
-                                     description="Rotation X (°)", style={'description_width': DESCRIPTION_WIDTH},
-                                     layout={'width': SLIDER_WIDTH}),
-        rotation_y=widgets.IntSlider(value=defaults["rotation_y"], min=0, max=360, step=5,
-                                     description="Rotation Y (°)", style={'description_width': DESCRIPTION_WIDTH},
-                                     layout={'width': SLIDER_WIDTH}),
-        rotation_z=widgets.IntSlider(value=defaults["rotation_z"], min=0, max=360, step=5,
-                                     description="Rotation Z (°)", style={'description_width': DESCRIPTION_WIDTH},
-                                     layout={'width': SLIDER_WIDTH}),
+        rotation_x1=widgets.IntSlider(value=defaults["rotation_x1"], min=0, max=360, step=5,
+                                      description="Rotation X1 (°)", style={'description_width': DESCRIPTION_WIDTH},
+                                      layout={'width': SLIDER_WIDTH}),
+        rotation_x2=widgets.IntSlider(value=defaults["rotation_x2"], min=0, max=360, step=5,
+                                      description="Rotation X2 (°)", style={'description_width': DESCRIPTION_WIDTH},
+                                      layout={'width': SLIDER_WIDTH}),
+        rotation_x3=widgets.IntSlider(value=defaults["rotation_x3"], min=0, max=360, step=5,
+                                      description="Rotation X3 (°)", style={'description_width': DESCRIPTION_WIDTH},
+                                      layout={'width': SLIDER_WIDTH}),
         noise_inside=widgets.FloatSlider(value=defaults["noise_inside"], min=0.0, max=0.5, step=0.05,
                                          description="Noise Inside", style={'description_width': DESCRIPTION_WIDTH},
                                          layout={'width': SLIDER_WIDTH}),
@@ -692,9 +692,9 @@ def create_3d_radial_segment_interface(defaults=None, save_dir=None):
             ("outer_radius", "Outer Radius", "{:.2f}"),
             ("inner_radius", "Inner Radius", "{:.2f}"),
             ("arc_span_degrees", "Arc Span", "{}"),
-            ("rotation_x", "Rotation X", "{}"),
-            ("rotation_y", "Rotation Y", "{}"),
-            ("rotation_z", "Rotation Z", "{}"),
+            ("rotation_x1", "Rotation X1", "{}"),
+            ("rotation_x2", "Rotation X2", "{}"),
+            ("rotation_x2", "Rotation X3", "{}"),
             ("noise_inside", "Noise Inside", "{:.2f}"),
             ("noise_outside", "Noise Outside", "{:.2f}")
         ]
@@ -724,9 +724,9 @@ def create_3d_barbell_interface(defaults=None, save_dir=None):
             "barbell_length": 0.8,
             "sphere_radius": 0.25,
             "connector_thickness": 0.1,
-            "rotation_angle_x": 50,
-            "rotation_angle_y": 50,
-            "rotation_angle_z": 0,
+            "rotation_angle_x1": 50,
+            "rotation_angle_x2": 50,
+            "rotation_angle_x3": 0,
             "center": (0.5, 0.5, 0.5),
             "noise_inside": 0.0,
             "noise_outside": 0.0
@@ -736,7 +736,7 @@ def create_3d_barbell_interface(defaults=None, save_dir=None):
     defaults, _, output, suffix_widget = setup_interface(defaults, save_dir, base_name, "3D")
 
     def update(num_samples, barbell_length, sphere_radius, connector_thickness,
-               rotation_angle_x, rotation_angle_y, rotation_angle_z, noise_inside, noise_outside):
+               rotation_angle_x1, rotation_angle_x2, rotation_angle_x3, noise_inside, noise_outside):
         return update_interface_3d(
             generate_function=generate_3d_barbell,
             plot_title=plot_title,
@@ -746,9 +746,9 @@ def create_3d_barbell_interface(defaults=None, save_dir=None):
             barbell_length=barbell_length,
             sphere_radius=sphere_radius,
             connector_thickness=connector_thickness,
-            rotation_angle_x=rotation_angle_x,
-            rotation_angle_y=rotation_angle_y,
-            rotation_angle_z=rotation_angle_z,
+            rotation_angle_x1=rotation_angle_x1,
+            rotation_angle_x2=rotation_angle_x2,
+            rotation_angle_x3=rotation_angle_x3,
             noise_inside=noise_inside,
             noise_outside=noise_outside
         )
@@ -768,15 +768,18 @@ def create_3d_barbell_interface(defaults=None, save_dir=None):
                                                 description="Connector Thickness",
                                                 style={'description_width': DESCRIPTION_WIDTH},
                                                 layout={'width': SLIDER_WIDTH}),
-        rotation_angle_x=widgets.IntSlider(value=defaults["rotation_angle_x"], min=0, max=360, step=10,
-                                           description="Rotation X (°)", style={'description_width': DESCRIPTION_WIDTH},
-                                           layout={'width': SLIDER_WIDTH}),
-        rotation_angle_y=widgets.IntSlider(value=defaults["rotation_angle_y"], min=0, max=360, step=10,
-                                           description="Rotation Y (°)", style={'description_width': DESCRIPTION_WIDTH},
-                                           layout={'width': SLIDER_WIDTH}),
-        rotation_angle_z=widgets.IntSlider(value=defaults["rotation_angle_z"], min=0, max=360, step=10,
-                                           description="Rotation Z (°)", style={'description_width': DESCRIPTION_WIDTH},
-                                           layout={'width': SLIDER_WIDTH}),
+        rotation_angle_x1=widgets.IntSlider(value=defaults["rotation_angle_x1"], min=0, max=360, step=10,
+                                            description="Rotation X1 (°)",
+                                            style={'description_width': DESCRIPTION_WIDTH},
+                                            layout={'width': SLIDER_WIDTH}),
+        rotation_angle_x2=widgets.IntSlider(value=defaults["rotation_angle_x2"], min=0, max=360, step=10,
+                                            description="Rotation X2 (°)",
+                                            style={'description_width': DESCRIPTION_WIDTH},
+                                            layout={'width': SLIDER_WIDTH}),
+        rotation_angle_x3=widgets.IntSlider(value=defaults["rotation_angle_x3"], min=0, max=360, step=10,
+                                            description="Rotation X3 (°)",
+                                            style={'description_width': DESCRIPTION_WIDTH},
+                                            layout={'width': SLIDER_WIDTH}),
         noise_inside=widgets.FloatSlider(value=defaults["noise_inside"], min=0.0, max=0.5, step=0.05,
                                          description="Noise Inside", style={'description_width': DESCRIPTION_WIDTH},
                                          layout={'width': SLIDER_WIDTH}),
@@ -791,9 +794,9 @@ def create_3d_barbell_interface(defaults=None, save_dir=None):
             ("barbell_length", "Barbell Length", "{:.2f}"),
             ("sphere_radius", "Sphere Radius", "{:.2f}"),
             ("connector_thickness", "Connector Thickness", "{:.2f}"),
-            ("rotation_angle_x", "Rotation X", "{}"),
-            ("rotation_angle_y", "Rotation Y", "{}"),
-            ("rotation_angle_z", "Rotation Z", "{}"),
+            ("rotation_angle_x1", "Rotation X1", "{}"),
+            ("rotation_angle_x2", "Rotation X2", "{}"),
+            ("rotation_angle_x3", "Rotation X3", "{}"),
             ("noise_inside", "Noise Inside", "{:.2f}"),
             ("noise_outside", "Noise Outside", "{:.2f}")
         ]
@@ -821,12 +824,12 @@ def create_3d_saddle_interface(defaults=None, save_dir=None):
         defaults = {
             "num_samples": 10000,
             "saddle_height": 0.5,
-            "curve_sharpness_x": 1.0,
-            "curve_sharpness_y": 1.0,
+            "curve_sharpness_x1": 1.0,
+            "curve_sharpness_x2": 1.0,
             "surface_thickness": 0.2,
-            "rotate_x_deg": 0,
-            "rotate_y_deg": 0,
-            "rotate_z_deg": 0,
+            "rotate_x1_deg": 0,
+            "rotate_x2_deg": 0,
+            "rotate_x3_deg": 0,
             "center": (0.5, 0.5, 0.5),
             "noise_inside": 0.0,
             "noise_outside": 0.0
@@ -835,8 +838,8 @@ def create_3d_saddle_interface(defaults=None, save_dir=None):
     plot_title = "Saddle 3D"
     defaults, _, output, suffix_widget = setup_interface(defaults, save_dir, base_name, "3D")
 
-    def update(num_samples, saddle_height, curve_sharpness_x, curve_sharpness_y,
-               surface_thickness, rotate_x_deg, rotate_y_deg, rotate_z_deg, noise_inside, noise_outside):
+    def update(num_samples, saddle_height, curve_sharpness_x1, curve_sharpness_x2,
+               surface_thickness, rotate_x1_deg, rotate_x2_deg, rotate_x3_deg, noise_inside, noise_outside):
         return update_interface_3d(
             generate_function=generate_3d_saddle,
             plot_title=plot_title,
@@ -844,12 +847,12 @@ def create_3d_saddle_interface(defaults=None, save_dir=None):
             num_samples=num_samples,
             center=defaults["center"],
             saddle_height=saddle_height,
-            curve_sharpness_x=curve_sharpness_x,
-            curve_sharpness_y=curve_sharpness_y,
+            curve_sharpness_x1=curve_sharpness_x1,
+            curve_sharpness_x2=curve_sharpness_x2,
             surface_thickness=surface_thickness,
-            rotate_x_deg=rotate_x_deg,
-            rotate_y_deg=rotate_y_deg,
-            rotate_z_deg=rotate_z_deg,
+            rotate_x1_deg=rotate_x1_deg,
+            rotate_x2_deg=rotate_x2_deg,
+            rotate_x3_deg=rotate_x3_deg,
             noise_inside=noise_inside,
             noise_outside=noise_outside
         )
@@ -862,24 +865,24 @@ def create_3d_saddle_interface(defaults=None, save_dir=None):
         saddle_height=widgets.FloatSlider(value=defaults["saddle_height"], min=0.1, max=1.0, step=0.05,
                                           description="Height", style={'description_width': DESCRIPTION_WIDTH},
                                           layout={'width': SLIDER_WIDTH}),
-        curve_sharpness_x=widgets.FloatSlider(value=defaults["curve_sharpness_x"], min=0.1, max=2.0, step=0.1,
-                                              description="Curve X", style={'description_width': DESCRIPTION_WIDTH},
-                                              layout={'width': SLIDER_WIDTH}),
-        curve_sharpness_y=widgets.FloatSlider(value=defaults["curve_sharpness_y"], min=0.1, max=2.0, step=0.1,
-                                              description="Curve Y", style={'description_width': DESCRIPTION_WIDTH},
-                                              layout={'width': SLIDER_WIDTH}),
+        curve_sharpness_x1=widgets.FloatSlider(value=defaults["curve_sharpness_x1"], min=0.1, max=2.0, step=0.1,
+                                               description="Curve X1", style={'description_width': DESCRIPTION_WIDTH},
+                                               layout={'width': SLIDER_WIDTH}),
+        curve_sharpness_x2=widgets.FloatSlider(value=defaults["curve_sharpness_x2"], min=0.1, max=2.0, step=0.1,
+                                               description="Curve X2", style={'description_width': DESCRIPTION_WIDTH},
+                                               layout={'width': SLIDER_WIDTH}),
         surface_thickness=widgets.FloatSlider(value=defaults["surface_thickness"], min=0.01, max=0.4, step=0.05,
                                               description="Thickness", style={'description_width': DESCRIPTION_WIDTH},
                                               layout={'width': SLIDER_WIDTH}),
-        rotate_x_deg=widgets.IntSlider(value=defaults["rotate_x_deg"], min=0, max=360, step=10,
-                                       description="Rotation X (°)", style={'description_width': DESCRIPTION_WIDTH},
-                                       layout={'width': SLIDER_WIDTH}),
-        rotate_y_deg=widgets.IntSlider(value=defaults["rotate_y_deg"], min=0, max=360, step=10,
-                                       description="Rotation Y (°)", style={'description_width': DESCRIPTION_WIDTH},
-                                       layout={'width': SLIDER_WIDTH}),
-        rotate_z_deg=widgets.IntSlider(value=defaults["rotate_z_deg"], min=0, max=360, step=10,
-                                       description="Rotation Z (°)", style={'description_width': DESCRIPTION_WIDTH},
-                                       layout={'width': SLIDER_WIDTH}),
+        rotate_x1_deg=widgets.IntSlider(value=defaults["rotate_x1_deg"], min=0, max=360, step=10,
+                                        description="Rotation X1 (°)", style={'description_width': DESCRIPTION_WIDTH},
+                                        layout={'width': SLIDER_WIDTH}),
+        rotate_x2_deg=widgets.IntSlider(value=defaults["rotate_x2_deg"], min=0, max=360, step=10,
+                                        description="Rotation X2 (°)", style={'description_width': DESCRIPTION_WIDTH},
+                                        layout={'width': SLIDER_WIDTH}),
+        rotate_x3_deg=widgets.IntSlider(value=defaults["rotate_x3_deg"], min=0, max=360, step=10,
+                                        description="Rotation X3 (°)", style={'description_width': DESCRIPTION_WIDTH},
+                                        layout={'width': SLIDER_WIDTH}),
         noise_inside=widgets.FloatSlider(value=defaults["noise_inside"], min=0.0, max=0.5, step=0.05,
                                          description="Noise Inside", style={'description_width': DESCRIPTION_WIDTH},
                                          layout={'width': SLIDER_WIDTH}),
@@ -892,12 +895,12 @@ def create_3d_saddle_interface(defaults=None, save_dir=None):
         param_list = [
             ("num_samples", "Samples", "{:.0f}"),
             ("saddle_height", "Saddle Height", "{:.2f}"),
-            ("curve_sharpness_x", "Curve Sharpness X", "{:.2f}"),
-            ("curve_sharpness_y", "Curve Sharpness Y", "{:.2f}"),
+            ("curve_sharpness_x1", "Curve Sharpness X1", "{:.2f}"),
+            ("curve_sharpness_x2", "Curve Sharpness X2", "{:.2f}"),
             ("surface_thickness", "Surface Thickness", "{:.2f}"),
-            ("rotate_x_deg", "Rotate X", "{}"),
-            ("rotate_y_deg", "Rotate Y", "{}"),
-            ("rotate_z_deg", "Rotate Z", "{}"),
+            ("rotate_x1_deg", "Rotate X1", "{}"),
+            ("rotate_x2_deg", "Rotate X2", "{}"),
+            ("rotate_x3_deg", "Rotate X3", "{}"),
             ("noise_inside", "Noise Inside", "{:.2f}"),
             ("noise_outside", "Noise Outside", "{:.2f}")
         ]
