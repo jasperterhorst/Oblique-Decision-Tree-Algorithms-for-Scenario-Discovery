@@ -8,7 +8,7 @@ import pandas as pd
 from sklearn.tree import DecisionTreeClassifier
 
 from A_scenario_methods_demo.utils import get_points_in_box
-from src.config import DEFAULT_SEED
+from src.config import DEFAULT_VARIABLE_SEEDS
 
 
 def get_cart_boxes(tree: DecisionTreeClassifier, x_bounds: tuple, y_bounds: tuple) -> list:
@@ -79,7 +79,7 @@ def run_cart(data: pd.DataFrame, y: np.ndarray, mass_min: float = 0.05):
     n_samples = len(data)
     min_samples_leaf = max(int(n_samples * mass_min), 1)
 
-    clf = DecisionTreeClassifier(min_samples_leaf=min_samples_leaf, random_state=DEFAULT_SEED)
+    clf = DecisionTreeClassifier(min_samples_leaf=min_samples_leaf, random_state=DEFAULT_VARIABLE_SEEDS[0])
     clf.fit(X, y)
 
     x_bounds = (data["x"].min(), data["x"].max())

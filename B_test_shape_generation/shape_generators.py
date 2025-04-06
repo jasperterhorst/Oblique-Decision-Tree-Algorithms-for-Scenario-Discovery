@@ -37,8 +37,10 @@ from src.config.settings import DEFAULT_VARIABLE_SEEDS
 # --------------------------------------------------------
 
 
-def sample_points_2d(num_samples):
-    """Generate 2D sample points using Latin Hypercube Sampling (LHS)."""
+def sample_points_2d(num_samples, random_state=DEFAULT_VARIABLE_SEEDS[0]):
+    """Generate 2D sample points using LHS with a seed for reproducibility."""
+    if random_state is not None:
+        np.random.seed(random_state)
     return lhs(n=2, samples=num_samples)
 
 
@@ -55,8 +57,10 @@ def apply_rotation_2d(point, angle_rad):
 # Helper Functions - Sampling and Rotating 3D
 # --------------------------------------------------------
 
-def sample_points_3d(num_samples):
-    """Generate 3D sample points using Latin Hypercube Sampling (LHS)."""
+def sample_points_3d(num_samples, random_state=DEFAULT_VARIABLE_SEEDS[0]):
+    """Generate 3D sample points using LHS with a seed for reproducibility."""
+    if random_state is not None:
+        np.random.seed(random_state)
     return lhs(n=3, samples=num_samples)
 
 
@@ -112,7 +116,7 @@ def generate_2d_rectangle(num_samples=1000, center=(0.5, 0.5), ribs=(0.4, 0.2), 
         samples (np.array): The raw sample points.
     """
     if samples is None:
-        samples = sample_points_2d(num_samples)
+        samples = sample_points_2d(num_samples, random_state=random_state)
     df_x = pd.DataFrame(samples, columns=['x1', 'x2'])
     center = np.array(center)
     rotation_rad = radians(rotation)
@@ -142,7 +146,7 @@ def generate_2d_radial_segment(num_samples=1000, center=(0.5, 0.5), outer_radius
     For each point, an inverse rotation is applied for boundary evaluation.
     """
     if samples is None:
-        samples = sample_points_2d(num_samples)
+        samples = sample_points_2d(num_samples, random_state=random_state)
     df_x = pd.DataFrame(samples, columns=['x1', 'x2'])
     center = np.array(center)
     arc_span_rad = radians(arc_span_degrees)
@@ -176,7 +180,7 @@ def generate_2d_barbell(num_samples=1000, center=(0.5, 0.5), barbell_length=0.3,
     The boundary evaluation applies an inverse rotation to the sample point.
     """
     if samples is None:
-        samples = sample_points_2d(num_samples)
+        samples = sample_points_2d(num_samples, random_state=random_state)
     df_x = pd.DataFrame(samples, columns=['x1', 'x2'])
     center = np.array(center)
     rotation_rad = radians(rotation)
@@ -213,7 +217,7 @@ def generate_2d_sine_wave(num_samples=1000, x_range=(0.2, 0.8), vertical_offset=
     The sine function's boundary is transformed using an inverse rotation for evaluation.
     """
     if samples is None:
-        samples = sample_points_2d(num_samples)
+        samples = sample_points_2d(num_samples, random_state=random_state)
     df_x = pd.DataFrame(samples, columns=['x1', 'x2'])
     x_min, x_max = x_range
     rotation_rad = radians(rotation)
@@ -243,7 +247,7 @@ def generate_2d_star(num_samples=2000, center=(0.5, 0.5), num_points=5, star_siz
     An inverse rotation is applied to the vertex coordinates before classification.
     """
     if samples is None:
-        samples = sample_points_2d(num_samples)
+        samples = sample_points_2d(num_samples, random_state=random_state)
     df_x = pd.DataFrame(samples, columns=['x1', 'x2'])
 
     angles = np.linspace(0, 2 * pi, num_points * 2, endpoint=False)
@@ -280,7 +284,7 @@ def generate_3d_radial_segment(num_samples=2000, center=(0.5, 0.5, 0.5), outer_r
     Instead of rotating the sample points, an inverse rotation (via Euler angles) is applied for boundary evaluation.
     """
     if samples is None:
-        samples = sample_points_3d(num_samples)
+        samples = sample_points_3d(num_samples, random_state=random_state)
     df_x = pd.DataFrame(samples, columns=['x1', 'x2', 'x3'])
     center = np.array(center)
     arc_span_rad = radians(arc_span_degrees)
@@ -323,7 +327,7 @@ def generate_3d_barbell(num_samples=2000, center=(0.5, 0.5, 0.5), barbell_length
     An inverse rotation (using Euler angles) is applied for boundary evaluation.
     """
     if samples is None:
-        samples = sample_points_3d(num_samples)
+        samples = sample_points_3d(num_samples, random_state=random_state)
     df_x = pd.DataFrame(samples, columns=['x1', 'x2', 'x3'])
     center = np.array(center)
     sphere_center_A = np.array([-barbell_length / 2, 0, 0])
@@ -360,7 +364,7 @@ def generate_3d_saddle(num_samples=2000, center=(0.5, 0.5, 0.5), saddle_height=0
     and normalized to span a total height.
     """
     if samples is None:
-        samples = sample_points_3d(num_samples)
+        samples = sample_points_3d(num_samples, random_state=random_state)
     rel_points = samples - np.array(center)
     rotation = R.from_euler('xyz', [-rotate_x_deg, -rotate_y_deg, -rotate_z_deg], degrees=True)
     inv_rotated_points = rotation.apply(rel_points) + np.array(center)
