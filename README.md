@@ -58,7 +58,6 @@ Implements several types of **oblique decision trees**, such as:
 These are ran and using converters put into a standard tree structure. So that the different trees can be compared
 evaluated and ran against each other on different datasets.
 
----
 
 [//]: # (### `E_TAO_algorithm/` – 🔧 TAO Optimization)
 
