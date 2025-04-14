@@ -13,10 +13,10 @@ from src.config.colors import (
     AXIS_LINE_COLOR, GRID_COLOR
 )
 
+
 # --------------------------------------------------------
 # Helper Function: Automatic Text Wrapping for Notes
 # --------------------------------------------------------
-
 
 def format_note_text(note, dimension="2D"):
     max_length = 65 if dimension == "2D" else 60
@@ -33,17 +33,17 @@ def format_note_text(note, dimension="2D"):
         lines.append(current_line)
     return "\n".join(lines)
 
+
 # --------------------------------------------------------
 # 2D Plotting Function
 # --------------------------------------------------------
-
 
 def plot_2d_shape(samples, y, title="2D Shape", save_path=None, note=""):
     plt.rcParams['text.usetex'] = False
     plt.rcParams['font.family'] = 'serif'
     plt.rcParams['font.serif'] = ['Times New Roman']
 
-    fig, ax = plt.subplots(figsize=(5.5, 5.5))
+    fig, ax = plt.subplots(figsize=(6,6))
 
     ax.scatter(samples[y == 0, 0], samples[y == 0, 1], c=PRIMARY_LIGHT,
                label='Not of Interest', alpha=0.2)
@@ -79,10 +79,10 @@ def plot_2d_shape(samples, y, title="2D Shape", save_path=None, note=""):
     display(fig)
     plt.close(fig)
 
+
 # --------------------------------------------------------
 # 3D Plotting Function
 # --------------------------------------------------------
-
 
 def plot_3d_shape(samples, y, title="3D Shape", save_path=None, note=""):
     plt.rcParams['text.usetex'] = False
@@ -115,8 +115,9 @@ def plot_3d_shape(samples, y, title="3D Shape", save_path=None, note=""):
     ax.set_ylim(0, 1)
     ax.set_zlim(0, 1)
 
-    ax.grid(True, linestyle='--', linewidth=0.5, color=GRID_COLOR)
     ax.set_box_aspect([1, 1, 1], zoom=0.89)
+
+    ax.grid(True, linestyle='--', linewidth=0.5, color=GRID_COLOR)
 
     if note:
         formatted_note = format_note_text(note, dimension="3D")
@@ -131,10 +132,10 @@ def plot_3d_shape(samples, y, title="3D Shape", save_path=None, note=""):
     display(fig)
     plt.close(fig)
 
+
 # --------------------------------------------------------
 # Data Saving Function
 # --------------------------------------------------------
-
 
 def save_data(df_x, y, file_prefix, save_dir):
     os.makedirs(save_dir, exist_ok=True)
