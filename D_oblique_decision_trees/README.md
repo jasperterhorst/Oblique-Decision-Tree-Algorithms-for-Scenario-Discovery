@@ -25,35 +25,36 @@ Dallas]. UTD Theses and Dissertations. [Link](https://utd-ir.tdl.org/handle/1073
 The subpackage is structured as follows:
 
 D_oblique_decision_trees/
-├── core/
-│   ├── __init__.py
-│   └── tree.py
-├── converters/
-│   ├── __init__.py
-│   ├── co2_converter.py
-│   ├── dispatcher.py
-│   ├── hhcart_converter.py
-│   ├── oc1_converter.py
-│   ├── randcart_converter.py
-│   └── wodt_converter.py
-├── evaluation/
-│   ├── __init__.py
-│   ├── benchmark_runner.py
-│   ├── evaluator.py
-│   └── metrics.py
-├── visualization/
-│   ├── __init__.py
-│   ├── decision_boundaries.py
-│   ├── tradeoff_plots.py
-│   └── results_plots.py
-├── notebooks/
-│   ├── 
-│   └── 
 ├── __init__.py
-└── README.md
-
-
-
-
-
+│
+├── models/                        # Model construction and conversion logic
+│   ├── __init__.py
+│   ├── registry.py                # get_model_registry_for_depth(...)
+│   └── converters.py             # convert_model_to_internal_tree(...)
+│
+├── trees/                         # Tree structure and pruning utilities
+│   ├── __init__.py
+│   ├── structure.py              # TreeNode, DecisionNode, LeafNode, DecisionTree
+│   └── pruning.py                # prune_tree_to_depth, compress_redundant_leafs
+│
+├── training/                      # Model training and evaluation runner
+│   ├── __init__.py
+│   ├── trainer.py                # train_and_prune_model(...)
+│   └── single_runner.py          # run_single_model(...) for demo notebooks
+│
+├── evaluation/                    # Metric evaluation and batch experiments
+│   ├── __init__.py
+│   ├── metrics.py                # accuracy, coverage, density, etc.
+│   ├── evaluator.py              # evaluate_tree(...)
+│   └── batch_runner.py           # DepthSweepBenchmarkRunner for multi-model runs
+│
+├── visualisation/                 # Decision boundary and metric plotting
+│   ├── __init__.py
+│   ├── decision_boundaries.py    # Overlay oblique leaf regions and splits
+│   ├── metrics_over_depth.py     # Line plots: metrics vs. depth
+│   └── coverage_density.py       # 2D tradeoff plots for coverage vs. density
+│
+├── notebooks/                     # Interactive demo and benchmark notebooks
+│   ├── demo_single_model.ipynb
+│   └── benchmark_summary.ipynb
 

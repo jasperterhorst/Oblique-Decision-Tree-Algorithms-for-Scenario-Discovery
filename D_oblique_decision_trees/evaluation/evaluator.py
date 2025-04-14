@@ -16,7 +16,7 @@ from .metrics import (
 )
 
 
-def evaluate_tree(tree, X, y, training_time=None):
+def evaluate_tree(tree, X, y):
     """
     Evaluate a decision tree model by computing various performance and interpretability metrics,
     along with tree meta-data.
@@ -26,7 +26,6 @@ def evaluate_tree(tree, X, y, training_time=None):
               'max_depth', 'num_splits', and 'num_leaves'.
         X (iterable): Input feature vectors.
         y (iterable): True labels corresponding to X.
-        training_time (float, optional): Training duration in seconds.
 
     Returns:
         dict: A dictionary containing evaluation metrics:
@@ -41,7 +40,6 @@ def evaluate_tree(tree, X, y, training_time=None):
             — “feature_utilisation_ratio”: Average ratio of nonzero weights to total features per node.
             — “tree_level_sparsity_index”: Overall sparsity index of the tree.
             — “composite_interpretability_score”: A composite interpretability score.
-            — “training_time”: Training duration in seconds.
     """
     metrics = {
         "accuracy": compute_accuracy(tree, X, y),
@@ -54,7 +52,6 @@ def evaluate_tree(tree, X, y, training_time=None):
         "avg_active_feature_count": compute_average_active_feature_count(tree),
         "feature_utilisation_ratio": compute_feature_utilisation_ratio(tree),
         "tree_level_sparsity_index": compute_tree_level_sparsity_index(tree),
-        "composite_interpretability_score": composite_interpretability_score(tree),
-        "training_time": training_time
+        "composite_interpretability_score": composite_interpretability_score(tree)
     }
     return metrics

@@ -68,8 +68,8 @@ class HHCARTNode:
 
 class HouseHolderCART(BaseEstimator):
 
-    def __init__(self, impurity, segmentor, max_depth, min_samples_split=2, method='eig', tau=1e-4, **kwargs):
-
+    def __init__(self, impurity, segmentor, max_depth, min_samples_split=2, method='eig',
+                 tau=1e-4, random_state=None, **kwargs):
         self.impurity = impurity
         self.segmentor = segmentor
         self.method = method
@@ -79,15 +79,33 @@ class HouseHolderCART(BaseEstimator):
         self._alpha = kwargs.get('alpha', None)  # only for linreg method
         self._root = None
         self._nodes = []
+        self.random_state = random_state
+        self.debug = kwargs.get("debug", False)
 
 
-    def _terminate(self, X, y, cur_depth):                              # termination conditions
+    # def _terminate(self, X, y, cur_depth):                              # termination conditions
+    #
+    #     if self._max_depth != None and cur_depth == self._max_depth:    # maximum depth is reached
+    #         return True
+    #     elif y.size < self._min_samples:                                # minimum number of samples has been reached
+    #         return True
+    #     elif np.unique(y).size == 1:                                    # terminate if the node is homogeneous
+    #         return True
+    #     else:
+    #         return False
 
-        if self._max_depth != None and cur_depth == self._max_depth:    # maximum depth is reached
+    def _terminate(self, X, y, cur_depth):
+        if self._max_depth is not None and cur_depth == self._max_depth:
+            if self.debug:
+                print(f"[HHCart Stop] Max depth {self._max_depth} reached at depth {cur_depth}")
             return True
-        elif y.size < self._min_samples:                                # minimum number of samples has been reached
+        elif y.size < self._min_samples:
+            if self.debug:
+                print(f"[HHCart Stop] Too few samples ({y.size}) at depth {cur_depth}")
             return True
-        elif np.unique(y).size == 1:                                    # terminate if the node is homogeneous
+        elif np.unique(y).size == 1:
+            if self.debug:
+                print(f"[HHCart Stop] Pure node (label={y[0]}) at depth {cur_depth}")
             return True
         else:
             return False
@@ -108,7 +126,7 @@ class HouseHolderCART(BaseEstimator):
             impurity_best, sr, left_indices, right_indices = self.segmentor(X, y, self.impurity)
             # generate Householder matrix using all the eigen values
             if self.method == 'eig':
-                extractor = PCA(n_components=1)
+                extractor = PCA(n_components=1, random_state=self.random_state)
                 extractor.fit(X, y)
                 mu = extractor.components_[0]
 
@@ -195,5 +213,6 @@ class HouseHolderCART(BaseEstimator):
 # Definition of classes provided: HHCartClassifier
 #
 class HHCartClassifier(ClassifierMixin, HouseHolderCART):
-    def __init__(self, impurity, segmentor, max_depth=50, min_samples_split=2, **kwargs):
-        super().__init__(impurity=impurity, segmentor=segmentor, max_depth=max_depth, min_samples_split=min_samples_split,**kwargs)
+    def __init__(self, impurity, segmentor, max_depth=50, min_samples_split=2, random_state=None, **kwargs):
+        super().__init__(impurity=impurity, segmentor=segmentor, max_depth=max_depth,
+                         min_samples_split=min_samples_split, random_state=random_state, **kwargs)

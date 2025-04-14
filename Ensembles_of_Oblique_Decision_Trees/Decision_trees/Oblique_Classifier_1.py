@@ -22,7 +22,7 @@ epsilon = 1e-6
 class BaseObliqueTree(BaseEstimator):
 
 
-    def __init__(self, criterion, max_depth, min_samples_split, min_features_split):
+    def __init__(self, criterion, max_depth, min_samples_split, min_features_split, random_state=None):
 
         # Get the options for tree learning
         self.criterion = criterion                      # splitting criterion --- default is 'gini-index'
@@ -30,6 +30,8 @@ class BaseObliqueTree(BaseEstimator):
         self.min_samples_split = min_samples_split      # minimum number of samples needed for a split
         self.min_features_split = min_features_split    # minimum number of features needed for a split
         self.tree_ = None                               # Internal tree --- initially set as 'None'
+        self.random_state = random_state
+        self.rng = np.random.RandomState(random_state) if random_state is not None else np.random
 
 
     # Find the minimum number of samples per split
@@ -102,7 +104,8 @@ class BaseObliqueTree(BaseEstimator):
         # Build a tree and get its root node
         #
         self.root_node, self.learned_depth = build_oblique_tree_oc1(X, y, is_classifier(self), self.criterion,
-                                                          self.max_depth, min_samples_split, min_features_split)
+                                                                    self.max_depth, min_samples_split,
+                                                                    min_features_split, rng=self.rng)
         #
         # Create a tree object
         #
@@ -130,9 +133,10 @@ class BaseObliqueTree(BaseEstimator):
 # Definition of classes provided: ObliqueClassifier1
 #
 class ObliqueClassifier1(ClassifierMixin, BaseObliqueTree):
-    def __init__(self, criterion="gini", max_depth=3, min_samples_split=2, min_features_split=1):
-        super().__init__(criterion=criterion, max_depth=max_depth,
-                         min_samples_split=min_samples_split, min_features_split=min_features_split)
+    def __init__(self, criterion="gini", max_depth=3, min_samples_split=2, min_features_split=1, random_state=None):
+        super().__init__(criterion=criterion, max_depth=max_depth, min_samples_split=min_samples_split,
+                         min_features_split=min_features_split,
+                         random_state=random_state)
 
 
 
@@ -140,7 +144,7 @@ class ObliqueClassifier1(ClassifierMixin, BaseObliqueTree):
 
 # Implements Murthy et al (1994)'s algorithm to learn an oblique decision tree via random perturbations
 def build_oblique_tree_oc1(X, y, is_classification, criterion,
-                           max_depth, min_samples_split, min_features_split,
+                           max_depth, min_samples_split, min_features_split, rng=None,
                            current_depth=0, current_features=None, current_samples=None, debug=False):
 
     n_samples, n_features = X.shape
@@ -199,7 +203,7 @@ def build_oblique_tree_oc1(X, y, is_classification, criterion,
 
     stagnant = 0                                                        # Used to track stagnation probability (see below)
     for k in range(5):                                                  # Randomly attempt to perturb a feature
-        m = np.random.randint(0, n_features)                            # Select a random feature (weight w[m]) to update
+        m = rng.randint(0, n_features)                            # Select a random feature (weight w[m]) to update
         idx = np.where(X[:,m] == 0)[0]
         if len(idx) != 0:
             X[idx,m] = epsilon
@@ -235,7 +239,7 @@ def build_oblique_tree_oc1(X, y, is_classification, criterion,
             # Stagnation prob. is the probability that the perturbation does not improve the score. To prevent the
             # impurity from remaining stagnant for a long time, the stag. prob decreases exponentially with the number
             # of stagnant perturbations. It is reset to 1 every time the global impurity measure is improved
-            if np.random.rand() <= np.exp(-stagnant):
+            if rng.rand() <= np.exp(-stagnant):
                 best_split_score = best_wm_score
                 w[m] = best_wm
                 stagnant += 1
@@ -252,10 +256,10 @@ def build_oblique_tree_oc1(X, y, is_classification, criterion,
     #
     idx = np.where(w == np.inf)[0]
     if len(idx) != 0:
-        w[idx]= np.random.rand(len(idx))
+        w[idx] = rng.rand(len(idx))
     idx = np.where(w == -np.inf)[0]
     if len(idx) != 0:
-        w[idx] = -1 *(np.random.rand(len(idx)))
+        w[idx] = -1 * (rng.rand(len(idx)))
     if b == np.inf:
         b = 10
     if b == -np.inf:
@@ -267,7 +271,7 @@ def build_oblique_tree_oc1(X, y, is_classification, criterion,
     #
     margin = np.dot(X, w) + b
     left, right = margin <= 0, margin > 0
-    if (len(y[left]) == 0 ):
+    if (len (y[left]) == 0 ):
         return LeafNode(is_classifier=is_classification, value=label, conf=conf,
                         samples=current_samples, features=current_features), current_depth
 
@@ -283,20 +287,24 @@ def build_oblique_tree_oc1(X, y, is_classification, criterion,
 
         # Grow the left branch and insert it
         left_node, left_depth = build_oblique_tree_oc1(X[left, :], y[left],
-                                                   is_classification, criterion,
-                                                   max_depth, min_samples_split, min_features_split,
-                                                   current_depth=current_depth + 1,
-                                                   current_features=current_features,
-                                                   current_samples=current_samples[left])
+                                                       is_classification, criterion,
+                                                       max_depth, min_samples_split, min_features_split,
+                                                       rng=rng,
+                                                       current_depth=current_depth + 1,
+                                                       current_features=current_features,
+                                                       current_samples=current_samples[left])
+
         decision_node.add_left_child(left_node)
 
         # Grow the right branch and insert it
         right_node, right_depth = build_oblique_tree_oc1(X[right, :], y[right],
-                                                     is_classification, criterion,
-                                                     max_depth, min_samples_split, min_features_split,
-                                                     current_depth=current_depth + 1,
-                                                     current_features=current_features,
-                                                     current_samples=current_samples[right])
+                                                         is_classification, criterion,
+                                                         max_depth, min_samples_split, min_features_split,
+                                                         rng=rng,
+                                                         current_depth=current_depth + 1,
+                                                         current_features=current_features,
+                                                         current_samples=current_samples[right])
+
         decision_node.add_right_child(right_node)
 
         return decision_node, max(left_depth, right_depth)

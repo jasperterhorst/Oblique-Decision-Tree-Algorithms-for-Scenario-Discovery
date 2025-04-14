@@ -35,7 +35,7 @@ class SplitQuestion(object):
 
 class node(object):													             # A Node definition
 
-	def __init__(self, depth, split, sample_ids, X, Y, class_num):
+	def __init__(self, depth, split, sample_ids, X, Y, class_num, rng):
 		super(node, self).__init__()
 		self.sample_ids = sample_ids
 		self.split = split
@@ -44,6 +44,7 @@ class node(object):													             # A Node definition
 		self.Y = Y
 		self.class_num = class_num
 		self.is_leaf = False
+		self.rng = rng
 		# after grow_stump, set the node as an internal node
 
 	def find_best_split(self, max_features='sqrt'):
@@ -61,7 +62,8 @@ class node(object):													             # A Node definition
 			subset_feature_num = int(feature_num * max_features)
 
 		feature_ids = range(feature_num)
-		subset_feature_ids = random.sample(feature_ids, subset_feature_num)		# get random subset of features
+		subset_feature_ids = self.rng.choice(feature_ids, size=subset_feature_num, replace=False).tolist()
+		# get random subset of features
 		self.split.attrIDs = subset_feature_ids									# feature 0 is threshold
 		subset_feature_ids = np.array(subset_feature_ids)
 
@@ -106,7 +108,7 @@ class node(object):													             # A Node definition
 			return jac
 
 		################################################
-		initial_a = np.random.rand(subset_feature_num + 1) - 0.5
+		initial_a = self.rng.rand(subset_feature_num + 1) - 0.5
 		result = minimize(func, initial_a, method='L-BFGS-B', jac=func_gradient,\
 			options={'maxiter':10, 'disp': False})
 
@@ -121,8 +123,8 @@ class node(object):													             # A Node definition
 		L_bool = self.split.test(self.X[self.sample_ids])
 		L_sample_ids = self.sample_ids[L_bool]
 		R_sample_ids = self.sample_ids[~L_bool]
-		LChild = node(self.depth + 1, SplitQuestion(), L_sample_ids, self.X, self.Y, self.class_num)
-		RChild = node(self.depth + 1, SplitQuestion(), R_sample_ids, self.X, self.Y, self.class_num)
+		LChild = node(self.depth + 1, SplitQuestion(), L_sample_ids, self.X, self.Y, self.class_num, self.rng)
+		RChild = node(self.depth + 1, SplitQuestion(), R_sample_ids, self.X, self.Y, self.class_num, self.rng)
 
 		if len(L_sample_ids) == 0:
 			LChild.is_leaf = True
@@ -135,21 +137,24 @@ class node(object):													             # A Node definition
 		self.RChild = RChild
 
 
-
 class BaseObliqueTree(BaseEstimator):
-    def __init__(self, max_depth, min_samples_split, max_features):
 
+
+    def __init__(self, max_depth, min_samples_split, max_features, random_state=None):
         # Get the options for tree learning
         self.max_depth = max_depth                     # maximum depth of the tree
         self.min_samples_split = min_samples_split     # number of features to consider when looking for the best split
         self.max_features = max_features               # remove features that occur in previous nodes
+        self.random_state = random_state
+        self.rng = np.random.RandomState(random_state)
 
     def fit(self, X, Y):
         self.X = X
         self.Y = Y
         self.classNum = self.Y.max() + 1
         self.sampleNum = self.X.shape[0]
-        self.root_node = node(1, SplitQuestion(), np.arange(self.sampleNum, dtype=np.uint32), self.X, self.Y, self.classNum)
+        self.root_node = node(0, SplitQuestion(), np.arange(self.sampleNum, dtype=np.uint32), self.X, self.Y,
+							  self.classNum, self.rng)
         self.leaf_num = 1
         self.tree_depth = self.build_subtree(self.root_node, is_classifier(self))
 
@@ -222,7 +227,8 @@ def compute_class_distribution(Y, class_num):
 # Definition of classes provided: WeightedObliqueDecisionTreeClassifier
 #
 class WeightedObliqueDecisionTreeClassifier(ClassifierMixin, BaseObliqueTree):
-    def __init__(self, max_depth=50, min_samples_split=2, max_features='all'):
-        super().__init__(max_depth=max_depth, min_samples_split=min_samples_split, max_features=max_features)
+    def __init__(self, max_depth=50, min_samples_split=2, max_features='all', random_state=None):
+        super().__init__(max_depth=max_depth, min_samples_split=min_samples_split, max_features=max_features,
+						 random_state=random_state)
 
 

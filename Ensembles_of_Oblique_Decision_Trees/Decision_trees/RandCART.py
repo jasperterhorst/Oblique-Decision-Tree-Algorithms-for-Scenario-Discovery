@@ -67,7 +67,7 @@ class Node:                                                                 # de
 
 class Rand_CART(BaseEstimator):
 
-    def __init__(self, impurity, segmentor, max_depth, min_samples_split=2,**kwargs):
+    def __init__(self, impurity, segmentor, max_depth, min_samples_split=2, random_state=None, **kwargs):
         self.impurity = impurity
         self.segmentor = segmentor
         self._max_depth = max_depth
@@ -75,6 +75,10 @@ class Rand_CART(BaseEstimator):
         self._compare_with_cart = kwargs.get('compare_with_cart', False)
         self._root = None
         self._nodes = []
+
+        # Jasper ter Horst Change: 04 April 2025
+        self.random_state = random_state
+        self.rng = np.random.RandomState(random_state)
 
     def _terminate(self, X, y, cur_depth):                                      # termination conditions
         if self._max_depth != None and cur_depth == self._max_depth:            # maximum depth reached
@@ -98,7 +102,7 @@ class Rand_CART(BaseEstimator):
             n_objects, n_features = X.shape
 
             # generate random rotation matrix
-            matrix = np.random.multivariate_normal(np.zeros(n_features), np.diag(np.ones((n_features))), n_features)
+            matrix = self.rng.multivariate_normal(np.zeros(n_features), np.diag(np.ones((n_features))), n_features)
             Q, R = qr(matrix)
             X_rotation = X.dot(Q)
             impurity_rotation, sr_rotation, left_indices_rotation, right_indices_rotation = self.segmentor(X_rotation,y,
@@ -152,7 +156,9 @@ class Rand_CART(BaseEstimator):
     def get_params(self, deep=True):
         return {'max_depth': self._max_depth,
                 'min_samples_split': self._min_samples,
-                'impurity': self.impurity, 'segmentor': self.segmentor}
+                'impurity': self.impurity, 'segmentor': self.segmentor,
+                'random_state': self.random_state
+                }
 
     def set_params(self, **parameters):
         for parameter, value in parameters.items():
@@ -185,6 +191,9 @@ class Rand_CART(BaseEstimator):
 #
 # Definition of classes provided: HHCartClassifier
 #
+
+# Jasper ter Horst Change: 04 April 2025. (added random)
 class RandCARTClassifier(ClassifierMixin, Rand_CART):
-    def __init__(self, impurity, segmentor, max_depth=50, min_samples_split=2):
-        super().__init__(impurity=impurity, segmentor=segmentor, max_depth=max_depth, min_samples_split=min_samples_split)
+    def __init__(self, impurity, segmentor, max_depth=50, min_samples_split=2, random_state=None):
+        super().__init__(impurity=impurity, segmentor=segmentor, max_depth=max_depth,
+                         min_samples_split=min_samples_split, random_state=random_state)

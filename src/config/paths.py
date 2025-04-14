@@ -13,6 +13,7 @@ DATA_DIR = os.path.join(BASE_DIR, "_data")
 SHAPES_DIR = os.path.join(DATA_DIR, "shapes")
 SCENARIO_METHODS_DEMO_OUTPUTS_DIR = os.path.join(DATA_DIR, "scenario_methods_demo_outputs")
 DEPTH_SWEEP_BATCH_RESULTS_OUTPUTS_DIR = os.path.join(DATA_DIR, "depth_sweep_batch_results")
+DEPTH_SWEEP_SINGLE_RUN_RESULTS_OUTPUTS_DIR = os.path.join(DATA_DIR, "depth_sweep_single_run_results")
 
 # Ensure required directories exist
 for path in [DATA_DIR, SHAPES_DIR, SCENARIO_METHODS_DEMO_OUTPUTS_DIR]:

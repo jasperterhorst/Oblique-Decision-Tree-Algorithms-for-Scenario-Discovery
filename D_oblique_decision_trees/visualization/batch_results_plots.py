@@ -273,15 +273,6 @@ def plot_coverage_density_all_shapes_for_algorithm(df, algorithm="hhcart", cover
         save_name (str): Path to save the resulting figure.
         print_points (bool): Whether to print the (depth, coverage, density) points. Default is False.
     """
-    import matplotlib.pyplot as plt
-    import matplotlib.cm as cm
-    import matplotlib.colors as mcolors
-    import numpy as np
-    import os
-    from src.config.settings import DEFAULT_VARIABLE_SEEDS
-    from src.config.paths import DEPTH_SWEEP_BATCH_RESULTS_OUTPUTS_DIR
-    from src.config.plot_settings import beautify_subplot
-
     seed = DEFAULT_VARIABLE_SEEDS[seed]
     all_shapes = sorted(df["dataset"].unique())
     ncols = 4

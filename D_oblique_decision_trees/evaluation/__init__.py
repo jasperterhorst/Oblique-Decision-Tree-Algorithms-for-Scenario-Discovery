@@ -15,6 +15,7 @@ from .metrics import (
     compute_tree_level_sparsity_index,
     composite_interpretability_score
 )
+from .io_utils import save_trees_dict, load_trees_dict, save_depth_sweep_df, load_depth_sweep_df
 
 from .evaluator import evaluate_tree
 from .benchmark_runner import DepthSweepRunner
