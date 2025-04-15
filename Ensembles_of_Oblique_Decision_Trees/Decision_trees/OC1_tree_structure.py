@@ -1,19 +1,10 @@
-#
-#
-#.......Defining the tree structure of Oblique Clasiifier 1 (OC1) for classification problems...................
-#
-#
-#
-#....Importing all the packages..........
-#
-#
+# .......Defining the tree structure of Oblique Clasiifier 1 (OC1) for classification problems...................
+
+# ....Importing all the packages..........
 import numpy as np
-#
-#
-#
-#.....Defining the tree structure................
-#
-#
+
+
+# .....Defining the tree structure................
 class Tree:
     def __init__(self, n_features, is_classifier): # Defining parameters for a single node.
         self.n_features = n_features               # 'n_features' is the number of features used to define the node.
@@ -76,7 +67,6 @@ class LeafNode(Node):
                                        value=value, conf=conf, samples=samples, features=features)
 
     def predict(self, X):
-
         # Simply return the leaf value
         return np.full((X.shape[0], ), self.value)
 

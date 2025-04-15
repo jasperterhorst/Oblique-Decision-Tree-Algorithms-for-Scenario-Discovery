@@ -1,11 +1,9 @@
 #
 # Import all the packages
-#
+
 import numpy as np
 from abc import ABCMeta, abstractmethod
-#
-#
-#
+
 
 class Twoing:
     """
@@ -17,7 +15,7 @@ class Twoing:
         left_len, right_len, n = len(left_label), len(right_label), (len(left_label) + len(right_label))
         labels = list(left_label) + list(right_label)
         n_classes = np.unique(labels)
-        if (left_len != 0 & right_len != 0):
+        if left_len != 0 and right_len != 0:
             for i in n_classes:
                 idx = np.where(left_label == i)[0]
                 li = (len(idx) / left_len)
@@ -26,7 +24,7 @@ class Twoing:
                 sum += (np.abs(li - ri))
             twoing_value = ((left_len / n) * (right_len / n) * np.square(sum)) / 4
 
-        elif (left_len == 0):
+        elif left_len == 0:
             for i in n_classes:
                 idx = np.where(right_label == i)[0]
                 ri = (len(idx) / right_len)
@@ -40,12 +38,9 @@ class Twoing:
                 sum += li
             twoing_value = ((left_len / n) * (right_len / n) * np.square(sum)) / 4
         if twoing_value == 0:
-            return (huge_val)
+            return huge_val
         else:
-            return (1 / twoing_value)
-
-
-
+            return 1 / twoing_value
 
 
 class MSE:
@@ -62,6 +57,7 @@ class MSE:
         total = left_len + right_len
 
         return (left_len / total) * left_std + (right_len / total) * right_std
+
 
 class SegmentorBase:
     """
@@ -144,7 +140,7 @@ class SegmentorBase:
 
 class MeanSegmentor(SegmentorBase):
     """
-        Split based on mean value of each feature.
+        Split based on the mean value of each feature.
     """
 
     def _split_generator(self, X):
@@ -180,3 +176,15 @@ class MeanSegmentor(SegmentorBase):
             )
 
 
+class CARTSegmentor(SegmentorBase):
+    """
+    Split based on all valid midpoints between sorted feature values (CART-style).
+    """
+    def _split_generator(self, X):
+        for i in range(X.shape[1]):
+            sorted_vals = np.unique(X[:, i])
+            for j in range(1, len(sorted_vals)):
+                threshold = (sorted_vals[j - 1] + sorted_vals[j]) / 2
+                left_i = np.nonzero(X[:, i] < threshold)[0]
+                right_i = np.nonzero(X[:, i] >= threshold)[0]
+                yield left_i, right_i, (i, threshold)

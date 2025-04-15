@@ -1,0 +1,3 @@
+seed,dataset,data_dim,algorithm,depth,accuracy,coverage,density,f_score,gini_coverage_all_leaves,gini_density_all_leaves,gini_coverage_class_1_leaves,gini_density_class_1_leaves,splits,leaves,runtime
+11,sine_wave_2d_fuzziness_007,2,hhcart,0,0.6698,0.0,,,0.0,0.0,0.0,0.0,0,1,6.50000038149301e-06
+11,sine_wave_2d_fuzziness_007,2,hhcart,1,0.6698,0.0,,,0.4939430648092067,0.37796489261420074,0.0,0.0,1,2,0.007535400000051595

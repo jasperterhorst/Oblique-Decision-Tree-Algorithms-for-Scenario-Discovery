@@ -1,24 +1,17 @@
-#
-#.............Pipeline for calling the Oblique Decision Trees using the Scikit-Learn's Bagging Classifier...............
-#
-#
-# Importing all the oblique decision trees
-#
-#
+# .............Pipeline for calling the Oblique Decision Trees using the Scikit-Learns Bagging Classifier..............
 
-from .WODT import *
-from .HouseHolder_CART import *
-from .RandCART import *
-from .CO2 import *
-from .NDT import *
-from .Oblique_Classifier_1 import *
-from .DNDT import *
-from .segmentor import *
-#
-#
+
+# Importing all the oblique decision trees
+from Ensembles_of_Oblique_Decision_Trees.Decision_trees.WODT import *
+from Ensembles_of_Oblique_Decision_Trees.Decision_trees.HouseHolder_CART import *
+from Ensembles_of_Oblique_Decision_Trees.Decision_trees.RandCART import *
+from Ensembles_of_Oblique_Decision_Trees.Decision_trees.CO2 import *
+from Ensembles_of_Oblique_Decision_Trees.Decision_trees.NDT import *
+from Ensembles_of_Oblique_Decision_Trees.Decision_trees.Oblique_Classifier_1 import *
+from Ensembles_of_Oblique_Decision_Trees.Decision_trees.DNDT import *
+from Ensembles_of_Oblique_Decision_Trees.Decision_trees.segmentor import *
+
 # Importing all the packages
-#
-#
 import numpy as np
 import pandas as pd
 from sklearn.preprocessing import MinMaxScaler
@@ -27,7 +20,6 @@ from sklearn.model_selection import train_test_split
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import BaggingClassifier, RandomForestClassifier
 from sklearn.datasets import load_iris, load_wine
-
 
 
 def pre_process(dataset='breastcancer'):
@@ -116,7 +108,6 @@ def pre_process(dataset='breastcancer'):
     return X, y
 
 
-
 def make_estimator(method='wodt', max_depth=5, n_estimators=10):
     if method == 'wodt':
         return WeightedObliqueDecisionTreeClassifier(max_depth=max_depth)
@@ -127,25 +118,31 @@ def make_estimator(method='wodt', max_depth=5, n_estimators=10):
     elif method == 'ndt':
         return NDTClassifier(max_depth=max_depth)
     elif method == 'wodt_bag':
-        return BaggingClassifier(base_estimator=WeightedObliqueDecisionTreeClassifier(max_depth=max_depth), n_estimators=n_estimators)
+        return BaggingClassifier(base_estimator=WeightedObliqueDecisionTreeClassifier(max_depth=max_depth),
+                                 n_estimators=n_estimators)
     elif method == 'oc1_bag':
         return BaggingClassifier(base_estimator=ObliqueClassifier1(max_depth=max_depth), n_estimators=n_estimators)
     elif method == 'stdt_bag':
         return BaggingClassifier(base_estimator=DecisionTreeClassifier(max_depth=max_depth), n_estimators=n_estimators)
     elif method == 'ndt_bag':
         return BaggingClassifier(base_estimator=NDTClassifier(max_depth=max_depth), n_estimators=n_estimators)
-    elif method == 'hhcart':
-        return HHCartClassifier(MSE(),MeanSegmentor(), max_depth = max_depth)
+    elif method == 'hhcart_a':
+        return HHCartAClassifier(MSE(), CARTSegmentor(), max_depth=max_depth)
+    elif method == 'hhcart_d':
+        return HHCartDClassifier(MSE(), CARTSegmentor(), max_depth=max_depth)
     elif method == 'randcart':
-        return RandCARTClassifier(MSE(),MeanSegmentor(), max_depth = max_depth)
+        return RandCARTClassifier(MSE(), MeanSegmentor(), max_depth=max_depth)
     elif method == 'co2':
-        return CO2Classifier(MSE(),MeanSegmentor(), max_depth = max_depth)
+        return CO2Classifier(MSE(), CARTSegmentor(), max_depth=max_depth)
     elif method == 'hhcart_bag':
-        return BaggingClassifier(base_estimator=HHCartClassifier(MSE(),MeanSegmentor(),max_depth=max_depth), n_estimators=n_estimators)
+        return BaggingClassifier(base_estimator=HHCartAClassifier(MSE(), CARTSegmentor(), max_depth=max_depth),
+                                 n_estimators=n_estimators)
     elif method == 'randcart_bag':
-        return BaggingClassifier(base_estimator=RandCARTClassifier(MSE(),MeanSegmentor(),max_depth=max_depth), n_estimators=n_estimators)
+        return BaggingClassifier(base_estimator=RandCARTClassifier(MSE(), MeanSegmentor(), max_depth=max_depth),
+                                 n_estimators=n_estimators)
     elif method == 'co2_bag':
-        return BaggingClassifier(base_estimator=CO2Classifier(MSE(),MeanSegmentor(),max_depth=max_depth), n_estimators=n_estimators)
+        return BaggingClassifier(base_estimator=CO2Classifier(MSE(), MeanSegmentor(), max_depth=max_depth),
+                                 n_estimators=n_estimators)
     elif method == 'random_forest':
         return RandomForestClassifier(max_depth=max_depth, n_estimators=n_estimators)
     else:
@@ -173,7 +170,7 @@ def evaluate(datasets_to_evaluate, methods_to_evaluate):
                     num_class = len(np.unique(y))
                     Y_pred = dndt_fit(train_X, test_X, transformed_Y, d, num_class, 1)
                     acc = np.mean(Y_pred == test_Y)
-                    print("accuracy_score: ", acc,"\n")
+                    print("accuracy_score: ", acc, "\n")
 
                 elif method == 'dndt_bag':
 
@@ -184,7 +181,7 @@ def evaluate(datasets_to_evaluate, methods_to_evaluate):
                     num_class = len(np.unique(y))
                     Y_pred = dndt_fit(train_X, test_X, transformed_Y, d, num_class, n_estimators)
                     acc = np.mean(Y_pred == test_Y)
-                    print("accuracy_score: ", acc,"\n")
+                    print("accuracy_score: ", acc, "\n")
 
                 else:
 
@@ -192,15 +189,10 @@ def evaluate(datasets_to_evaluate, methods_to_evaluate):
                     estimator.fit(train_X, train_Y)
                     Y_pred = estimator.predict(test_X)
                     acc = np.mean(Y_pred == test_Y)
-                    print("accuracy_score: ",acc,"\n")
-
+                    print("accuracy_score: ", acc, "\n")
 
 
 if __name__ == '__main__':
-    #datasets = ['iris', 'wine', 'glass', 'heart', 'breastcancer', 'diabetes',
-    # 'vehicle', 'fourclass', 'segmentation', 'satimage', 'pendigits', 'letter']
     datasets = ['iris']
-    methods = ['co2_bag','oc1_bag','hhcart_bag','randcart_bag','ndt_bag','wodt_bag','dndt_bag','stdt_bag']
+    methods = ['co2_bag', 'oc1_bag', 'hhcart_bag', 'randcart_bag', 'ndt_bag', 'wodt_bag', 'dndt_bag', 'stdt_bag']
     evaluate(datasets, methods)
-
-

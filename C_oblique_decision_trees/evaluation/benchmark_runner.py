@@ -14,11 +14,11 @@ from tqdm import tqdm
 from C_oblique_decision_trees.converters.dispatcher import convert_tree
 from C_oblique_decision_trees.evaluation.evaluator import evaluate_tree
 from C_oblique_decision_trees.evaluation.io_utils import save_depth_sweep_df, save_trees_dict
-from Ensembles_of_Oblique_Decision_Trees.Decision_trees.HouseHolder_CART import HHCartClassifier
+from Ensembles_of_Oblique_Decision_Trees.Decision_trees.HouseHolder_CART import HHCartAClassifier, HHCartDClassifier
 from Ensembles_of_Oblique_Decision_Trees.Decision_trees.RandCART import RandCARTClassifier
 from Ensembles_of_Oblique_Decision_Trees.Decision_trees.Oblique_Classifier_1 import ObliqueClassifier1
 from Ensembles_of_Oblique_Decision_Trees.Decision_trees.WODT import WeightedObliqueDecisionTreeClassifier
-from Ensembles_of_Oblique_Decision_Trees.Decision_trees.segmentor import MeanSegmentor
+from Ensembles_of_Oblique_Decision_Trees.Decision_trees.segmentor import MeanSegmentor, CARTSegmentor
 from Ensembles_of_Oblique_Decision_Trees.Decision_trees.split_criteria import gini
 from src.config.settings import DEFAULT_VARIABLE_SEEDS
 
@@ -57,7 +57,8 @@ class DepthSweepRunner:
             return lambda depth: cls(max_depth=depth, random_state=random_state, **kwargs)
 
         return {
-            "hhcart": make(HHCartClassifier, impurity=impurity, segmentor=segmentor),
+            "hhcart_a": make(HHCartAClassifier, impurity=impurity, segmentor=CARTSegmentor()),
+            "hhcart_d": make(HHCartDClassifier, impurity=impurity, segmentor=CARTSegmentor()),
             "randcart": make(RandCARTClassifier, impurity=impurity, segmentor=segmentor),
             "oc1": make(ObliqueClassifier1),
             "wodt": make(WeightedObliqueDecisionTreeClassifier, max_features='all'),

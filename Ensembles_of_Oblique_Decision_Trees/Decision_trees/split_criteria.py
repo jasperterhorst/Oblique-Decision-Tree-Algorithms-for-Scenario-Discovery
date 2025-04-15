@@ -1,16 +1,13 @@
-#
 # Classification impurity split criteria ---- 'gini' & 'twoing'
-#
-#.....Importing all the packages...........
-#
-#
+
+# .....Importing all the packages...........
+
 from collections import Counter
 import numpy as np
-#
-#
-#
+
+
 def gini(left, right):
-    sum=0
+    sum = 0
     if (len(left)+len(right)) == 0:
         return np.inf
     else:
@@ -33,7 +30,7 @@ def twoing(left_label, right_label):
     else:
         labels = list(left_label) + list(right_label)
         n_classes = np.unique(labels)
-        if (left_len != 0 & right_len != 0):
+        if left_len != 0 and right_len != 0:
             for i in n_classes:
                 idx = np.where(left_label == i)[0]
                 li = (len(idx) / left_len)
@@ -42,7 +39,7 @@ def twoing(left_label, right_label):
                 sum += (np.abs(li - ri))
             twoing_value = ((left_len / n) * (right_len / n) * np.square(sum)) / 4
 
-        elif (left_len == 0):
+        elif left_len == 0:
             for i in n_classes:
                 idx = np.where(right_label == i)[0]
                 ri = (len(idx) / right_len)
@@ -56,8 +53,6 @@ def twoing(left_label, right_label):
                 sum += li
             twoing_value = ((left_len / n) * (right_len / n) * np.square(sum)) / 4
         if twoing_value == 0:
-            return (huge_val)
+            return huge_val
         else:
-            return (1 / twoing_value)
-
-
+            return 1 / twoing_value
