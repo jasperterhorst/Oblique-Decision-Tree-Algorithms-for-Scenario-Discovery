@@ -143,7 +143,7 @@ shape_configs = {
 
 # === Generation Loop ===
 for fuzz in fuzz_levels:
-    suffix = f"fuzz_{int(fuzz * 100):03d}"
+    suffix = f"fuzziness_{int(fuzz * 100):03d}"
     out_dir = SHAPES_DIR / suffix
     out_dir.mkdir(exist_ok=True)
 

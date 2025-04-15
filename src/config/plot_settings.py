@@ -97,4 +97,3 @@ def beautify_subplot(ax, title=None, xlabel=None, ylabel=None):
 
     ax.grid(True, linestyle='dashed', color='grey', linewidth=0.5)
     ax.tick_params(axis='both', colors=AXIS_LINE_COLOR)
-

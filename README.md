@@ -47,7 +47,7 @@ This is where theory meets controlled benchmarking.
 
 ---
 
-### `D_oblique_decision_trees/` – 🌲 Core Tree Implementations
+### `C_oblique_decision_trees/` – 🌲 Core Tree Implementations
 Implements several types of **oblique decision trees**, such as:
 - **OC1**
 - **Householder CART (HHCART)**
