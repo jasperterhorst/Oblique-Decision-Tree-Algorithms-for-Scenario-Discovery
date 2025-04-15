@@ -8,6 +8,7 @@ pyDOE2==1.3.0
 pyDOE2==1.3.0
 scipy~=1.15.2
 seaborn==0.13.2
+scikit-learn
 Shapely==2.0.7
 tensorflow==2.18.0
 tensorflow_intel==2.18.0

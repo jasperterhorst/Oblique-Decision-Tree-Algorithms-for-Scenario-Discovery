@@ -1,18 +1,12 @@
-#
-#
 # Implementation of Randomized CART
-#
-#
-#
-#.....Importing all the packages................
-#
+
+# .....Importing all the packages................
 import numpy as np
 from copy import deepcopy
 from scipy.linalg import qr
 from sklearn.base import BaseEstimator, ClassifierMixin
-#
-#
-#
+
+
 class Node:                                                                 # definition of the Node
 
     def __init__(self, depth, labels, **kwargs):
@@ -102,11 +96,11 @@ class Rand_CART(BaseEstimator):
             n_objects, n_features = X.shape
 
             # generate random rotation matrix
-            matrix = self.rng.multivariate_normal(np.zeros(n_features), np.diag(np.ones((n_features))), n_features)
+            matrix = self.rng.multivariate_normal(np.zeros(n_features), np.diag(np.ones(n_features)), n_features)
             Q, R = qr(matrix)
             X_rotation = X.dot(Q)
-            impurity_rotation, sr_rotation, left_indices_rotation, right_indices_rotation = self.segmentor(X_rotation,y,
-                                                                                                           self.impurity)
+            impurity_rotation, sr_rotation, left_indices_rotation, right_indices_rotation = (
+                self.segmentor(X_rotation, y, self.impurity))
 
             if self._compare_with_cart:
                 impurity_best, sr, left_indices, right_indices = self.segmentor(X, y, self.impurity)
@@ -135,17 +129,15 @@ class Rand_CART(BaseEstimator):
             X_left, y_left = X[left_indices], y[left_indices]
             X_right, y_right = X[right_indices], y[right_indices]
 
-            if (len(y_right) <= self._min_samples):
+            if len(y_right) <= self._min_samples:
                 return self._generate_leaf_node(cur_depth, y)
-            elif (len(y_left) <= self._min_samples):
+            elif len(y_left) <= self._min_samples:
                 return self._generate_leaf_node(cur_depth, y)
             else:
-                node = Node(cur_depth, y,
-                        split_rules=sr,
-                        weights=weights,
-                        left_child=self._generate_node(X_left, y_left, cur_depth + 1),
-                        right_child=self._generate_node(X_right, y_right, cur_depth + 1),
-                        is_leaf=False)
+                node = Node(cur_depth, y, split_rules=sr, weights=weights,
+                            left_child=self._generate_node(X_left, y_left, cur_depth + 1),
+                            right_child=self._generate_node(X_right, y_right, cur_depth + 1),
+                            is_leaf=False)
                 self._nodes.append(node)
                 return node
 
@@ -188,11 +180,8 @@ class Rand_CART(BaseEstimator):
         correct_count = np.count_nonzero(predictions == labels)
         return correct_count / labels.shape[0]
 
-#
-# Definition of classes provided: HHCartClassifier
-#
 
-# Jasper ter Horst Change: 04 April 2025. (added random)
+# Definition of classes provided: HHCartClassifier
 class RandCARTClassifier(ClassifierMixin, Rand_CART):
     def __init__(self, impurity, segmentor, max_depth=50, min_samples_split=2, random_state=None):
         super().__init__(impurity=impurity, segmentor=segmentor, max_depth=max_depth,

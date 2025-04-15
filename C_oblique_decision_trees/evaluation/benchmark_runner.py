@@ -18,7 +18,7 @@ from Ensembles_of_Oblique_Decision_Trees.Decision_trees.HouseHolder_CART import 
 from Ensembles_of_Oblique_Decision_Trees.Decision_trees.RandCART import RandCARTClassifier
 from Ensembles_of_Oblique_Decision_Trees.Decision_trees.Oblique_Classifier_1 import ObliqueClassifier1
 from Ensembles_of_Oblique_Decision_Trees.Decision_trees.WODT import WeightedObliqueDecisionTreeClassifier
-from Ensembles_of_Oblique_Decision_Trees.Decision_trees.segmentor import MeanSegmentor, CARTSegmentor
+from Ensembles_of_Oblique_Decision_Trees.Decision_trees.segmentor import CARTSegmentor, MeanSegmentor
 from Ensembles_of_Oblique_Decision_Trees.Decision_trees.split_criteria import gini
 from src.config.settings import DEFAULT_VARIABLE_SEEDS
 
@@ -47,7 +47,8 @@ class DepthSweepRunner:
         self.results = []
 
     @staticmethod
-    def build_registry(random_state=None, impurity=gini, segmentor=MeanSegmentor()):
+    def build_registry(random_state=None, impurity=gini, segmentor=CARTSegmentor(),
+                       n_restarts=None, bias_steps=None):
         """
         Returns a registry of constructors that take depth and return models.
         Supports passing impurity function and segmentor instance.
@@ -57,16 +58,16 @@ class DepthSweepRunner:
             return lambda depth: cls(max_depth=depth, random_state=random_state, **kwargs)
 
         return {
-            "hhcart_a": make(HHCartAClassifier, impurity=impurity, segmentor=CARTSegmentor()),
-            "hhcart_d": make(HHCartDClassifier, impurity=impurity, segmentor=CARTSegmentor()),
-            "randcart": make(RandCARTClassifier, impurity=impurity, segmentor=segmentor),
-            "oc1": make(ObliqueClassifier1),
+            "hhcart_a": make(HHCartAClassifier, impurity=impurity, segmentor=segmentor),
+            "hhcart_d": make(HHCartDClassifier, impurity=impurity, segmentor=segmentor),
+            "randcart": make(RandCARTClassifier, impurity=impurity, segmentor=MeanSegmentor()),
+            "oc1": make(ObliqueClassifier1, n_restarts=n_restarts, bias_steps=bias_steps),
             "wodt": make(WeightedObliqueDecisionTreeClassifier, max_features='all'),
         }
 
     def run(self, auto_export=True, filename="result.csv", tree_dict_filename="result.pkl",
             n_seeds=1, fixed_seed=None, return_trees=True, registry=None, save_tree_dict=True, batch_mode=False,
-            output_subfolder=None):
+            output_subfolder=None, n_restarts=10, bias_steps=10):
         """
         Run depth sweeps, evaluating all models and saving results.
 
@@ -81,16 +82,19 @@ class DepthSweepRunner:
             save_tree_dict (bool): Whether to persist the trees.
             batch_mode (bool): If True, save outputs to batch results folder.
             output_subfolder (str): Subdirectory to store outputs.
+            n_restarts (int): Number of restarts of hyperplanes in OC1.
+            bias_steps (int): Number changes in the bias for OC1.
 
         Returns:
             (DataFrame, dict): Results and trained trees (if return_trees).
         """
+
         seeds = [fixed_seed] if fixed_seed is not None else DEFAULT_VARIABLE_SEEDS[:n_seeds]
 
         run_type = "batch" if batch_mode else "single"
 
         if registry is None:
-            registry = self.build_registry(random_state=fixed_seed or 42)
+            registry = self.build_registry(random_state=fixed_seed or 42, n_restarts=n_restarts, bias_steps=bias_steps)
 
         trees_dict = {}
         total_loops = len(seeds) * len(registry) * len(self.datasets) * (self.max_depth + 1)
