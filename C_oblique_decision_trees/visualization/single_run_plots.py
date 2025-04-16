@@ -12,11 +12,149 @@ import matplotlib.cm as cm
 import matplotlib.colors as mcolors
 import numpy as np
 from matplotlib.colors import ListedColormap
+from shapely.geometry import LineString, box
+from shapely.ops import split
 
 from C_oblique_decision_trees.core.tree import DecisionNode
 from C_oblique_decision_trees.evaluation.io_utils import get_output_dir
-from src.config.colors import PRIMARY_LIGHT, PRIMARY_DARK, SECONDARY_LIGHT, SECONDARY_DARK
+from src.config.colors import PRIMARY_LIGHT, SECONDARY_LIGHT
 from src.config.plot_settings import beautify_plot, beautify_subplot
+
+
+def create_initial_polygon(x_min, x_max, y_min, y_max):
+    return box(x_min, y_min, x_max, y_max)
+
+
+def cut_polygon_with_line(polygon, w, b, side):
+    # Create the line representing the hyperplane: w^T x + b = 0
+    x_min, y_min, x_max, y_max = polygon.bounds
+    if not np.isclose(w[1], 0.0):
+        x_vals = np.array([x_min - 1, x_max + 1])
+        y_vals = -(w[0] * x_vals + b) / w[1]
+        line = LineString([(x_vals[0], y_vals[0]), (x_vals[1], y_vals[1])])
+    else:
+        x_split = -b / w[0]
+        y_vals = np.array([y_min - 1, y_max + 1])
+        line = LineString([(x_split, y_vals[0]), (x_split, y_vals[1])])
+
+    try:
+        pieces = split(polygon, line)
+        if len(pieces.geoms) != 2:
+            return None
+        if side == '<':
+            return min(pieces.geoms, key=lambda p: np.dot(p.centroid.coords[0], w) + b)
+        else:
+            return max(pieces.geoms, key=lambda p: np.dot(p.centroid.coords[0], w) + b)
+    except Exception as e:
+        print(f"[!] Split error: {e}")
+        return None
+
+
+def construct_region_from_constraints(constraints, initial_region):
+    region = initial_region
+    for w, b, side in constraints:
+        region = cut_polygon_with_line(region, w, b, side)
+        if region is None or region.is_empty:
+            return None
+    return region
+
+
+def plot_oblique_splits_clipped(X, y, trees_dict, max_depth, save_name=None, output_subfolder=None):
+    import matplotlib as mpl
+    import os
+    from C_oblique_decision_trees.evaluation.io_utils import get_output_dir
+
+    mpl.rcParams['text.usetex'] = False
+    mpl.rcParams['font.family'] = 'serif'
+    mpl.rcParams['font.serif'] = ['Times New Roman']
+
+    model_key = next(iter(trees_dict))
+    available_depths = sorted(trees_dict[model_key].keys())
+    n_plots = len(available_depths)
+
+    n_cols = 3
+    n_rows = int(np.ceil(n_plots / n_cols))
+    fig, axes = plt.subplots(n_rows, n_cols, figsize=(12, 4 * n_rows))
+    axes = axes.flatten()
+
+    x_min, x_max = X[:, 0].min(), X[:, 0].max()
+    y_min, y_max = X[:, 1].min(), X[:, 1].max()
+    bounds = (x_min, x_max, y_min, y_max)
+
+    scatter_colors = np.where(y == 0, SECONDARY_LIGHT, PRIMARY_LIGHT)
+
+    ax = axes[0]
+    ax.scatter(X[:, 0], X[:, 1], c=scatter_colors, s=5)
+    beautify_subplot(ax, title="Sampled Data Points", xlabel="Feature 1", ylabel="Feature 2")
+    ax.set_xlim(x_min, x_max)
+    ax.set_ylim(y_min, y_max)
+
+    def plot_split_recursive(node, constraints, ax, depth):
+        if not isinstance(node, DecisionNode):
+            return
+
+        w, b = node.weights, node.bias
+        region = construct_region_from_constraints(constraints, create_initial_polygon(*bounds))
+        if region is None or not region.is_valid or region.area < 1e-8:
+            print(f"[!] Invalid region at depth {depth}")
+            return
+
+        # Plot the clipped line
+        if not np.isclose(w[1], 0.0):
+            x_vals = np.linspace(x_min - 2, x_max + 2, 2)
+            y_vals = -(w[0] * x_vals + b) / w[1]
+            line_seg = LineString([(x_vals[0], y_vals[0]), (x_vals[1], y_vals[1])])
+        else:
+            x_split = -b / w[0]
+            y_vals = np.linspace(y_min - 2, y_max + 2, 2)
+            line_seg = LineString([(x_split, y_vals[0]), (x_split, y_vals[1])])
+
+        clipped = region.intersection(line_seg)
+        if not clipped.is_empty and hasattr(clipped, "xy"):
+            x, y = clipped.xy
+            ax.plot(x, y, 'k--', linewidth=1)
+        else:
+            print(f"[!] No clipped segment at depth {depth}")
+
+        # Recurse with constraints
+        if len(node.children) > 0:
+            left_constraints = constraints + [(w, b, '<')]
+            right_constraints = constraints + [(w, b, '>=')]
+            plot_split_recursive(node.children[0], left_constraints, ax, depth + 1)
+            if len(node.children) > 1:
+                plot_split_recursive(node.children[1], right_constraints, ax, depth + 1)
+
+    for depth in range(1, max_depth + 1):
+        model_trees = trees_dict.get(model_key, {})
+        pruned_tree = model_trees.get(depth)
+        if pruned_tree is None:
+            print(f"Depth {depth} missing in trees_dict.")
+            continue
+
+        ax = axes[depth]
+        ax.scatter(X[:, 0], X[:, 1], c=scatter_colors, s=5, alpha=0.6)
+
+        initial_constraints = []
+        plot_split_recursive(pruned_tree.root, initial_constraints, ax, 0)
+
+        beautify_subplot(ax, title=f"Split Regions (Tree Depth = {depth})", xlabel="Feature 1", ylabel="Feature 2")
+        ax.set_xlim(x_min, x_max)
+        ax.set_ylim(y_min, y_max)
+
+    for j in range(n_plots, len(axes)):
+        axes[j].axis("off")
+
+    plt.tight_layout()
+
+    if save_name:
+        output_dir = get_output_dir("single", output_subfolder)
+        save_path = os.path.join(output_dir, save_name)
+        os.makedirs(os.path.dirname(save_path), exist_ok=True)
+        fig.savefig(save_path, bbox_inches="tight")
+        print(f"[\u2713] Saved clipped split figure: {save_path}")
+
+    plt.show()
+    plt.close(fig)
 
 
 def plot_coverage_density_for_shape(df, algorithm=None, dataset=None, seed=None, print_points=False,

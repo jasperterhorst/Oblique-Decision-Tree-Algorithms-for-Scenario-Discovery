@@ -16,6 +16,7 @@ from C_oblique_decision_trees.evaluation.evaluator import evaluate_tree
 from C_oblique_decision_trees.evaluation.io_utils import save_depth_sweep_df, save_trees_dict
 from Ensembles_of_Oblique_Decision_Trees.Decision_trees.HouseHolder_CART import HHCartAClassifier, HHCartDClassifier
 from Ensembles_of_Oblique_Decision_Trees.Decision_trees.RandCART import RandCARTClassifier
+from Ensembles_of_Oblique_Decision_Trees.Decision_trees.CO2 import CO2Classifier
 from Ensembles_of_Oblique_Decision_Trees.Decision_trees.Oblique_Classifier_1 import ObliqueClassifier1
 from Ensembles_of_Oblique_Decision_Trees.Decision_trees.WODT import WeightedObliqueDecisionTreeClassifier
 from Ensembles_of_Oblique_Decision_Trees.Decision_trees.segmentor import CARTSegmentor, MeanSegmentor
@@ -48,7 +49,7 @@ class DepthSweepRunner:
 
     @staticmethod
     def build_registry(random_state=None, impurity=gini, segmentor=CARTSegmentor(),
-                       n_restarts=None, bias_steps=None):
+                       n_restarts=20, bias_steps=20):
         """
         Returns a registry of constructors that take depth and return models.
         Supports passing impurity function and segmentor instance.
@@ -63,6 +64,7 @@ class DepthSweepRunner:
             "randcart": make(RandCARTClassifier, impurity=impurity, segmentor=MeanSegmentor()),
             "oc1": make(ObliqueClassifier1, n_restarts=n_restarts, bias_steps=bias_steps),
             "wodt": make(WeightedObliqueDecisionTreeClassifier, max_features='all'),
+            "co2": make(CO2Classifier, impurity=impurity, segmentor=segmentor),
         }
 
     def run(self, auto_export=True, filename="result.csv", tree_dict_filename="result.pkl",
@@ -113,12 +115,15 @@ class DepthSweepRunner:
                     true_max_depth = full_tree.max_depth
 
                     for depth in range(0, min(self.max_depth, true_max_depth) + 1):
-                        model_at_depth = constructor(depth)
-
-                        # FIT
-                        fit_start = time.perf_counter()
-                        model_at_depth.fit(X, y)
-                        fit_end = time.perf_counter()
+                        if depth == self.max_depth:
+                            model_at_depth = model  # Reuse max depth model
+                            fit_start = 0.0
+                            fit_end = 0.0
+                        else:
+                            model_at_depth = constructor(depth)
+                            fit_start = time.perf_counter()
+                            model_at_depth.fit(X, y)
+                            fit_end = time.perf_counter()
 
                         # CONVERT
                         tree_at_depth = convert_tree(model_at_depth, model_type=model_name)

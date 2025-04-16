@@ -56,7 +56,8 @@ class CO2Node:                                                      # defining t
 
 class ContinuouslyOptimizedObliqueTree(BaseEstimator):
 
-    def __init__(self, impurity, segmentor, max_depth, min_samples_split=2, nu=1.0, tau=10, tol=1e-3, eta=0.1):
+    def __init__(self, impurity, segmentor, max_depth, min_samples_split=2, nu=1.0, tau=10, tol=1e-3, eta=0.1,
+                 random_state=None):
         self.impurity = impurity
         self.segmentor = segmentor
         self.nu = nu
@@ -67,6 +68,8 @@ class ContinuouslyOptimizedObliqueTree(BaseEstimator):
         self.eta = eta
         self._root = None
         self._nodes = []
+        self.random_state = random_state
+        self.rng = np.random.RandomState(random_state)
 
     def _terminate(self, X, y, cur_depth):                                  # conditions for termination
         if self._max_depth != None and cur_depth == self._max_depth:        # maximum depth reached
@@ -125,7 +128,7 @@ class ContinuouslyOptimizedObliqueTree(BaseEstimator):
                 w_old = np.copy(w)
                 old_objective = self.objective(X, y, w_old, thetaL, thetaR)
                 for t in range(1, (self.tau + 1)):
-                    sample = np.random.choice(n_samples, size=1)                           # considering all the samples
+                    sample = self.rng.choice(n_samples, size=1)                           # considering all the samples
                     labels_y = np.unique(y[sample])
                     index_y_samples = np.zeros(len(y[sample]), dtype=int)
                     y_sample = y[sample]
@@ -218,9 +221,12 @@ class ContinuouslyOptimizedObliqueTree(BaseEstimator):
 
 # Definition of classes provided: CO2Classifier
 class CO2Classifier(ClassifierMixin, ContinuouslyOptimizedObliqueTree):
-    def __init__(self, impurity, segmentor, max_depth=50, min_samples_split=2, nu=4.0, tau=10, tol=1e-3, eta=0.01):
-        super().__init__(impurity=impurity, segmentor=segmentor, max_depth=max_depth,
-                         min_samples_split=min_samples_split, nu=nu, tau=tau, tol=tol, eta=eta)
+    def __init__(self, impurity, segmentor, max_depth=50, min_samples_split=2, nu=4.0, tau=10, tol=1e-3, eta=0.01,
+                 random_state=None):
+        super().__init__(impurity=impurity, segmentor=segmentor,
+                         max_depth=max_depth, min_samples_split=min_samples_split,
+                         nu=nu, tau=tau, tol=tol, eta=eta,
+                         random_state=random_state)
 
 
 # # Implementation of Continuous Optimization of Oblique Splits (CO2) by [Norouzi et al.]
