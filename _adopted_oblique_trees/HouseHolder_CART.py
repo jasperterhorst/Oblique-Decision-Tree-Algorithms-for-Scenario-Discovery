@@ -33,7 +33,7 @@ from scipy.linalg import norm
 from sklearn.base import BaseEstimator, ClassifierMixin
 
 # Use the CARTSegmentor from the package for full threshold search
-from Ensembles_of_Oblique_Decision_Trees.Decision_trees.segmentor import CARTSegmentor
+from _adopted_oblique_trees.segmentor import CARTSegmentor
 
 
 class HHCARTNode:
@@ -309,7 +309,7 @@ class HHCartDClassifier(ClassifierMixin, HouseHolderCART):
 # from scipy.linalg import norm
 # from sklearn.base import BaseEstimator, ClassifierMixin
 #
-# from Ensembles_of_Oblique_Decision_Trees.Decision_trees.segmentor import CARTSegmentor
+# from _adopted_oblique_trees.segmentor import CARTSegmentor
 #
 #
 # class HHCARTNode:

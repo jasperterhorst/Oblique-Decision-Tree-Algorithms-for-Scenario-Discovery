@@ -4,8 +4,8 @@
 from warnings import warn
 import numpy as np
 from scipy.stats import mode
-from Ensembles_of_Oblique_Decision_Trees.Decision_trees.OC1_tree_structure import Tree, Node, LeafNode
-from Ensembles_of_Oblique_Decision_Trees.Decision_trees import split_criteria
+from _adopted_oblique_trees.OC1_tree_structure import Tree, Node, LeafNode
+from _adopted_oblique_trees import split_criteria
 from sklearn.base import BaseEstimator, ClassifierMixin, is_classifier
 
 
@@ -327,8 +327,8 @@ def get_best_splits(X, y, criterion=split_criteria.gini):
 # from warnings import warn
 # import numpy as np
 # from scipy.stats import mode
-# from Ensembles_of_Oblique_Decision_Trees.Decision_trees.OC1_tree_structure import Tree, Node, LeafNode
-# from Ensembles_of_Oblique_Decision_Trees.Decision_trees import split_criteria
+# from _adopted_oblique_trees.OC1_tree_structure import Tree, Node, LeafNode
+# from _adopted_oblique_trees import split_criteria
 # from sklearn.base import BaseEstimator, ClassifierMixin, is_classifier
 #
 #

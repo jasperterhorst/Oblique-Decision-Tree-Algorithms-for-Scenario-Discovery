@@ -28,8 +28,8 @@ DATASET=${DATASETS[$SLURM_ARRAY_TASK_ID]}
 
 # Noise folders, models, and seeds
 NOISE_FOLDERS=(fuzziness_000 fuzziness_003 fuzziness_005 fuzziness_007)
-MODELS=(hhcart randcart oc1 wodt)
-SEED_INDICES=(0 1 2 3 4)
+MODELS=(hhcart_a hhcart_d randcart oc1 wodt co2)
+SEED_INDICES=(0 1 2)
 
 mkdir -p logs
 

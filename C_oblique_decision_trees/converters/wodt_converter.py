@@ -13,7 +13,7 @@ def convert_wodt(model):
     Convert a trained WODT model into a standardized DecisionTree.
 
     Parameters:
-        model: A WODT model created by 'Ensembles_of_Oblique_Decision_Trees with a 'root_node' attribute.
+        model: A WODT model stored in '_adopted_oblique_trees' with a 'root_node' attribute.
                Non-leaf nodes should have a 'split' object with attributes 'paras' (weights)
                and 'threshold' (bias). Children are accessed via 'LChild' and 'RChild'.
                Leaf nodes may include a 'class_distribution' attribute.
