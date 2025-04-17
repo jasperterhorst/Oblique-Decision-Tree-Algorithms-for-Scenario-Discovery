@@ -12,15 +12,21 @@ import numpy as np
 from tqdm import tqdm
 
 from C_oblique_decision_trees.converters.dispatcher import convert_tree
+
 from C_oblique_decision_trees.evaluation.evaluator import evaluate_tree
+
 from C_oblique_decision_trees.evaluation.io_utils import save_depth_sweep_df, save_trees_dict
+
 from _adopted_oblique_trees.HouseHolder_CART import HHCartAClassifier, HHCartDClassifier
 from _adopted_oblique_trees.RandCART import RandCARTClassifier
 from _adopted_oblique_trees.CO2 import CO2Classifier
 from _adopted_oblique_trees.Oblique_Classifier_1 import ObliqueClassifier1
 from _adopted_oblique_trees.WODT import WeightedObliqueDecisionTreeClassifier
+from _adopted_oblique_trees.CART import CARTClassifier
+
 from _adopted_oblique_trees.segmentor import CARTSegmentor, MeanSegmentor
 from _adopted_oblique_trees.split_criteria import gini
+
 from src.config.settings import DEFAULT_VARIABLE_SEEDS
 
 
@@ -48,23 +54,85 @@ class DepthSweepRunner:
         self.results = []
 
     @staticmethod
-    def build_registry(random_state=None, impurity=gini, segmentor=CARTSegmentor(),
-                       n_restarts=20, bias_steps=20):
+    def build_registry(
+        random_state=None,
+        impurity=gini,
+        segmentor=CARTSegmentor(),
+        n_restarts=20,
+        bias_steps=20,
+        max_iter_per_node=10,
+        tau=1e-6,
+        nu=1.0,
+        eta=0.01,
+        n_rotations=5,
+        max_features='all',
+        min_features_split=1,
+        min_samples_split=2,
+    ):
         """
-        Returns a registry of constructors that take depth and return models.
-        Supports passing impurity function and segmentor instance.
+        Constructs a registry of oblique decision tree classifiers, each wrapped in a lambda
+        that accepts tree depth and returns an initialized model. This setup is used for
+        benchmarking various models in a depth sweep.
+
+        Parameters:
+            random_state (int): Controls reproducibility. Passed to all models that support it.
+
+            impurity (callable): Impurity function used to evaluate splits (e.g., Gini, entropy).
+                Used by CO2, HHCART (A and D), and RandCART. Default is the standard Gini index.
+
+            segmentor (object): Object that implements the split search strategy.
+                Passed to HHCART (for axis-aligned splits in reflected space), CO2 (to define initial splits),
+                and RandCART (for axis-aligned splits in rotated space).
+                Typically a CART-based splitter or a MeanSegmentor.
+
+            n_restarts (int): Number of random restarts for hyperplane optimization in OC1.
+                Controls how many times the algorithm attempts to escape local minima.
+
+            bias_steps (int): Number of bias perturbation steps used in OC1's local search process.
+
+            tau (float): Tolerance for convergence of HHCART classifiers.
+
+            max_iter_per_node (int): Maximum number of iterations for hyperplane optimization in CO2.
+
+            nu (float): Smoothing constant for the convex-concave surrogate loss in CO2.
+                Influences how strongly the surrogate bounds the true classification error.
+
+            eta (float): Learning rate for CO2’s stochastic gradient descent.
+                Determines the step size for updating hyperplane parameters.
+
+            n_rotations (int): Number of random rotations for the data in RandCART.
+
+            max_features (int, float, or 'all'): Used by WODT to control the number of features
+                randomly selected at each split. Supports both absolute counts and fractional values.
+
+            min_features_split (int): Minimum number of non-zero coefficients required in an OC1 split.
+                Enforces sparsity by ensuring splits involve at least a certain number of input features.
+
+            min_samples_split (int): Minimum number of samples required to split an internal node.
+
+        Returns:
+            dict: A model registry mapping string identifiers (e.g., 'co2', 'oc1') to functions
+                  that take depth as input and return initialized classifier instances.
         """
 
         def make(cls, **kwargs):
             return lambda depth: cls(max_depth=depth, random_state=random_state, **kwargs)
 
         return {
-            "hhcart_a": make(HHCartAClassifier, impurity=impurity, segmentor=segmentor),
-            "hhcart_d": make(HHCartDClassifier, impurity=impurity, segmentor=segmentor),
-            "randcart": make(RandCARTClassifier, impurity=impurity, segmentor=MeanSegmentor()),
-            "oc1": make(ObliqueClassifier1, n_restarts=n_restarts, bias_steps=bias_steps),
-            "wodt": make(WeightedObliqueDecisionTreeClassifier, max_features='all'),
-            "co2": make(CO2Classifier, impurity=impurity, segmentor=segmentor),
+            "hhcart_a": make(HHCartAClassifier, impurity=impurity, segmentor=segmentor,
+                             tau=tau, min_samples_split=min_samples_split),
+            "hhcart_d": make(HHCartDClassifier, impurity=impurity, segmentor=segmentor,
+                             tau=tau, min_samples_split=min_samples_split),
+            "randcart": make(RandCARTClassifier, impurity=impurity, segmentor=CARTSegmentor(),
+                             min_samples_split=min_samples_split, n_rotations=n_rotations),
+            "oc1": make(ObliqueClassifier1, n_restarts=n_restarts, bias_steps=bias_steps,
+                        min_features_split=min_features_split),
+            "wodt": make(WeightedObliqueDecisionTreeClassifier, max_features=max_features,
+                         min_samples_split=min_samples_split),
+            "co2": make(CO2Classifier, impurity=impurity, segmentor=segmentor,
+                        max_iter_per_node=max_iter_per_node, nu=nu, eta=eta,
+                        min_samples_split=min_samples_split),
+            "cart": make(CARTClassifier, impurity=impurity, min_samples_split=min_samples_split),
         }
 
     def run(self, auto_export=True, filename="result.csv", tree_dict_filename="result.pkl",
@@ -155,13 +223,13 @@ class DepthSweepRunner:
                 "seed", "dataset", "data_dim", "algorithm", "depth",
                 "accuracy", "coverage", "density", "f_score",
                 "gini_coverage_all_leaves", "gini_density_all_leaves",
-                "gini_coverage_class_1_leaves", "gini_density_class_1_leaves",
                 "splits", "leaves", "runtime"
             ]
 
             # desired_cols = [
             #     "seed", "dataset", "data_dim", "algorithm", "depth",
             #     "accuracy", "coverage", "density", "f_score",
+            #     gini_coverage_all_leaves", "gini_density_all_leaves",
             #     "splits", "leaves", "avg_active_feature_count",
             #     "feature_utilisation_ratio", "tree_level_sparsity_index",
             #     "composite_interpretability_score", "run_time"

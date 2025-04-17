@@ -37,7 +37,7 @@ parser.add_argument("--folder", type=str, required=True,
 parser.add_argument("--seed-index", type=int, required=True,
                     help="Index into DEFAULT_VARIABLE_SEEDS")
 parser.add_argument("--model", type=str, required=True,
-                    choices=["hhcart", "randcart", "oc1", "wodt"],
+                    choices=["hhcart_a", "hhcart_d", "randcart", "oc1", "wodt", "co2", "cart"],
                     help="Model to use")
 parser.add_argument("--max-depth", type=int, default=20,
                     help="Maximum depth to sweep over")
@@ -80,8 +80,9 @@ depth_sweep_df, _ = runner.run(
     save_tree_dict=False,
     batch_mode=True,
     output_subfolder="DelftBlue"
-#     output_subfolder=args.folder
 )
 
 elapsed = time.time() - start_time
 print(f"[✓] Script completed in {elapsed:.2f} seconds")
+
+#     output_subfolder=args.folder

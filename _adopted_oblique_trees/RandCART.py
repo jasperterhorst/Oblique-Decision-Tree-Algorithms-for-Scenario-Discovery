@@ -17,6 +17,7 @@ class Node:                                                                 # de
         self._weights = kwargs.get('weights', None)
         self._left_child = kwargs.get('left_child', None)
         self._right_child = kwargs.get('right_child', None)
+        self._label = None
 
         if not self.is_leaf:
             assert self._split_rules
@@ -59,30 +60,26 @@ class Node:                                                                 # de
         return self._right_child
 
 
-class Rand_CART(BaseEstimator):
-
-    def __init__(self, impurity, segmentor, max_depth, min_samples_split=2, random_state=None, **kwargs):
+class RandCART(BaseEstimator):
+    def __init__(self, impurity, segmentor, max_depth, min_samples_split=2, random_state=None,
+                 n_rotations=1, compare_with_cart=False):
         self.impurity = impurity
         self.segmentor = segmentor
         self._max_depth = max_depth
         self._min_samples = min_samples_split
-        self._compare_with_cart = kwargs.get('compare_with_cart', False)
+        self._compare_with_cart = compare_with_cart
         self._root = None
         self._nodes = []
-
-        # Jasper ter Horst Change: 04 April 2025
+        self.n_rotations = n_rotations
         self.random_state = random_state
         self.rng = np.random.RandomState(random_state)
 
-    def _terminate(self, X, y, cur_depth):                                      # termination conditions
-        if self._max_depth != None and cur_depth == self._max_depth:            # maximum depth reached
-            return True
-        elif y.size < self._min_samples:                                        # minimum number of samples reached
-            return True
-        elif np.unique(y).size == 1:                                            # node is homogeneous
-            return True
-        else:
-            return False
+    def _terminate(self, X, y, cur_depth):
+        return (
+            self._max_depth is not None and cur_depth == self._max_depth
+            or y.size < self._min_samples
+            or np.unique(y).size == 1
+        )
 
     def _generate_leaf_node(self, cur_depth, y):
         node = Node(cur_depth, y, is_leaf=True)
@@ -92,65 +89,64 @@ class Rand_CART(BaseEstimator):
     def _generate_node(self, X, y, cur_depth):
         if self._terminate(X, y, cur_depth):
             return self._generate_leaf_node(cur_depth, y)
-        else:
-            n_objects, n_features = X.shape
 
-            # generate random rotation matrix
+        n_objects, n_features = X.shape
+        best_score = -np.inf
+        best_result = None
+
+        for _ in range(self.n_rotations):
             matrix = self.rng.multivariate_normal(np.zeros(n_features), np.diag(np.ones(n_features)), n_features)
-            Q, R = qr(matrix)
-            X_rotation = X.dot(Q)
-            impurity_rotation, sr_rotation, left_indices_rotation, right_indices_rotation = (
-                self.segmentor(X_rotation, y, self.impurity))
+            Q, _ = qr(matrix)
+            X_rot = X @ Q
+            impurity, sr, left_idx, right_idx = self.segmentor(X_rot, y, self.impurity)
 
-            if self._compare_with_cart:
-                impurity_best, sr, left_indices, right_indices = self.segmentor(X, y, self.impurity)
-                if impurity_best > impurity_rotation:
-                    impurity_best = impurity_rotation
-                    left_indices = left_indices_rotation
-                    right_indices = right_indices_rotation
-                    sr = sr_rotation
-                else:
-                    Q = np.diag(np.ones(n_features))
-            else:
-                impurity_best = impurity_rotation
-                left_indices = left_indices_rotation
-                right_indices = right_indices_rotation
-                sr = sr_rotation
+            if sr and impurity > best_score:
+                best_score = impurity
+                best_result = (Q, sr, left_idx, right_idx)
 
-            if not sr:
-                return self._generate_leaf_node(cur_depth, y)
+        if self._compare_with_cart:
+            imp_cart, sr_cart, left_cart, right_cart = self.segmentor(X, y, self.impurity)
+            if not best_result or imp_cart > best_score:
+                Q = np.eye(n_features)
+                best_result = (Q, sr_cart, left_cart, right_cart)
 
-            i, treshold = sr
-            weights = np.zeros(n_features + 1)
-            weights[:-1] = Q[:, i]
-            weights[-1] = treshold
-            left_indices = X.dot(np.array(weights[:-1]).T) - weights[-1] < 0
-            right_indices = np.logical_not(left_indices)
-            X_left, y_left = X[left_indices], y[left_indices]
-            X_right, y_right = X[right_indices], y[right_indices]
+        if not best_result:
+            return self._generate_leaf_node(cur_depth, y)
 
-            if len(y_right) <= self._min_samples:
-                return self._generate_leaf_node(cur_depth, y)
-            elif len(y_left) <= self._min_samples:
-                return self._generate_leaf_node(cur_depth, y)
-            else:
-                node = Node(cur_depth, y, split_rules=sr, weights=weights,
-                            left_child=self._generate_node(X_left, y_left, cur_depth + 1),
-                            right_child=self._generate_node(X_right, y_right, cur_depth + 1),
-                            is_leaf=False)
-                self._nodes.append(node)
-                return node
+        Q, sr, left_idx, right_idx = best_result
+        i, threshold = sr
+        weights = np.zeros(n_features + 1)
+        weights[:-1] = Q[:, i]
+        weights[-1] = threshold
+
+        left_mask = X @ weights[:-1] - weights[-1] < 0
+        right_mask = ~left_mask
+        X_left, y_left = X[left_mask], y[left_mask]
+        X_right, y_right = X[right_mask], y[right_mask]
+
+        if len(y_left) <= self._min_samples or len(y_right) <= self._min_samples:
+            return self._generate_leaf_node(cur_depth, y)
+
+        node = Node(cur_depth, y, split_rules=sr, weights=weights,
+                    left_child=self._generate_node(X_left, y_left, cur_depth + 1),
+                    right_child=self._generate_node(X_right, y_right, cur_depth + 1),
+                    is_leaf=False)
+        self._nodes.append(node)
+        return node
 
     def fit(self, X, y):
-
         self._root = self._generate_node(X, y, 0)
 
     def get_params(self, deep=True):
-        return {'max_depth': self._max_depth,
-                'min_samples_split': self._min_samples,
-                'impurity': self.impurity, 'segmentor': self.segmentor,
-                'random_state': self.random_state
-                }
+        return {
+            'max_depth': self._max_depth,
+            'min_samples_split': self._min_samples,
+            'impurity': self.impurity,
+            'segmentor': self.segmentor,
+            'random_state': self.random_state,
+            'n_rotations': self.n_rotations,
+            'compare_with_cart': self._compare_with_cart
+        }
 
     def set_params(self, **parameters):
         for parameter, value in parameters.items():
@@ -182,7 +178,9 @@ class Rand_CART(BaseEstimator):
 
 
 # Definition of classes provided: HHCartClassifier
-class RandCARTClassifier(ClassifierMixin, Rand_CART):
-    def __init__(self, impurity, segmentor, max_depth=50, min_samples_split=2, random_state=None):
+class RandCARTClassifier(ClassifierMixin, RandCART):
+    def __init__(self, impurity, segmentor, max_depth=50, min_samples_split=2,
+                 random_state=None, n_rotations=1, compare_with_cart=False):
         super().__init__(impurity=impurity, segmentor=segmentor, max_depth=max_depth,
-                         min_samples_split=min_samples_split, random_state=random_state)
+                         min_samples_split=min_samples_split, random_state=random_state,
+                         n_rotations=n_rotations, compare_with_cart=compare_with_cart)
