@@ -60,10 +60,6 @@ def construct_region_from_constraints(constraints, initial_region):
 
 
 def plot_oblique_splits_clipped(X, y, trees_dict, max_depth, save_name=None, output_subfolder=None):
-    import matplotlib as mpl
-    import os
-    from C_oblique_decision_trees.evaluation.io_utils import get_output_dir
-
     mpl.rcParams['text.usetex'] = False
     mpl.rcParams['font.family'] = 'serif'
     mpl.rcParams['font.serif'] = ['Times New Roman']

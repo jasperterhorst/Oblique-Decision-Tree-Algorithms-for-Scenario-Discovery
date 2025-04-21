@@ -22,6 +22,7 @@ from _adopted_oblique_trees.RandCART import RandCARTClassifier
 from _adopted_oblique_trees.CO2 import CO2Classifier
 from _adopted_oblique_trees.Oblique_Classifier_1 import ObliqueClassifier1
 from _adopted_oblique_trees.WODT import WeightedObliqueDecisionTreeClassifier
+from _adopted_oblique_trees.RidgeCART import RidgeCARTClassifier
 from _adopted_oblique_trees.CART import CARTClassifier
 
 from _adopted_oblique_trees.segmentor import CARTSegmentor, MeanSegmentor
@@ -55,19 +56,20 @@ class DepthSweepRunner:
 
     @staticmethod
     def build_registry(
-        random_state=None,
-        impurity=gini,
-        segmentor=CARTSegmentor(),
-        n_restarts=20,
-        bias_steps=20,
-        max_iter_per_node=10,
-        tau=1e-6,
-        nu=1.0,
-        eta=0.01,
-        n_rotations=5,
-        max_features='all',
-        min_features_split=1,
-        min_samples_split=2,
+            random_state=None,
+            impurity=gini,
+            segmentor=CARTSegmentor(),
+            n_restarts=20,
+            bias_steps=20,
+            max_iter_per_node=10,
+            tau=1e-6,
+            nu=1.0,
+            eta=0.01,
+            tol=1e-3,
+            n_rotations=1,
+            max_features='all',
+            min_features_split=1,
+            min_samples_split=2,
     ):
         """
         Constructs a registry of oblique decision tree classifiers, each wrapped in a lambda
@@ -91,6 +93,8 @@ class DepthSweepRunner:
             bias_steps (int): Number of bias perturbation steps used in OC1's local search process.
 
             tau (float): Tolerance for convergence of HHCART classifiers.
+
+            tol (float): Tolerance for convergence of CO2 classifiers.
 
             max_iter_per_node (int): Maximum number of iterations for hyperplane optimization in CO2.
 
@@ -131,8 +135,10 @@ class DepthSweepRunner:
                          min_samples_split=min_samples_split),
             "co2": make(CO2Classifier, impurity=impurity, segmentor=segmentor,
                         max_iter_per_node=max_iter_per_node, nu=nu, eta=eta,
-                        min_samples_split=min_samples_split),
+                        min_samples_split=min_samples_split, tol=tol),
             "cart": make(CARTClassifier, impurity=impurity, min_samples_split=min_samples_split),
+            "ridge_cart": make(RidgeCARTClassifier, impurity=impurity, segmentor=segmentor,
+                               min_samples_split=min_samples_split),
         }
 
     def run(self, auto_export=True, filename="result.csv", tree_dict_filename="result.pkl",
@@ -176,32 +182,23 @@ class DepthSweepRunner:
 
             for model_name, constructor in registry.items():
                 for dataset_name, (X, y) in self.datasets:
-                    model = constructor(self.max_depth)
-                    model.fit(X, y)
-
-                    full_tree = convert_tree(model, model_type=model_name)
+                    # Step 1: Get true maximum depth after fitting full tree once
+                    model_full = constructor(self.max_depth)
+                    model_full.fit(X, y)
+                    full_tree = convert_tree(model_full, model_type=model_name)
                     true_max_depth = full_tree.max_depth
 
-                    for depth in range(0, min(self.max_depth, true_max_depth) + 1):
-                        if depth == self.max_depth:
-                            model_at_depth = model  # Reuse max depth model
-                            fit_start = 0.0
-                            fit_end = 0.0
-                        else:
-                            model_at_depth = constructor(depth)
-                            fit_start = time.perf_counter()
-                            model_at_depth.fit(X, y)
-                            fit_end = time.perf_counter()
+                    # Step 2: Loop through depths from 0 to true_max_depth
+                    for depth in range(0, true_max_depth + 1):
+                        model_at_depth = constructor(depth)
+                        fit_start = time.perf_counter()
+                        model_at_depth.fit(X, y)
+                        fit_end = time.perf_counter()
 
-                        # CONVERT
                         tree_at_depth = convert_tree(model_at_depth, model_type=model_name)
-
-                        # EVALUATE
                         metrics = evaluate_tree(tree_at_depth, X, y)
 
-                        # Timing results
                         metrics["runtime"] = fit_end - fit_start
-
                         metrics.update({
                             "seed": seed,
                             "dataset": dataset_name,

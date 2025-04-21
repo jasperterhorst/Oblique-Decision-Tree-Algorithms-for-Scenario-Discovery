@@ -1,31 +1,30 @@
 import pandas as pd
-import glob
-import os
+from pathlib import Path
 
-# Find all relevant CSV files in the current directory
-csv_files = sorted(glob.glob("depth_sweep_*.csv"))
+# 1. Define current and input dirs
+current_dir = Path.cwd()
+input_dir = current_dir / "delftblue"
 
+# 2. Gather CSVs
+csv_files = sorted(input_dir.glob("*.csv"))
 if not csv_files:
-    raise FileNotFoundError("No files matching 'depth_sweep_*.csv' found.")
+    raise FileNotFoundError(f"No CSV files found in '{input_dir}'.")
 
-# Merge them
-dfs = [pd.read_csv(file) for file in csv_files]
+# 3. Read & concat
+dfs = [pd.read_csv(f) for f in csv_files]
 merged_df = pd.concat(dfs, ignore_index=True)
 
-# Define preferred column order
+# 4. Reorder columns if they exist
 preferred_order = [
-    'dataset', 'data_dim', 'seed', 'algorithm', 'depth', 'splits', 'leaves',
-    'accuracy', 'coverage', 'density', 'f_score', 'training_time',
-    'avg_active_feature_count', 'feature_utilisation_ratio',
-    'tree_level_sparsity_index', 'composite_interpretability_score'
+    "seed", "dataset", "data_dim", "algorithm", "depth", "accuracy", "coverage",
+    "density", "f_score", "gini_coverage_all_leaves", "gini_density_all_leaves",
+    "splits", "leaves", "runtime"
 ]
-
-# Retain only the columns that exist in the merged DataFrame
-final_order = [col for col in preferred_order if col in merged_df.columns]
+final_order = [c for c in preferred_order if c in merged_df.columns]
 merged_df = merged_df[final_order]
 
-# Save the merged and reordered result
-output_file = "depth_sweep_multiple_seeds.csv"
-merged_df.to_csv(output_file, index=False)
+# 5. Save to current dir
+output_path = current_dir / "all_algorithms_all_datasets.csv"
+merged_df.to_csv(output_path, index=False)
 
-print(f"Merged {len(csv_files)} files into '{output_file}' with {len(merged_df)} rows.")
+print(f"Merged {len(csv_files)} CSV files from '{input_dir}' into '{output_path}' ({len(merged_df)} rows).")

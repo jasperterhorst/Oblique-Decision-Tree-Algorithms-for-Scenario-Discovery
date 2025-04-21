@@ -158,11 +158,13 @@ class ContinuouslyOptimizedObliqueTree(BaseEstimator):
 
                 # Check for convergence
                 new_objective = self.objective(X, y, w, thetaL, thetaR)
-                if np.abs(old_objective - new_objective) < 1e-2:
+
+                if np.abs(old_objective - new_objective) < self.tol:
                     # if np.linalg.norm(w - w_old) < 1e-4:
                     converged = True
                     probL = np.exp(thetaL) / np.sum(np.exp(thetaL))
                     probR = np.exp(thetaR) / np.sum(np.exp(thetaR))
+
             weights = w[:-1]
             bias = w[-1]
             pl = probL

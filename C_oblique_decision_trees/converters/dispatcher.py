@@ -9,6 +9,7 @@ from C_oblique_decision_trees.converters.randcart_converter import convert_randc
 from C_oblique_decision_trees.converters.co2_converter import convert_co2
 from C_oblique_decision_trees.converters.oc1_converter import convert_oc1
 from C_oblique_decision_trees.converters.wodt_converter import convert_wodt
+from C_oblique_decision_trees.converters.ridgecart_converter import convert_ridge_cart
 from C_oblique_decision_trees.converters.cart_converter import convert_cart
 
 
@@ -39,6 +40,8 @@ def convert_tree(model, model_type):
         return convert_oc1(model)
     elif model_type == 'wodt':
         return convert_wodt(model)
+    elif model_type == 'ridge_cart':
+        return convert_ridge_cart(model)
     elif model_type == 'cart':
         return convert_cart(model)
     else:

@@ -16,6 +16,116 @@ from src.config.paths import DEPTH_SWEEP_BATCH_RESULTS_OUTPUTS_DIR
 from src.config.settings import DEFAULT_VARIABLE_SEEDS
 
 
+def plot_benchmark_metrics(df, metric="accuracy", xlabel="Depth", ylabel=None,
+                           group_by=None,
+                           show_std=False, save_name=None, filter_noise=False,
+                           max_depth=None):
+    """
+    General-purpose plotting function for benchmark metrics.
+
+    Parameters:
+        df (pd.DataFrame): Benchmark results.
+        metric (str): Column to plot on the y-axis.
+        xlabel (str): Label for x-axis.
+        ylabel (str): Label for y-axis (default: metric name).
+        group_by (list): Columns to group lines by (e.g. ["algorithm", "dataset"]).
+        show_std (bool): Whether to show shaded std deviation bands.
+        save_name (str): Output filename (PDF). Auto-generated if None.
+        filter_noise (bool): Split 'dataset' column into 'dataset_name' and 'noise_type'.
+        max_depth (int): Filter to maximum depth (also sets x-axis limit).
+    """
+    if group_by is None:
+        group_by = ["algorithm", "dataset"]
+
+    if metric not in df.columns:
+        print(f"Metric '{metric}' not found in DataFrame columns.")
+        return
+
+    plot_df = df.copy()
+
+    # === Dataset & Noise Parsing === #
+    if filter_noise:
+        split_cols = plot_df["dataset"].str.rsplit("_", n=2, expand=True)
+        plot_df["dataset_name"] = split_cols[0].str.replace("_", "", regex=False).str.strip("_")
+        plot_df["noise_type"] = (
+            split_cols[1].str.replace("_", "", regex=False).str.strip("_") + "_" +
+            split_cols[2].str.replace("_", "", regex=False).str.strip("_")
+        )
+
+    # === Filter Max Depth === #
+    if max_depth is not None:
+        plot_df = plot_df[plot_df["depth"] <= max_depth]
+
+    # === Grouping Adjustments === #
+    effective_group_by = group_by.copy()
+    if filter_noise:
+        effective_group_by = [col.replace("dataset", "dataset_name") for col in group_by]
+
+    # === Aggregate Means === #
+    agg_df = plot_df.groupby(effective_group_by + ["depth"], as_index=False)[metric].mean()
+
+    # === Plotting === #
+    fig, ax = plt.subplots(figsize=(7, 5))
+    sns.lineplot(
+        data=agg_df,
+        x="depth",
+        y=metric,
+        hue=effective_group_by[0],
+        style=effective_group_by[1] if len(effective_group_by) > 1 else None,
+        ax=ax
+    )
+
+    # === Std Deviation Bands (Optional) === #
+    if show_std:
+        std_df = plot_df.groupby(effective_group_by + ["depth"], as_index=False)[metric].std()
+        std_col = f"{metric}_std"
+        std_df.rename(columns={metric: std_col}, inplace=True)
+
+        for key, subdf in std_df.groupby(effective_group_by):
+            key = (key,) if isinstance(key, str) else key
+            sub_mean = agg_df
+            for col, val in zip(effective_group_by, key):
+                sub_mean = sub_mean[sub_mean[col] == val]
+            merged = pd.merge(sub_mean, subdf, on=["depth"])
+            ax.fill_between(
+                merged["depth"],
+                merged[metric] - merged[std_col],
+                merged[metric] + merged[std_col],
+                alpha=0.2
+            )
+
+    # === Axis Limits === #
+    if max_depth is not None:
+        ax.set_xlim(0, max_depth)
+
+    bounded_metrics = [
+        "accuracy", "coverage", "density", "f_score",
+        "gini_coverage_all_leaves", "gini_density_all_leaves"
+    ]
+    if metric in bounded_metrics:
+        ax.set_ylim(0, 1)
+    elif metric in ["time", "runtime"]:
+        y_max = agg_df[metric].max() * 1.1
+        ax.set_ylim(0, y_max)
+
+    # === Title and File Naming === #
+    title = f"{metric.capitalize()} vs Depth by " + " and ".join([col.capitalize() for col in group_by])
+    if save_name is None:
+        save_name = f"{metric}_vs_depth_by_{'_'.join(group_by)}.pdf"
+    save_path = os.path.join(DEPTH_SWEEP_BATCH_RESULTS_OUTPUTS_DIR, save_name)
+
+    # === Beautify and Save === #
+    beautify_plot(
+        ax=ax,
+        title=title,
+        xlabel=xlabel,
+        ylabel=ylabel or metric.capitalize(),
+        save_path=save_path
+    )
+
+    return ax
+
+
 def plot_metric_vs_depth_per_dataset_and_algorithm(df, metric="accuracy", title=None, xlabel="Depth", ylabel=None,
                                                    x_lim=None, y_lim=None, save_name=None):
     """

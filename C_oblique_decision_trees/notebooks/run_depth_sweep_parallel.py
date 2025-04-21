@@ -37,9 +37,9 @@ parser.add_argument("--folder", type=str, required=True,
 parser.add_argument("--seed-index", type=int, required=True,
                     help="Index into DEFAULT_VARIABLE_SEEDS")
 parser.add_argument("--model", type=str, required=True,
-                    choices=["hhcart_a", "hhcart_d", "randcart", "oc1", "wodt", "co2", "cart"],
+                    choices=["hhcart_a", "hhcart_d", "randcart", "oc1", "wodt", "co2", "cart", "ridge_cart"],
                     help="Model to use")
-parser.add_argument("--max-depth", type=int, default=20,
+parser.add_argument("--max-depth", type=int, default=12,
                     help="Maximum depth to sweep over")
 parser.add_argument("--output-filename", type=str, required=True,
                     help="Output CSV filename")
@@ -79,7 +79,7 @@ depth_sweep_df, _ = runner.run(
     return_trees=True,
     save_tree_dict=False,
     batch_mode=True,
-    output_subfolder="DelftBlue"
+    output_subfolder="noise_added"
 )
 
 elapsed = time.time() - start_time
