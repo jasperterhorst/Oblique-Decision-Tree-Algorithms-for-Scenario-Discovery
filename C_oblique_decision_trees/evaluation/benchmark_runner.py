@@ -13,9 +13,7 @@ from tqdm import tqdm
 
 from C_oblique_decision_trees.converters.dispatcher import convert_tree
 
-from C_oblique_decision_trees.evaluation.evaluator import evaluate_tree
-
-from C_oblique_decision_trees.evaluation.io_utils import save_depth_sweep_df, save_trees_dict
+from C_oblique_decision_trees.evaluation import evaluate_tree, save_depth_sweep_df, save_trees_dict
 
 from _adopted_oblique_trees.HouseHolder_CART import HHCartAClassifier, HHCartDClassifier
 from _adopted_oblique_trees.RandCART import RandCARTClassifier
@@ -220,7 +218,9 @@ class DepthSweepRunner:
                 "seed", "dataset", "data_dim", "algorithm", "depth",
                 "accuracy", "coverage", "density", "f_score",
                 "gini_coverage_all_leaves", "gini_density_all_leaves",
-                "splits", "leaves", "runtime"
+                "splits", "leaves",
+                "total_active_feature_count", "avg_active_feature_count",
+                "runtime"
             ]
 
             # desired_cols = [

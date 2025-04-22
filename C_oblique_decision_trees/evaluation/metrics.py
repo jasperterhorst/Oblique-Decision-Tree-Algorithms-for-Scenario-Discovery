@@ -216,6 +216,33 @@ def compute_leafwise_coverage_density(tree, X, y, filter_class=None):
 # =============================================================================
 # INTERPRETABILITY & COMPLEXITY METRICS
 # =============================================================================
+def count_total_constrained_dimensions(tree):
+    """
+    Count the total number of unique dimensions used (non-zero weights)
+    across all decision nodes in the tree.
+
+    Parameters:
+        tree: Trained decision tree with nodes that may have `weights`.
+
+    Returns:
+        int: Total number of unique feature indices that are used.
+    """
+    constrained_dims = set()
+    nodes_to_visit = [tree.root]
+
+    while nodes_to_visit:
+        node = nodes_to_visit.pop()
+        if hasattr(node, 'weights') and node.weights is not None:
+            used_dims = np.flatnonzero(node.weights)
+            constrained_dims.update(used_dims)
+
+        # Recurse into children
+        if hasattr(node, 'children') and isinstance(node.children, list):
+            nodes_to_visit.extend(node.children)
+
+    return len(constrained_dims)
+
+
 def compute_average_active_feature_count(tree):
     """
     Compute the average active feature count per decision node.
@@ -231,66 +258,3 @@ def compute_average_active_feature_count(tree):
     ]
     return np.mean(active_feature_counts) if active_feature_counts else 0.0
 
-
-def compute_feature_utilisation_ratio(tree):
-    """
-    Compute the average feature utilization ratio per decision node.
-
-    For each node with a 'weights' attribute, this is the ratio of nonzero weights to total features.
-
-    Returns:
-        float: The average utilization ratio, or 0.0 if no nodes with weights are found.
-    """
-    ratios = []
-    for node in tree.root.children:
-        if hasattr(node, 'weights'):
-            weights = node.weights
-            total_features = len(weights)
-            nonzero_count = np.count_nonzero(weights)
-            ratio = nonzero_count / total_features if total_features > 0 else 0
-            ratios.append(ratio)
-    return np.mean(ratios) if ratios else 0.0
-
-
-def compute_tree_level_sparsity_index(tree):
-    """
-    Compute the overall tree-level sparsity index.
-
-    Defined as:
-        Sparsity = 1 – (Total nonzero weights / Total weights)
-
-    Returns:
-        float: The sparsity index, or np.nan if no weights are found.
-    """
-    total_nonzero = 0
-    total_weights = 0
-    for node in tree.root.children:
-        if hasattr(node, 'weights'):
-            weights = node.weights
-            total_nonzero += np.count_nonzero(weights)
-            total_weights += len(weights)
-    if total_weights == 0:
-        return np.nan
-    return 1 - (total_nonzero / total_weights)
-
-
-def composite_interpretability_score(tree):
-    """
-    Compute a composite interpretability score for the tree.
-
-    This score integrates:
-      – Average active feature count,
-      – Feature utilization ratio, and
-      – Tree-level sparsity index.
-
-    Lower values are assumed to indicate higher interpretability.
-
-    Returns:
-         float: The interpretability score, or np.nan if sparsity is zero.
-    """
-    active_count = compute_average_active_feature_count(tree)
-    util_ratio = compute_feature_utilisation_ratio(tree)
-    sparsity_index = compute_tree_level_sparsity_index(tree)
-    if sparsity_index == 0 or np.isnan(sparsity_index):
-        return np.nan
-    return (active_count * (1 - util_ratio)) / sparsity_index

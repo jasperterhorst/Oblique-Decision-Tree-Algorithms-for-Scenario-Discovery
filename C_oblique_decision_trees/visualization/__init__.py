@@ -8,8 +8,8 @@ from .single_run_plots import (print_tree_structure, plot_decision_boundaries, p
                                plot_decision_regions_from_dict, plot_oblique_splits_from_dict)
 from .batch_results_plots import (plot_metric_vs_depth_per_dataset_and_algorithm, plot_metric_vs_depth_per_algorithm,
                                   plot_metric_vs_depth_per_shape, plot_seed_std_vs_depth_per_algorithm,
-                                  plot_coverage_density_all_shapes_for_algorithm)
-from .plot_build_tester import plot_benchmark_metrics
+                                  plot_coverage_density_all_shapes_for_algorithm, plot_benchmark_metrics,
+                                  plot_runtime_per_shape_grouped_by_noise_and_algorithm)
 
 __all__ = [
     "print_tree_structure",
@@ -23,4 +23,5 @@ __all__ = [
     "plot_seed_std_vs_depth_per_algorithm",
     "plot_coverage_density_all_shapes_for_algorithm",
     "plot_benchmark_metrics",
+    "plot_runtime_per_shape_grouped_by_noise_and_algorithm",
 ]

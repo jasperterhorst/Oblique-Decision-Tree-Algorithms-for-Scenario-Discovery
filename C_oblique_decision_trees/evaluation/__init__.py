@@ -12,10 +12,8 @@ from .metrics import (
     compute_f_score,
     compute_leafwise_coverage_density,
     gini_coefficient,
-    compute_average_active_feature_count,
-    compute_feature_utilisation_ratio,
-    compute_tree_level_sparsity_index,
-    composite_interpretability_score
+    count_total_constrained_dimensions,
+    compute_average_active_feature_count
 )
 
 from .io_utils import (

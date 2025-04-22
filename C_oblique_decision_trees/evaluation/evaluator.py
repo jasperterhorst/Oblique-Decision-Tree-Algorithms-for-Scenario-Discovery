@@ -5,10 +5,8 @@ from C_oblique_decision_trees.evaluation.metrics import (
     compute_f_score,
     compute_leafwise_coverage_density,
     gini_coefficient,
-    compute_average_active_feature_count,
-    compute_feature_utilisation_ratio,
-    compute_tree_level_sparsity_index,
-    composite_interpretability_score
+    count_total_constrained_dimensions,
+    compute_average_active_feature_count
 )
 
 
@@ -46,10 +44,8 @@ def evaluate_tree(tree, X, y):
     # =========================================================================
     # INTERPRETABILITY & COMPLEXITY METRICS
     # =========================================================================
+    total_active = count_total_constrained_dimensions(tree)
     avg_active = compute_average_active_feature_count(tree)
-    util_ratio = compute_feature_utilisation_ratio(tree)
-    sparsity = compute_tree_level_sparsity_index(tree)
-    interpret_score = composite_interpretability_score(tree)
 
     # =========================================================================
     # STRUCTURAL METADATA
@@ -73,10 +69,8 @@ def evaluate_tree(tree, X, y):
         "gini_density_all_leaves": gini_den_all,
 
         # Interpretability
+        "total_active_feature_count": total_active,
         "avg_active_feature_count": avg_active,
-        "feature_utilisation_ratio": util_ratio,
-        "tree_level_sparsity_index": sparsity,
-        "composite_interpretability_score": interpret_score,
 
         # Metadata
         "depth": depth,

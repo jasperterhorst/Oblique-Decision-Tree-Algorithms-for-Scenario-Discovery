@@ -39,7 +39,7 @@ from src.config.paths import SHAPES_DIR
 
 # === Configuration ===
 fuzz_levels = [0.00, 0.03, 0.05, 0.07]
-num_samples_2d = 5000
+num_samples_2d = 10000
 num_samples_3d = 10000
 
 # === Shape Definitions ===
