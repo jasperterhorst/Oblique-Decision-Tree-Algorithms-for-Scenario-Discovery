@@ -6,7 +6,7 @@ DATASETS = [
 ]
 FOLDER = "shapes"
 NOISE_FOLDERS = ["fuzziness_000", "fuzziness_003", "fuzziness_005", "fuzziness_007"]
-MODELS = ["hhcart_a", "hhcart_d", "randcart", "oc1", "wodt", "co2", "cart", "ridge_cart"]
+MODELS = ["hhcart_a", "hhcart_d", "randcart", "oc1", "wodt", "cart", "ridge_cart"]
 SEED_INDICES = [0, 1, 2]
 
 OUTPUT_JOBLIST = "job_list_fuzziness.txt"
@@ -29,7 +29,8 @@ with open(OUTPUT_JOBLIST, "w", newline="\n") as f:
                         f"--subfolder-name {folder} "
                         f"--seed-index {seed_index} "
                         f"--model {model} "
-                        f"--output-filename {output_file} > {log_file} 2>&1"
+                        f"--output-filename {output_file} "
+                        f"--output-subfolder delftblue_fuzziness_runs > {log_file} 2>&1"
                     )
                     f.write(cmd + "\n")
 

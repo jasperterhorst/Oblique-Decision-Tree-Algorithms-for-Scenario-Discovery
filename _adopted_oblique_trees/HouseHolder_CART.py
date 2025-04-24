@@ -45,6 +45,7 @@ class HHCARTNode:
         self._weights = kwargs.get('weights', None)  # weight vector (oblique hyperplane)
         self._left_child = kwargs.get('left_child', None)  # left child node
         self._right_child = kwargs.get('right_child', None)  # right child node
+        self._label = None
 
         if not self.is_leaf:
             assert self._split_rules is not None
@@ -63,7 +64,7 @@ class HHCARTNode:
 
     @property
     def label(self):
-        if not hasattr(self, '_label'):
+        if self._label is None:
             classes, counts = np.unique(self.labels, return_counts=True)
             self._label = classes[np.argmax(counts)]
         return self._label

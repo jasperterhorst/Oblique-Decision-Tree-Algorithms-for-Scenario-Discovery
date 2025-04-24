@@ -16,9 +16,11 @@ from C_oblique_decision_trees.converters.dispatcher import convert_tree
 from C_oblique_decision_trees.evaluation import evaluate_tree, save_depth_sweep_df, save_trees_dict
 
 from _adopted_oblique_trees.HouseHolder_CART import HHCartAClassifier, HHCartDClassifier
+from _adopted_oblique_trees.Sparse_Oblique_Classifier_1 import SparseObliqueClassifier1
 from _adopted_oblique_trees.RandCART import RandCARTClassifier
 from _adopted_oblique_trees.CO2 import CO2Classifier
 from _adopted_oblique_trees.Oblique_Classifier_1 import ObliqueClassifier1
+from _adopted_oblique_trees.Sparse_HouseHolder_CART_D import SparseHHCARTDClassifier
 from _adopted_oblique_trees.WODT import WeightedObliqueDecisionTreeClassifier
 from _adopted_oblique_trees.RidgeCART import RidgeCARTClassifier
 from _adopted_oblique_trees.CART import CARTClassifier
@@ -54,89 +56,109 @@ class DepthSweepRunner:
 
     @staticmethod
     def build_registry(
-            random_state=None,
-            impurity=gini,
-            segmentor=CARTSegmentor(),
-            n_restarts=20,
-            bias_steps=20,
-            max_iter_per_node=10,
-            tau=1e-6,
-            nu=1.0,
-            eta=0.01,
-            tol=1e-3,
-            n_rotations=1,
-            max_features='all',
-            min_features_split=1,
-            min_samples_split=2,
+            random_state=None, impurity=gini, segmentor=CARTSegmentor(), n_restarts=20, bias_steps=20,
+            max_iter_per_node=10, tau=1e-6, nu=1.0, eta=0.01, tol=1e-3, n_rotations=1, max_features='all',
+            min_features_split=1, min_samples_split=2, lambda_reg=0.01, threshold_value=0.01, alpha=1.0
     ):
         """
         Constructs a registry of oblique decision tree classifiers, each wrapped in a lambda
-        that accepts tree depth and returns an initialized model. This setup is used for
+        that accepts tree depth and returns an initialized model. This setup supports
         benchmarking various models in a depth sweep.
 
         Parameters:
-            random_state (int): Controls reproducibility. Passed to all models that support it.
 
-            impurity (callable): Impurity function used to evaluate splits (e.g., Gini, entropy).
-                Used by CO2, HHCART (A and D), and RandCART. Default is the standard Gini index.
+        # General Controls for All Models
+            random_state (int or None):
+                Seed for reproducibility. Use None for stochastic behaviour.
 
-            segmentor (object): Object that implements the split search strategy.
-                Passed to HHCART (for axis-aligned splits in reflected space), CO2 (to define initial splits),
-                and RandCART (for axis-aligned splits in rotated space).
-                Typically a CART-based splitter or a MeanSegmentor.
+            min_samples_split (int, default=2):
+                Minimum number of samples required to perform a split. Must be ≥ 2.
 
-            n_restarts (int): Number of random restarts for hyperplane optimization in OC1.
-                Controls how many times the algorithm attempts to escape local minima.
+        # Split Quality & Search Strategies
+            impurity (callable):
+                Function to evaluate split quality (e.g., gini, entropy).
+                Applies to: HHCART variants, CO2, RandCART, RidgeCART, CART.
 
-            bias_steps (int): Number of bias perturbation steps used in OC1's local search process.
+            segmentor (object):
+                Defines axis-aligned split search (e.g., CARTSegmentor, MeanSegmentor).
+                Applies to: HHCART variants, CO2, RandCART, RidgeCART.
 
-            tau (float): Tolerance for convergence of HHCART classifiers.
+        # OC1 & Sparse OC1 Hyperparameters
+            n_restarts (int, default=20):
+                Number of random restarts (≥ 1) to escape local minima.
 
-            tol (float): Tolerance for convergence of CO2 classifiers.
+            bias_steps (int, default=20):
+                Number of discrete bias perturbation steps. Must be ≥ 1.
 
-            max_iter_per_node (int): Maximum number of iterations for hyperplane optimization in CO2.
+            min_features_split (int, default=1):
+                Minimum non-zero coefficients per split. Must be ≥ 1.
 
-            nu (float): Smoothing constant for the convex-concave surrogate loss in CO2.
-                Influences how strongly the surrogate bounds the true classification error.
+            lambda_reg (float, default=0.01):
+                L1 regularisation strength ≥ 0. Higher values increase sparsity. Typical values are in [0.01, 0.1].
+                Applies to: Sparse OC1.
 
-            eta (float): Learning rate for CO2’s stochastic gradient descent.
-                Determines the step size for updating hyperplane parameters.
+            threshold_value (float, default=0.01):
+                Threshold to zero-out small weights post-optimization. Must be ≥ 0.
+                Applies to: Sparse OC1.
 
-            n_rotations (int): Number of random rotations for the data in RandCART.
+        # (Sparse) HHCART (A and D) Controls
+            tau (float, default=1e-6):
+                Reflection tolerance. Small positive value to skip near-axis eigenvectors.
+                Applies to: HHCART(A), HHCART(D), Sparse HHCART(D).
 
-            max_features (int, float, or 'all'): Used by WODT to control the number of features
-                randomly selected at each split. Supports both absolute counts and fractional values.
+            alpha (float, default=1.0):
+                SparsePCA sparsity control ≥ 0. Higher values yield sparser components. For many datasets values
+                [0.1, 5.0] are tested.
+                Applies to: Sparse HHCART(D).
 
-            min_features_split (int): Minimum number of non-zero coefficients required in an OC1 split.
-                Enforces sparsity by ensuring splits involve at least a certain number of input features.
+        # CO2-Specific Hyperparameters
+            max_iter_per_node (int, default=10):
+                Max optimisation iterations per node. Must be ≥ 1.
 
-            min_samples_split (int): Minimum number of samples required to split an internal node.
+            nu (float, default=1.0):
+                Positive smoothing parameter for surrogate loss.
+
+            eta (float, default=0.01):
+                Learning rate > 0 for gradient descent.
+
+            tol (float, default=1e-3):
+                Convergence tolerance > 0 for stopping criterion.
+
+        # RandCART Controls
+            n_rotations (int, default=1):
+                Number of random rotations ≥ 1 applied before splitting.
+
+        # WODT Controls
+            max_features (int, float, or 'all', default='all'):
+                Number of features to consider at each split.
+                - If int: absolute count.
+                - If float: fraction (0 < value ≤ 1).
+                - If 'all': use all features.
 
         Returns:
-            dict: A model registry mapping string identifiers (e.g., 'co2', 'oc1') to functions
-                  that take depth as input and return initialized classifier instances.
+            dict: A model registry mapping string identifiers (e.g., 'co2', 'sparse_oc1')
+                  to functions that take depth as input and return initialized classifier instances.
         """
-
         def make(cls, **kwargs):
-            return lambda depth: cls(max_depth=depth, random_state=random_state, **kwargs)
+            return lambda depth: cls(max_depth=depth, random_state=random_state, min_samples_split=min_samples_split,
+                                     **kwargs)
 
         return {
-            "hhcart_a": make(HHCartAClassifier, impurity=impurity, segmentor=segmentor,
-                             tau=tau, min_samples_split=min_samples_split),
-            "hhcart_d": make(HHCartDClassifier, impurity=impurity, segmentor=segmentor,
-                             tau=tau, min_samples_split=min_samples_split),
-            "randcart": make(RandCARTClassifier, impurity=impurity, segmentor=CARTSegmentor(),
-                             min_samples_split=min_samples_split, n_rotations=n_rotations),
+            "hhcart_a": make(HHCartAClassifier, impurity=impurity, segmentor=segmentor, tau=tau),
+            "hhcart_d": make(HHCartDClassifier, impurity=impurity, segmentor=segmentor, tau=tau),
+            "sparse_hhcart_d": make(SparseHHCARTDClassifier, impurity=impurity, segmentor=segmentor, tau=tau,
+                                    alpha=alpha),
+            "randcart": make(RandCARTClassifier, impurity=impurity, segmentor=CARTSegmentor(), n_rotations=n_rotations),
             "oc1": make(ObliqueClassifier1, n_restarts=n_restarts, bias_steps=bias_steps,
                         min_features_split=min_features_split),
-            "wodt": make(WeightedObliqueDecisionTreeClassifier, max_features=max_features,
-                         min_samples_split=min_samples_split),
+            "sparse_oc1": make(SparseObliqueClassifier1, n_restarts=n_restarts, bias_steps=bias_steps,
+                               lambda_reg=lambda_reg, threshold_value=threshold_value,
+                               min_features_split=min_features_split),
+            "wodt": make(WeightedObliqueDecisionTreeClassifier, max_features=max_features),
             "co2": make(CO2Classifier, impurity=impurity, segmentor=segmentor,
-                        max_iter_per_node=max_iter_per_node, nu=nu, eta=eta,
-                        min_samples_split=min_samples_split, tol=tol),
-            "cart": make(CARTClassifier, impurity=impurity, min_samples_split=min_samples_split),
-            "ridge_cart": make(RidgeCARTClassifier, impurity=impurity, segmentor=segmentor,
-                               min_samples_split=min_samples_split),
+                        max_iter_per_node=max_iter_per_node, nu=nu, eta=eta, tol=tol),
+            "cart": make(CARTClassifier, impurity=impurity),
+            "ridge_cart": make(RidgeCARTClassifier, impurity=impurity, segmentor=segmentor),
         }
 
     def run(self, auto_export=True, filename="result.csv", tree_dict_filename="result.pkl",
@@ -222,15 +244,6 @@ class DepthSweepRunner:
                 "total_active_feature_count", "avg_active_feature_count",
                 "runtime"
             ]
-
-            # desired_cols = [
-            #     "seed", "dataset", "data_dim", "algorithm", "depth",
-            #     "accuracy", "coverage", "density", "f_score",
-            #     gini_coverage_all_leaves", "gini_density_all_leaves",
-            #     "splits", "leaves", "avg_active_feature_count",
-            #     "feature_utilisation_ratio", "tree_level_sparsity_index",
-            #     "composite_interpretability_score", "run_time"
-            # ]
 
             df = df[[col for col in desired_cols if col in df.columns]]
             save_depth_sweep_df(df, filename=filename, run_type=run_type, subdir=output_subfolder)

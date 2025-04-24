@@ -3,7 +3,7 @@ from pathlib import Path
 
 # 1. Define current and input dirs
 current_dir = Path.cwd()
-input_dir = current_dir / "delftblue_dimensionality_runs"
+input_dir = current_dir / "delftblue"
 
 # 2. Gather CSVs
 csv_files = sorted(input_dir.glob("*.csv"))
@@ -16,9 +16,9 @@ merged_df = pd.concat(dfs, ignore_index=True)
 
 # 4. Reorder columns if they exist
 preferred_order = [
-    "seed", "dataset", "data_dim", "algorithm", "depth", "accuracy", "coverage",
-    "density", "f_score", "gini_coverage_all_leaves", "gini_density_all_leaves",
-    "splits", "leaves", "runtime"
+    "seed", "dataset", "data_dim", "algorithm", "depth", "accuracy", "coverage", "density",
+    "f_score", "gini_coverage_all_leaves", "gini_density_all_leaves", "splits", "leaves",
+    "total_active_feature_count", "avg_active_feature_count", "runtime"
 ]
 final_order = [c for c in preferred_order if c in merged_df.columns]
 merged_df = merged_df[final_order]

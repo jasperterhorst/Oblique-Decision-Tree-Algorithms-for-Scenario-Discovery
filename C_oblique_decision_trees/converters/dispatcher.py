@@ -20,7 +20,8 @@ def convert_tree(model, model_type):
     Parameters:
         model: The trained model instance.
         model_type (str): The type identifier for the model. Accepted values:
-                          'hhcart_a', 'hhcart_d', 'randcart', 'co2', 'oc1', 'wodt', 'cart_lc'.
+                          'hhcart_a', 'hhcart_d', 'sparse_hhcart_d', 'randcart',
+                          'co2', 'oc1', 'sparse_oc1', 'wodt', 'ridge_cart', 'cart'.
 
     Returns:
         DecisionTree: The converted decision tree.
@@ -28,15 +29,13 @@ def convert_tree(model, model_type):
     Raises:
         ValueError: If the provided model_type is unsupported.
     """
-    if model_type == 'hhcart_a':
-        return convert_hhcart(model)
-    elif model_type == 'hhcart_d':
+    if model_type in {'hhcart_a', 'hhcart_d', 'sparse_hhcart_d'}:
         return convert_hhcart(model)
     elif model_type == 'randcart':
         return convert_randcart(model)
     elif model_type == 'co2':
         return convert_co2(model)
-    elif model_type == 'oc1':
+    elif model_type in {'oc1', 'sparse_oc1'}:
         return convert_oc1(model)
     elif model_type == 'wodt':
         return convert_wodt(model)
