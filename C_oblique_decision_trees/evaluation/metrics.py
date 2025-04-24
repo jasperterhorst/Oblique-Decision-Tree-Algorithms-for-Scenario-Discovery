@@ -24,61 +24,6 @@ def compute_accuracy(tree, X, y):
     return accuracy_score(y, y_pred)
 
 
-# def compute_coverage(tree, X, y):
-#     """
-#     Compute the coverage metric. If the tree has depth 0, return 1.0.
-#     Otherwise, compute the proportion of relevant (y == 1) instances captured.
-#
-#     Parameters:
-#         tree: A trained decision tree with `predict` and `depth` attributes.
-#         X (iterable): Input features.
-#         y (iterable): True binary labels.
-#
-#     Returns:
-#         float: Coverage score.
-#     """
-#     y = np.array(y)
-#     if tree.max_depth == 0:
-#         return 1.0
-#
-#     y_pred = np.array([tree.predict(x) for x in X])
-#     relevant = (y == 1)
-#     selected = (y_pred == 1)
-#
-#     total_relevant = np.sum(relevant)
-#     if total_relevant == 0:
-#         return np.nan
-#
-#     return np.sum(relevant & selected) / total_relevant
-#
-#
-# def compute_density(tree, X, y):
-#     """
-#     Compute the density metric. If tree has depth 0, return the average of y.
-#     Otherwise, compute the proportion of selected instances that are relevant.
-#
-#     Parameters:
-#         tree: A trained decision tree with `predict` and `depth` attributes.
-#         X (iterable): Input features.
-#         y (iterable): True binary labels.
-#
-#     Returns:
-#         float: Density score.
-#     """
-#     y = np.array(y)
-#     if tree.max_depth == 0:
-#         return np.mean(y)
-#
-#     y_pred = np.array([tree.predict(x) for x in X])
-#     selected = (y_pred == 1)
-#
-#     total_selected = np.sum(selected)
-#     if total_selected == 0:
-#         return 0.0
-#
-#     return np.sum((y == 1) & selected) / total_selected
-
-
 def compute_coverage(tree, X, y):
     """
     Compute the coverage metric as the proportion of relevant instances (where y == 1)
@@ -148,20 +93,6 @@ def compute_f_score(tree, X, y):
     return 2 * coverage * density / (coverage + density)
 
 
-def gini_coefficient(values):
-    """
-    Compute the Gini coefficient of a list of non-negative values.
-    Returns 0 if all values are 0, or the list is empty.
-    """
-    values = np.array(values)
-    if len(values) == 0 or np.all(values == 0):
-        return 0.0
-    sorted_vals = np.sort(values)
-    n = len(sorted_vals)
-    index = np.arange(1, n + 1)
-    return (2 * np.sum(index * sorted_vals)) / (n * np.sum(sorted_vals)) - (n + 1) / n
-
-
 def compute_leafwise_coverage_density(tree, X, y, filter_class=None):
     """
     Compute per-leaf coverage and density.
@@ -213,6 +144,20 @@ def compute_leafwise_coverage_density(tree, X, y, filter_class=None):
     return coverage_list, density_list
 
 
+def gini_coefficient(values):
+    """
+    Compute the Gini coefficient of a list of non-negative values.
+    Returns 0 if all values are 0, or the list is empty.
+    """
+    values = np.array(values)
+    if len(values) == 0 or np.all(values == 0):
+        return 0.0
+    sorted_vals = np.sort(values)
+    n = len(sorted_vals)
+    index = np.arange(1, n + 1)
+    return (2 * np.sum(index * sorted_vals)) / (n * np.sum(sorted_vals)) - (n + 1) / n
+
+
 # =============================================================================
 # INTERPRETABILITY & COMPLEXITY METRICS
 # =============================================================================
@@ -257,4 +202,3 @@ def compute_average_active_feature_count(tree):
         for node in tree.root.children if hasattr(node, 'weights')
     ]
     return np.mean(active_feature_counts) if active_feature_counts else 0.0
-

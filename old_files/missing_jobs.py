@@ -18,7 +18,7 @@ expected_filenames = {
 
 # === Scan the actual output folder ===
 base_dir = os.path.abspath(
-    os.path.join(os.path.dirname(__file__), "..", "..", "_data", "depth_sweep_batch_results", "delftblue")
+    os.path.join(os.path.dirname(__file__), "..", "..", "_data", "depth_sweep_batch_results", "delftblue_fuzziness_runs")
 )
 print(f"📂 Checking folder: {base_dir}")
 

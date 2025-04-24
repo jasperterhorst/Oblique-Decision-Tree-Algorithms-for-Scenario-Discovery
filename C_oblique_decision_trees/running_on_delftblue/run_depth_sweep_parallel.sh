@@ -49,7 +49,8 @@ for FOLDER in "${NOISE_FOLDERS[@]}"; do
       echo "Launching: $FILENAME"
       srun -N1 -n1 python run_depth_sweep_parallel.py \
         --dataset "$DATASET" \
-        --folder "$FOLDER" \
+        --folder-name "shapes" \
+        --subfolder-name "$FOLDER" \
         --seed-index "$SEED_INDEX" \
         --model "$MODEL" \
         --output-filename "$FILENAME" > "$LOGFILE" 2>&1 &

@@ -11,8 +11,7 @@ DATASETS = [
     "rectangle_2d", "barbell_3d", "radial_segment_3d", "saddle_3d"
 ]
 NOISE_FOLDERS = ["fuzziness_000", "fuzziness_003", "fuzziness_005", "fuzziness_007"]
-MODELS = ["hhcart_a", "hhcart_d", "randcart", "oc1", "wodt", "co2", "cart"]
-# SEED_INDICES = [0, 1, 2, 3, 4]
+MODELS = ["hhcart_a", "hhcart_d", "randcart", "oc1", "wodt", "co2", "cart", "ridge_cart"]
 SEED_INDICES = [0, 1, 2]
 MAX_PARALLEL = 12
 PYTHON_EXEC = "python"
@@ -29,9 +28,10 @@ def run_job(dataset, noise, seed_index, model):
 
     cmd = [
         PYTHON_EXEC,
-        "run_depth_sweep_parallel.py",
+        "run_depth_sweep_benchmark.py",
         "--dataset", dataset,
-        "--folder", noise,
+        "--folder-name", "shapes",
+        "--subfolder-name", noise,
         "--seed-index", str(seed_index),
         "--model", model,
         "--output-filename", filename

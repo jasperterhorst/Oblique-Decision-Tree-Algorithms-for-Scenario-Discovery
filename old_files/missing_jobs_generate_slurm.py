@@ -1,7 +1,7 @@
 import os
 
 INPUT_FILE = "missing_jobs.txt"
-OUTPUT_SCRIPT = "run_consecutive_dimensionality.sh"
+OUTPUT_SCRIPT = "run_dimensionality_array.sh"
 
 # Load all lines
 with open(INPUT_FILE, "r") as f:
@@ -71,7 +71,7 @@ print(f"[✓] SLURM array rerun script saved to: {OUTPUT_SCRIPT}")
 # import os
 #
 # INPUT_FILE = "missing_jobs.txt"
-# OUTPUT_SCRIPT = "run_consecutive_dimensionality.sh"
+# OUTPUT_SCRIPT = "run_dimensionality_array.sh"
 #
 # # Load all lines
 # with open(INPUT_FILE, "r") as f:
@@ -123,7 +123,7 @@ print(f"[✓] SLURM array rerun script saved to: {OUTPUT_SCRIPT}")
 #             out_file = f"{dataset}_{folder}_{model}_seed{seed}.csv"
 #             log_file = f"logs/{dataset}_{folder}_{model}_seed{seed}.log"
 #             f.write(f"    echo \"Launching: {out_file}\"\n")
-#             f.write(f"    srun -N1 -n1 --exclusive python run_depth_sweep_parallel.py "
+#             f.write(f"    srun -N1 -n1 --exclusive python run_depth_sweep_benchmark.py "
 #                     f"--dataset {dataset} --folder {folder} "
 #                     f"--seed-index {seed} --model {model} "
 #                     f"--output-filename {out_file} > {log_file} 2>&1 &\n")
