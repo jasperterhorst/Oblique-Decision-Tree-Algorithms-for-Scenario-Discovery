@@ -1,13 +1,70 @@
-# Implementation of Oblique Classifier 1 (OC1) by [Murthy et al.]
+"""
+Oblique Classifier 1 (OC1) – Corrected Implementation Overview
+---------------------------------------------------------------
 
-# ......Importing all the packages............................
+This module provides a revised implementation of the Oblique Classifier 1 (OC1) algorithm,
+originally introduced by Murthy et al. (1994). The version included in the
+"Ensembles of Oblique Decision Trees" package by Torsha Majumder deviated from several
+core principles underpinning OC1’s design. This revision addresses those inconsistencies
+to restore theoretical alignment, thereby also enhancing split quality.
+
+Key Corrections and Enhancements:
+---------------------------------
+1. Coordinate-Wise Perturbation (Local Search Restoration):
+   - Original: Applied arbitrary full-vector perturbations during split search.
+   - Revision: Implements component-wise (coordinate) perturbation, adjusting one
+     feature weight at a time, in line with OC1’s intended local search dynamics
+     for fine-grained impurity minimisation.
+
+2. Probabilistic Acceptance of Non-Improving Perturbations:
+   - Original: Accepted only strictly improving splits, limiting exploration.
+   - Revision: Reintroduces OC1’s stochastic acceptance rule
+     (P_update = exp(-k)) to allow occasional acceptance of non-improving moves,
+     enhancing the ability to escape local minima and flat impurity regions.
+
+3. Stochastic Restarts for Global Exploration:
+   - Original: Used a fixed or single initial hyperplane per node.
+   - Revision: Adds a configurable `n_restarts` parameter, enabling multiple
+     random restarts to improve coverage of the oblique split space, selecting
+     the globally best split across all attempts.
+
+4. Bias Term Perturbation:
+   - Original: Lacked systematic adjustment of the bias (threshold) term.
+   - Revision: Introduces `bias_steps` to iteratively shift the hyperplane
+     along its normal vector, expanding the search to include optimal positioning
+     of decision boundaries, not just orientation.
+
+5. Reproducible Randomness:
+   - Original: Relied on global NumPy RNG, causing inconsistent outcomes.
+   - Revision: Utilises a local `RandomState` seeded via `random_state`, ensuring
+     deterministic behaviour across runs for benchmarking and experimentation.
+
+6. Global Impurity-Based Split Selection:
+   - Original: Accepted the first split that improved impurity.
+   - Revision: Evaluates all candidate splits across perturbations, bias shifts,
+     and restarts, selecting the split that minimises impurity globally.
+
+7. Optional Sparsity Control (Extension):
+   - New Feature: Supports L1-regularisation (`lambda_reg`) and hard thresholding
+     (`threshold_value`) to induce sparsity in weight vectors, promoting simpler
+     and more interpretable oblique splits without sacrificing performance.
+
+Algorithm Workflow:
+-------------------
+- Random Initialisation: Begins with multiple random hyperplanes (`n_restarts`).
+- Local Search: Performs coordinate-wise perturbations of weights and bias adjustments.
+- Stochastic Acceptance: Applies probabilistic rules to avoid premature convergence.
+- Global Selection: Retains the split achieving minimal impurity across all trials.
+- Sparsity (Optional): Applies L1 penalty and thresholding to simplify decision boundaries.
+- Tree Construction: Recursively builds the tree structure using the selected splits.
+"""
+
 from warnings import warn
 import numpy as np
 from scipy.stats import mode
 from _adopted_oblique_trees.OC1_tree_structure import Tree, Node, LeafNode
 from _adopted_oblique_trees import split_criteria
 from sklearn.base import BaseEstimator, ClassifierMixin, is_classifier
-
 
 epsilon = 1e-6
 
@@ -16,18 +73,20 @@ epsilon = 1e-6
 class BaseObliqueTree(BaseEstimator):
 
     def __init__(self, impurity, max_depth, min_samples_split, min_features_split, random_state=None,
-                 n_restarts=20, bias_steps=20):
+                 n_restarts=20, bias_steps=20, lambda_reg=0.0, threshold_value=0.0):
 
         # Get the options for tree learning
-        self.impurity = impurity                      # splitting impurity - default is 'gini-index'
-        self.max_depth = max_depth                      # maximum depth of the tree
-        self.min_samples_split = min_samples_split      # minimum number of samples needed for a split
-        self.min_features_split = min_features_split    # minimum number of features needed for a split
-        self.tree_ = None                               # Internal tree - initially set as 'None'
+        self.impurity = impurity  # splitting impurity - default is 'gini-index'
+        self.max_depth = max_depth  # maximum depth of the tree
+        self.min_samples_split = min_samples_split  # minimum number of samples needed for a split
+        self.min_features_split = min_features_split  # minimum number of features needed for a split
+        self.tree_ = None  # Internal tree - initially set as 'None'
         self.random_state = random_state
         self.rng = np.random.RandomState(random_state) if random_state is not None else np.random
         self.n_restarts = n_restarts
         self.bias_steps = bias_steps
+        self.lambda_reg = lambda_reg
+        self.threshold_value = threshold_value
 
         self.root_node = None
         self.learned_depth = None
@@ -74,10 +133,10 @@ class BaseObliqueTree(BaseEstimator):
 
     def fit(self, X, y):
         # Ensure that X is a 2d array of shape (n_samples, n_features)
-        if X.ndim == 1:                 # single feature from all examples
+        if X.ndim == 1:  # single feature from all examples
             if len(y) > 1:
                 X = X.reshape(-1, 1)
-            elif len(y) == 1:           # single training example
+            elif len(y) == 1:  # single training example
                 X = X.reshape(1, -1)
             else:
                 ValueError('Invalid X and y')
@@ -96,7 +155,8 @@ class BaseObliqueTree(BaseEstimator):
 
         self.root_node, self.learned_depth = build_oblique_tree_oc1(
             X, y, is_classifier(self), self.impurity, self.max_depth, min_samples_split,
-            min_features_split, rng=self.rng, n_restarts=self.n_restarts, bias_steps=self.bias_steps
+            min_features_split, rng=self.rng, n_restarts=self.n_restarts, bias_steps=self.bias_steps,
+            lambda_reg=self.lambda_reg, threshold_value=self.threshold_value
         )
 
         # Create a tree object
@@ -115,7 +175,9 @@ class BaseObliqueTree(BaseEstimator):
                 'impurity': self.impurity,
                 'min_features_split': self.min_features_split,
                 'n_restarts': self.n_restarts,
-                'bias_steps': self.bias_steps
+                'bias_steps': self.bias_steps,
+                'lambda_reg': self.lambda_reg,
+                'threshold_value': self.threshold_value
                 }
 
     def set_params(self, **parameters):
@@ -127,17 +189,19 @@ class BaseObliqueTree(BaseEstimator):
 # Definition of classes provided: ObliqueClassifier1
 class ObliqueClassifier1(ClassifierMixin, BaseObliqueTree):
     def __init__(self, impurity="gini", max_depth=3, min_samples_split=2, min_features_split=1,
-                 random_state=None, n_restarts=5, bias_steps=5):
+                 random_state=None, n_restarts=5, bias_steps=5,
+                 lambda_reg=0.0, threshold_value=0.0):
         super().__init__(impurity=impurity, max_depth=max_depth, min_samples_split=min_samples_split,
                          min_features_split=min_features_split, random_state=random_state,
-                         n_restarts=n_restarts, bias_steps=bias_steps)
+                         n_restarts=n_restarts, bias_steps=bias_steps,
+                         lambda_reg=lambda_reg, threshold_value=threshold_value)
 
 
 # Implements Murthy et al (1994)'s algorithm to learn an oblique decision tree via random perturbations
 def build_oblique_tree_oc1(X, y, is_classification, impurity,
                            max_depth, min_samples_split, min_features_split, rng=None,
-                           n_restarts=5, bias_steps=5, current_depth=0, current_features=None,
-                           current_samples=None, debug=False):
+                           n_restarts=5, bias_steps=5, lambda_reg=0.0, threshold_value=0.0,
+                           current_depth=0, current_features=None, current_samples=None, debug=False):
     """
     Builds an OC1-style Oblique Decision Tree.
 
@@ -161,7 +225,7 @@ def build_oblique_tree_oc1(X, y, is_classification, impurity,
         current_features = np.arange(n_features)
         current_samples = np.arange(n_samples)
 
-    y = np.atleast_1d(y)      # Ensure y is at least a 1D array
+    y = np.atleast_1d(y)  # Ensure y is at least a 1D array
 
     # ------------------ LEAF LABEL -------------------------
     # Estimate the label of this node
@@ -182,19 +246,19 @@ def build_oblique_tree_oc1(X, y, is_classification, impurity,
         conf = np.sum((-std <= y) & (y <= std)) / X.shape[0]
 
     # ------------------ TERMINATION CHECK -------------------------
-    if (current_depth == max_depth or            # max depth reached
-        n_samples <= min_samples_split or        # not enough samples to split on
-        n_features <= min_features_split or      # not enough features to split on
-        conf >= 0.95):                           # node is very homogeneous
+    if (current_depth == max_depth or  # max depth reached
+            n_samples <= min_samples_split or  # not enough samples to split on
+            n_features <= min_features_split or  # not enough features to split on
+            conf >= 0.95):  # node is very homogeneous
 
         return LeafNode(is_classifier=is_classification, value=label, conf=conf,
                         samples=current_samples, features=current_features), current_depth
 
     # ------------------ INIT SPLIT FROM AXIS -------------------------
-    feature_splits = get_best_splits(X, y, impurity=impurity)   # Get the best split for each feature
-    f = np.argmin(feature_splits[:, 1])                           # Find the best feature to split on
-    best_split_score = feature_splits[f, 1]                       # Save the score corresponding to the best split
-    w, b = np.eye(1, n_features, f).squeeze(), -feature_splits[f, 0]    # Construct a (w, b) from the best split
+    feature_splits = get_best_splits(X, y, impurity=impurity)  # Get the best split for each feature
+    f = np.argmin(feature_splits[:, 1])  # Find the best feature to split on
+    best_split_score = feature_splits[f, 1]  # Save the score corresponding to the best split
+    w, b = np.eye(1, n_features, f).squeeze(), -feature_splits[f, 0]  # Construct a (w, b) from the best split
     # X[f] <= s becomes 1. X[f] + 0. X[rest] - s <= 0
 
     # ------------------ OC1 PERTURBATION SEARCH -------------------------
@@ -239,6 +303,10 @@ def build_oblique_tree_oc1(X, y, is_classification, impurity,
 
                     score = impurity(left, right)
 
+                    # Apply L1 penalty if enabled
+                    if lambda_reg > 0:
+                        score += lambda_reg * np.linalg.norm(w_perturbed, ord=1)
+
                     if score < best_score:
                         best_score = score
                         best_w = w_perturbed.copy()
@@ -251,6 +319,10 @@ def build_oblique_tree_oc1(X, y, is_classification, impurity,
                         samples=current_samples, features=current_features), current_depth
 
     w, b = best_w, best_b
+
+    # Apply hard thresholding for sparsity if enabled
+    if threshold_value > 0:
+        w[np.abs(w) < threshold_value] = 0
 
     # ------------------------- SANITY CHECKS -------------------------
     idx = np.where(w == np.inf)[0]
@@ -280,7 +352,9 @@ def build_oblique_tree_oc1(X, y, is_classification, impurity,
                                                    rng=rng, n_restarts=n_restarts, bias_steps=bias_steps,
                                                    current_depth=current_depth + 1,
                                                    current_features=current_features,
-                                                   current_samples=current_samples[left])
+                                                   current_samples=current_samples[left],
+                                                   lambda_reg=lambda_reg,
+                                                   threshold_value=threshold_value)
 
     decision_node.add_left_child(left_node)
 
@@ -289,7 +363,9 @@ def build_oblique_tree_oc1(X, y, is_classification, impurity,
                                                      rng=rng, n_restarts=n_restarts, bias_steps=bias_steps,
                                                      current_depth=current_depth + 1,
                                                      current_features=current_features,
-                                                     current_samples=current_samples[right])
+                                                     current_samples=current_samples[right],
+                                                     lambda_reg=lambda_reg,
+                                                     threshold_value=threshold_value)
 
     decision_node.add_right_child(right_node)
 

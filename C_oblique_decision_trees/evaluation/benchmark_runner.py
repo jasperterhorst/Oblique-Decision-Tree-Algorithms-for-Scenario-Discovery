@@ -16,11 +16,9 @@ from C_oblique_decision_trees.converters.dispatcher import convert_tree
 from C_oblique_decision_trees.evaluation import evaluate_tree, save_depth_sweep_df, save_trees_dict
 
 from _adopted_oblique_trees.HouseHolder_CART import HHCartAClassifier, HHCartDClassifier
-from _adopted_oblique_trees.Sparse_Oblique_Classifier_1 import SparseObliqueClassifier1
 from _adopted_oblique_trees.RandCART import RandCARTClassifier
 from _adopted_oblique_trees.CO2 import CO2Classifier
 from _adopted_oblique_trees.Oblique_Classifier_1 import ObliqueClassifier1
-from _adopted_oblique_trees.Sparse_HouseHolder_CART_D import SparseHHCARTDClassifier
 from _adopted_oblique_trees.WODT import WeightedObliqueDecisionTreeClassifier
 from _adopted_oblique_trees.RidgeCART import RidgeCARTClassifier
 from _adopted_oblique_trees.CART import CARTClassifier
@@ -58,7 +56,7 @@ class DepthSweepRunner:
     def build_registry(
             random_state=None, impurity=gini, segmentor=CARTSegmentor(), n_restarts=20, bias_steps=20,
             max_iter_per_node=10, tau=1e-6, nu=1.0, eta=0.01, tol=1e-3, n_rotations=1, max_features='all',
-            min_features_split=1, min_samples_split=2, lambda_reg=0.01, threshold_value=0.01, alpha=1.0
+            min_features_split=1, min_samples_split=2, lambda_reg=0.0, threshold_value=0.0, alpha=0.0
     ):
         """
         Constructs a registry of oblique decision tree classifiers, each wrapped in a lambda
@@ -95,21 +93,19 @@ class DepthSweepRunner:
 
             lambda_reg (float, default=0.01):
                 L1 regularisation strength ≥ 0. Higher values increase sparsity. Typical values are in [0.01, 0.1].
-                Applies to: Sparse OC1.
 
             threshold_value (float, default=0.01):
                 Threshold to zero-out small weights post-optimization. Must be ≥ 0.
-                Applies to: Sparse OC1.
 
         # (Sparse) HHCART (A and D) Controls
             tau (float, default=1e-6):
                 Reflection tolerance. Small positive value to skip near-axis eigenvectors.
-                Applies to: HHCART(A), HHCART(D), Sparse HHCART(D).
+                Applies to: HHCART(A) and HHCART(D).
 
             alpha (float, default=1.0):
                 SparsePCA sparsity control ≥ 0. Higher values yield sparser components. For many datasets values
                 [0.1, 5.0] are tested.
-                Applies to: Sparse HHCART(D).
+                Applies to: HHCART(D).
 
         # CO2-Specific Hyperparameters
             max_iter_per_node (int, default=10):
@@ -146,19 +142,14 @@ class DepthSweepRunner:
         return {
             "hhcart_a": make(HHCartAClassifier, impurity=impurity, segmentor=segmentor, tau=tau),
             "hhcart_d": make(HHCartDClassifier, impurity=impurity, segmentor=segmentor, tau=tau),
-            "sparse_hhcart_d": make(SparseHHCARTDClassifier, impurity=impurity, segmentor=segmentor, tau=tau,
-                                    alpha=alpha),
             "randcart": make(RandCARTClassifier, impurity=impurity, segmentor=CARTSegmentor(), n_rotations=n_rotations),
-            "oc1": make(ObliqueClassifier1, n_restarts=n_restarts, bias_steps=bias_steps,
-                        min_features_split=min_features_split),
-            "sparse_oc1": make(SparseObliqueClassifier1, n_restarts=n_restarts, bias_steps=bias_steps,
-                               lambda_reg=lambda_reg, threshold_value=threshold_value,
-                               min_features_split=min_features_split),
             "wodt": make(WeightedObliqueDecisionTreeClassifier, max_features=max_features),
-            "co2": make(CO2Classifier, impurity=impurity, segmentor=segmentor,
-                        max_iter_per_node=max_iter_per_node, nu=nu, eta=eta, tol=tol),
             "cart": make(CARTClassifier, impurity=impurity),
             "ridge_cart": make(RidgeCARTClassifier, impurity=impurity, segmentor=segmentor),
+            "oc1": make(ObliqueClassifier1, n_restarts=n_restarts, bias_steps=bias_steps,
+                        min_features_split=min_features_split),
+            "co2": make(CO2Classifier, impurity=impurity, segmentor=segmentor,
+                        max_iter_per_node=max_iter_per_node, nu=nu, eta=eta, tol=tol),
         }
 
     def run(self, auto_export=True, filename="result.csv", tree_dict_filename="result.pkl",

@@ -29,13 +29,13 @@ def convert_tree(model, model_type):
     Raises:
         ValueError: If the provided model_type is unsupported.
     """
-    if model_type in {'hhcart_a', 'hhcart_d', 'sparse_hhcart_d'}:
+    if model_type in {'hhcart_a', 'hhcart_d'}:
         return convert_hhcart(model)
     elif model_type == 'randcart':
         return convert_randcart(model)
     elif model_type == 'co2':
         return convert_co2(model)
-    elif model_type in {'oc1', 'sparse_oc1'}:
+    elif model_type == 'oc1':
         return convert_oc1(model)
     elif model_type == 'wodt':
         return convert_wodt(model)

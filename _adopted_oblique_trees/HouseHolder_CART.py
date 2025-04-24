@@ -1,35 +1,74 @@
-# This file is an adaptation of the original HouseHolder CART implementation by Torsha Majumder.
-# Although the file was originally labeled as "Implementation of HouseHolder CART-A by [Wickramarachchi et al.]",
-# the algorithmic logic did not fully conform to the HHCART(A) methodology described by Wickramarachchi et al. (2015).
-#
-# To ensure consistency with the theoretical framework, the following modifications have been introduced:
-#
-# 1. Two distinct algorithmic variants are now supported:
-#    - HHCartAClassifier (HHCART(A)): This variant evaluates all nonzero eigenvectors from each class's covariance
-#      matrix, constructing a comprehensive set of Householder reflections. This exhaustive search improves split
-#      accuracy, albeit at a higher computational cost.
-#    - HHCartDClassifier (HHCART(D)): This variant utilizes only the dominant eigenvector (associated with the largest
-#      eigenvalue) for generating the Householder reflection at each node, resulting in significant speed improvements
-#      with similar performance.
-#
-# 2. The reflection and split selection mechanisms have been refined:
-#    In the A variant, the algorithm iterates over every candidate eigenvector for each class and selects the split that
-#    minimizes the impurity score across all reflections, whereas in the D variant the inner loop is replaced by a
-#    single selection of the dominant eigenvector.
-#
-# 3. The default segmentor is set to use CARTSegmentor, which performs a full CART-style threshold search by evaluating
-#    every valid midpoint between sorted feature values, thereby ensuring an exhaustive and correct split search.
-#
-# The remaining tree-building logic, including node creation, termination conditions, and prediction routines,
-# remains unchanged.
-#
-# These adaptations yield two usable implementations: one that fully adheres to HHCART(A)'s exhaustive split search
-# (HHCartAClassifier), and another (HHCartDClassifier) that reduces runtime by employing only the dominant eigenvector,
-# trading a minor loss in accuracy for greater efficiency.
+"""
+HouseHolder CART (HHCART) – Corrected and Extended Implementation
+-----------------------------------------------------------------
+
+This module provides a revised implementation of the HouseHolder CART (HHCART) algorithm,
+originally described by Wickramarachchi et al. (2015). The version found in the
+"Ensembles of Oblique Decision Trees" package, developed by Torsha Majumder, was labelled
+as HHCART(A), but its internal logic diverged from the formal HHCART(A) methodology.
+Various aspects such as reflection construction, split generation, and selection
+strategies did not align with the original algorithm.
+
+To address these discrepancies, this implementation introduces a series of corrections
+to better reproduce HHCART(A). Additionally, it extends functionality by incorporating
+the HHCART(D) variant, as proposed by Wickramarachchi et al. (2015), which offers a more
+computationally efficient alternative with minimal loss in performance — a valuable
+feature for applications like scenario discovery. Furthermore, optional sparsity has been
+added to HHCART(D) to enhance interpretability by reducing the complexity of decision boundaries.
+
+Key Corrections and Enhancements:
+---------------------------------
+1. Class-Specific Covariance Analysis:
+   - Original: Applied PCA to the full dataset at each node.
+   - Revision: Computes covariance matrices per class at each node to capture
+     within-class geometric structure, followed by eigen decomposition to identify
+     class-specific reflection directions.
+
+2. Exhaustive Reflection Search (HHCART(A)):
+   - Original: Used only the first principal component as the reflection axis.
+   - Revision: Iterates over all non-zero eigenvectors from each class, constructing
+     Householder reflections for each to explore a richer set of oblique split orientations.
+
+3. Accurate Split Generation – CARTSegmentor:
+   - Original: Employed a MeanSegmentor, evaluating a single threshold per feature.
+   - Revision: Introduced CARTSegmentor, performing a full threshold search by
+     evaluating all midpoints between sorted feature values, consistent with CART methodology.
+
+4. Global Split Selection Strategy:
+   - Original: Accepted the first split meeting a basic impurity criterion.
+   - Revision: Implements a global optimisation, selecting the split and reflection
+     pair that minimises impurity across all candidates.
+
+5. Correct Oblique Boundary Construction:
+   - Original: Derived decision hyperplanes directly from PCA components.
+   - Revision: Constructs the oblique decision boundary using the optimal column from
+     the Householder reflection matrix, ensuring alignment between axis-aligned splits
+     in reflected space and oblique boundaries in the original feature space.
+
+6. Optional Sparsity Control for HHCART(D) (Extension):
+   - Extension: Integrated SparsePCA into HHCART(D). By configuring the `alpha` parameter,
+     users can induce sparsity in the dominant eigenvector, simplifying decision boundaries
+     without significantly compromising performance. When `alpha=0`, the algorithm defaults
+     to standard dense behaviour.
+
+Algorithm Variants:
+-------------------
+- `HHCartAClassifier` (HHCART(A)):
+   - Performs exhaustive search across all class-specific eigenvectors.
+   - Focuses on maximising split accuracy through comprehensive reflection evaluation.
+   - Operates in dense mode only (no sparsity).
+
+- `HHCartDClassifier` (HHCART(D)):
+   - Selects only the dominant eigenvector per class for efficiency.
+   - Supports sparse reflections via SparsePCA (`alpha > 0`), enhancing interpretability
+     by reducing active features in splits.
+"""
+
 
 import numpy as np
 from copy import deepcopy
 from scipy.linalg import norm
+from sklearn.decomposition import SparsePCA
 from sklearn.base import BaseEstimator, ClassifierMixin
 
 # Use the CARTSegmentor from the package for full threshold search
@@ -37,14 +76,15 @@ from _adopted_oblique_trees.segmentor import CARTSegmentor
 
 
 class HHCARTNode:
-    def __init__(self, depth, labels, **kwargs):  # Defining the node structure
-        self.depth = depth                    # Depth of the node
-        self.labels = labels                  # Label associated with the node
-        self.is_leaf = kwargs.get('is_leaf', False)  # 'is_leaf' is set to 'False' for internal nodes
-        self._split_rules = kwargs.get('split_rules', None)  # splitting rule (tuple: (feature index, threshold))
-        self._weights = kwargs.get('weights', None)  # weight vector (oblique hyperplane)
-        self._left_child = kwargs.get('left_child', None)  # left child node
-        self._right_child = kwargs.get('right_child', None)  # right child node
+    def __init__(self, depth, labels, **kwargs):                # Defining the node structure
+        self.depth = depth                                      # Depth of the node
+        self.labels = labels                                    # Label associated with the node
+        self.is_leaf = kwargs.get('is_leaf', False)             # 'is_leaf' is set to 'False' for internal nodes
+        self._split_rules = kwargs.get('split_rules', None)     # splitting rule (tuple: (feature index, threshold))
+        self._weights = kwargs.get('weights', None)             # weight vector (oblique hyperplane)
+        self._left_child = kwargs.get('left_child', None)       # left child node
+        self._right_child = kwargs.get('right_child', None)     # right child node
+        self._alpha = kwargs.get('alpha', 0.0)
         self._label = None
 
         if not self.is_leaf:
@@ -248,10 +288,17 @@ class HHCartDClassifier(ClassifierMixin, HouseHolderCART):
             X_c = X[y == c]
             if X_c.shape[0] <= 1:
                 continue
-            S = np.cov(X_c, rowvar=False)
-            eigvals, eigvecs = np.linalg.eigh(S)  # ascending order
-            # Use only the dominant eigenvector: the one associated with the largest eigenvalue.
-            mu = eigvecs[:, -1]
+
+            # Use SparsePCA to find the dominant eigenvector
+            if self._alpha > 0:
+                spca = SparsePCA(n_components=1, alpha=self._alpha, random_state=self.random_state)
+                spca.fit(X_c)
+                mu = spca.components_[0]
+            else:
+                S = np.cov(X_c, rowvar=False)
+                eigvals, eigvecs = np.linalg.eigh(S)
+                mu = eigvecs[:, -1]
+
             if np.allclose(mu, 0):
                 continue
 
@@ -299,7 +346,7 @@ class HHCartDClassifier(ClassifierMixin, HouseHolderCART):
         return node
 
     def __init__(self, impurity, segmentor=CARTSegmentor(), max_depth=50, min_samples_split=2,
-                 random_state=None, **kwargs):
-        # Call the parent constructor; the _generate_node method has been overridden.
+                 random_state=None, alpha=0.0, **kwargs):
         super().__init__(impurity=impurity, segmentor=segmentor, max_depth=max_depth,
-                         min_samples_split=min_samples_split, random_state=random_state, **kwargs)
+                         min_samples_split=min_samples_split, random_state=random_state,
+                         alpha=alpha, **kwargs)
