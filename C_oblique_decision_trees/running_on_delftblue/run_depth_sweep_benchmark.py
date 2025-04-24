@@ -34,6 +34,7 @@ def main():
     print(f"OMP_NUM_THREADS set to: {os.environ['OMP_NUM_THREADS']}")
 
     parser = argparse.ArgumentParser(description="Run depth sweep benchmark on a dataset.")
+
     parser.add_argument("--dataset", type=str, required=True, help="Dataset prefix to run")
     parser.add_argument("--folder-name", type=str, required=True, help="Main folder inside DATA_DIR")
     parser.add_argument("--subfolder-name", type=str, required=True, help="Subfolder path within folder-name")
@@ -44,6 +45,11 @@ def main():
     parser.add_argument("--max-depth", type=int, default=12, help="Maximum tree depth")
     parser.add_argument("--output-subfolder", type=str, default="delftblue", help="Output subfolder")
     parser.add_argument("--output-filename", type=str, required=True, help="Output CSV filename")
+
+    # Sparsity-related parameters
+    parser.add_argument('--lambda_reg', type=float, default=0.0, help='L1 regularisation strength for OC1')
+    parser.add_argument('--threshold_value', type=float, default=0.0, help='Hard thresholding value for OC1 sparsity')
+    parser.add_argument('--alpha', type=float, default=0.0, help='SparsePCA alpha parameter for HHCART(D)')
 
     args = parser.parse_args()
     print(f"Arguments: {args}")
@@ -62,7 +68,8 @@ def main():
     registry = {args.model: DepthSweepRunner.build_registry(random_state=seed)[args.model]}
 
     print("Running depth sweep benchmark...")
-    runner = DepthSweepRunner(datasets=filtered_data, max_depth=args.max_depth)
+    runner = DepthSweepRunner(datasets=filtered_data, max_depth=args.max_depth,
+                              lambda_reg=args.lambda_reg, threshold_value=args.threshold_value, alpha=args.alpha)
     runner.run(
         auto_export=True,
         filename=args.output_filename,
@@ -73,7 +80,7 @@ def main():
         return_trees=True,
         save_tree_dict=False,
         batch_mode=True,
-        output_subfolder=args.output_subfolder
+        output_subfolder=args.output_subfolder,
     )
 
     elapsed = time.time() - start_time

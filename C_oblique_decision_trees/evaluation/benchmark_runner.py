@@ -22,7 +22,6 @@ from _adopted_oblique_trees.Oblique_Classifier_1 import ObliqueClassifier1
 from _adopted_oblique_trees.WODT import WeightedObliqueDecisionTreeClassifier
 from _adopted_oblique_trees.RidgeCART import RidgeCARTClassifier
 from _adopted_oblique_trees.CART import CARTClassifier
-
 from _adopted_oblique_trees.segmentor import CARTSegmentor, MeanSegmentor
 from _adopted_oblique_trees.split_criteria import gini
 
@@ -35,7 +34,7 @@ class DepthSweepRunner:
     Grows trees progressively from depth 0 to the maximum depth and evaluates them.
     """
 
-    def __init__(self, datasets, max_depth=10):
+    def __init__(self, datasets, max_depth=10, lambda_reg=0.0, threshold_value=0.0, alpha=0.0):
         """
         Initialize the depth sweep runner.
 
@@ -43,6 +42,9 @@ class DepthSweepRunner:
             datasets (dict or list): A dict mapping dataset names to (X, y) tuples
                                       or a list of (X, y) tuples.
             max_depth (int): Maximum tree depth to test.
+            lambda_reg (float): Regularization parameter for OC1 is a penalty supposed to cause sparsity.
+            threshold_value (float): Threshold for OC1 regularization if smaller w set to 0.
+            alpha (float): Sparsity control for HHCART(D) sets strictness of sparce PCA method.
         """
         if isinstance(datasets, dict):
             self.datasets = list(datasets.items())
@@ -50,6 +52,9 @@ class DepthSweepRunner:
             self.datasets = [("dataset_" + str(i), ds) for i, ds in enumerate(datasets)]
 
         self.max_depth = max_depth
+        self.lambda_reg = lambda_reg
+        self.threshold_value = threshold_value
+        self.alpha = alpha
         self.results = []
 
     @staticmethod
@@ -141,13 +146,13 @@ class DepthSweepRunner:
 
         return {
             "hhcart_a": make(HHCartAClassifier, impurity=impurity, segmentor=segmentor, tau=tau),
-            "hhcart_d": make(HHCartDClassifier, impurity=impurity, segmentor=segmentor, tau=tau),
+            "hhcart_d": make(HHCartDClassifier, impurity=impurity, segmentor=segmentor, tau=tau, alpha=alpha),
             "randcart": make(RandCARTClassifier, impurity=impurity, segmentor=CARTSegmentor(), n_rotations=n_rotations),
             "wodt": make(WeightedObliqueDecisionTreeClassifier, max_features=max_features),
             "cart": make(CARTClassifier, impurity=impurity),
             "ridge_cart": make(RidgeCARTClassifier, impurity=impurity, segmentor=segmentor),
             "oc1": make(ObliqueClassifier1, n_restarts=n_restarts, bias_steps=bias_steps,
-                        min_features_split=min_features_split),
+                        min_features_split=min_features_split, lambda_reg=lambda_reg, threshold_value=threshold_value),
             "co2": make(CO2Classifier, impurity=impurity, segmentor=segmentor,
                         max_iter_per_node=max_iter_per_node, nu=nu, eta=eta, tol=tol),
         }
@@ -181,7 +186,9 @@ class DepthSweepRunner:
         run_type = "batch" if batch_mode else "single"
 
         if registry is None:
-            registry = self.build_registry(random_state=fixed_seed or 42, n_restarts=n_restarts, bias_steps=bias_steps)
+            registry = self.build_registry(random_state=fixed_seed or 42, n_restarts=n_restarts, bias_steps=bias_steps,
+                                           lambda_reg=self.lambda_reg, threshold_value=self.threshold_value,
+                                           alpha=self.alpha)
 
         trees_dict = {}
         total_loops = len(seeds) * len(registry) * len(self.datasets) * (self.max_depth + 1)

@@ -1,7 +1,7 @@
 import os
 
 INPUT_FILE = "missing_jobs.txt"
-OUTPUT_SCRIPT = "run_dimensionality_array.sh"
+OUTPUT_SCRIPT = "run_sparsity_array.sh"
 
 # Load all lines
 with open(INPUT_FILE, "r") as f:
@@ -71,7 +71,7 @@ print(f"[✓] SLURM array rerun script saved to: {OUTPUT_SCRIPT}")
 # import os
 #
 # INPUT_FILE = "missing_jobs.txt"
-# OUTPUT_SCRIPT = "run_dimensionality_array.sh"
+# OUTPUT_SCRIPT = "run_sparsity_array.sh"
 #
 # # Load all lines
 # with open(INPUT_FILE, "r") as f:
