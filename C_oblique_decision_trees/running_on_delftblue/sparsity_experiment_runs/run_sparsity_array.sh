@@ -13,6 +13,8 @@ module load py-pip
 
 export OMP_NUM_THREADS=1
 
+mkdir -p logs
+
 MAX_PARALLEL=28
 
 while read -r JOB; do
