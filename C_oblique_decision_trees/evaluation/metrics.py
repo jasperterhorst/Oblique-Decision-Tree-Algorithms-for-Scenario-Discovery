@@ -163,27 +163,24 @@ def gini_coefficient(values):
 # =============================================================================
 def count_total_constrained_dimensions(tree):
     """
-    Count the total number of unique dimensions used (non-zero weights)
-    across all decision nodes in the tree.
+    Count the number of unique features (dimensions) used across all splits in the decision tree.
 
     Parameters:
-        tree: Trained decision tree with nodes that may have `weights`.
+        tree (DecisionTree): The decision tree object.
 
     Returns:
-        int: Total number of unique feature indices that are used.
+        int: Number of distinct non-zero feature indices used in decision nodes.
     """
     constrained_dims = set()
     nodes_to_visit = [tree.root]
 
     while nodes_to_visit:
         node = nodes_to_visit.pop()
-        if hasattr(node, 'weights') and node.weights is not None:
+        if isinstance(node, DecisionNode) and node.weights.size > 0:
             used_dims = np.flatnonzero(node.weights)
             constrained_dims.update(used_dims)
 
-        # Recurse into children
-        if hasattr(node, 'children') and isinstance(node.children, list):
-            nodes_to_visit.extend(node.children)
+        nodes_to_visit.extend(node.children)
 
     return len(constrained_dims)
 

@@ -84,7 +84,7 @@ def plot_benchmark_metrics(df, metric="accuracy", xlabel="Depth", ylabel=None,
     - Saves the figure as a PDF to DEPTH_SWEEP_BATCH_RESULTS_OUTPUTS_DIR.
     """
     if group_by is None:
-        group_by = ["algorithm", "dataset"]
+        group_by=["algorithm", "shape", "label_noise"]
 
     if metric not in df.columns:
         print(f"Metric '{metric}' not found in DataFrame columns.")

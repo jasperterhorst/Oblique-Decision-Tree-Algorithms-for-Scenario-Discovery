@@ -18,6 +18,22 @@ from src.config.colors import (
 # Helper Function: Automatic Text Wrapping for Notes
 # --------------------------------------------------------
 
+# def format_note_text(note, dimension="2D"):
+#     max_length = 65 if dimension == "2D" else 60
+#     words = note.split()
+#     lines = []
+#     current_line = ""
+#     for word in words:
+#         if len(current_line) + len(word) + 1 <= max_length:
+#             current_line += " " + word if current_line else word
+#         else:
+#             lines.append(current_line)
+#             current_line = word
+#     if current_line:
+#         lines.append(current_line)
+#     return "\n".join(lines)
+
+
 def format_note_text(note, dimension="2D"):
     max_length = 65 if dimension == "2D" else 60
     words = note.split()
@@ -29,21 +45,27 @@ def format_note_text(note, dimension="2D"):
         else:
             lines.append(current_line)
             current_line = word
-    if current_line:
+        if len(lines) == 3:
+            break  # Stop at 3 lines
+    if current_line and len(lines) < 3:
         lines.append(current_line)
+
+    # Pad with empty lines if less than 3
+    while len(lines) < 3:
+        lines.append(" ")
+
     return "\n".join(lines)
 
 
 # --------------------------------------------------------
 # 2D Plotting Function
 # --------------------------------------------------------
-
 def plot_2d_shape(samples, y, title="2D Shape", save_path=None, note=""):
     plt.rcParams['text.usetex'] = False
     plt.rcParams['font.family'] = 'serif'
     plt.rcParams['font.serif'] = ['Times New Roman']
 
-    fig, ax = plt.subplots(figsize=(6,6))
+    fig, ax = plt.subplots(figsize=(6, 6))
 
     ax.scatter(samples[y == 0, 0], samples[y == 0, 1], c=PRIMARY_LIGHT,
                label='Not of Interest', alpha=0.2)

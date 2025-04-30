@@ -48,8 +48,8 @@ def load_shape_dataset(folder_name="shapes", subfolder_name=None):
             prefix = key[:-2]
             key_y = prefix + "_y"
             if key_y in files:
-                X = files[key].values
-                y = files[key_y].values.squeeze()
+                X = files[key]  # Keep as DataFrame to retain column names
+                y = files[key_y].values.squeeze()  # Labels as NumPy array
                 datasets[prefix] = (X, y)
 
     print(f"\nLoaded {len(datasets)} paired datasets: {list(datasets.keys())}\n")

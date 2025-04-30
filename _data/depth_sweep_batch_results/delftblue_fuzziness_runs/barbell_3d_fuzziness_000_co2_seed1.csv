@@ -1,5 +1,0 @@
-seed,dataset,data_dim,algorithm,depth,accuracy,coverage,density,f_score,gini_coverage_all_leaves,gini_density_all_leaves,splits,leaves,runtime
-8,barbell_3d_fuzziness_000,3,co2,0,0.8604,0.0,,,0.0,0.0,0,1,0.0002362648956477642
-8,barbell_3d_fuzziness_000,3,co2,1,0.8604,0.0,,,0.48424068767908324,0.3882494812208832,1,2,4.230723041109741
-8,barbell_3d_fuzziness_000,3,co2,2,0.8604,0.0,,,0.7421203438395416,0.6902507939930991,3,4,4.183148558717221
-8,barbell_3d_fuzziness_000,3,co2,3,0.8604,0.0,,,0.8276026743075451,0.6833769747870395,5,6,4.323132744990289

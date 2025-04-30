@@ -34,7 +34,7 @@ class DepthSweepRunner:
     Grows trees progressively from depth 0 to the maximum depth and evaluates them.
     """
 
-    def __init__(self, datasets, max_depth=10, lambda_reg=0.0, threshold_value=0.0, alpha=0.0):
+    def __init__(self, datasets, max_depth=10):
         """
         Initialize the depth sweep runner.
 
@@ -42,9 +42,6 @@ class DepthSweepRunner:
             datasets (dict or list): A dict mapping dataset names to (X, y) tuples
                                       or a list of (X, y) tuples.
             max_depth (int): Maximum tree depth to test.
-            lambda_reg (float): Regularization parameter for OC1 is a penalty supposed to cause sparsity.
-            threshold_value (float): Threshold for OC1 regularization if smaller w set to 0.
-            alpha (float): Sparsity control for HHCART(D) sets strictness of sparce PCA method.
         """
         if isinstance(datasets, dict):
             self.datasets = list(datasets.items())
@@ -52,16 +49,13 @@ class DepthSweepRunner:
             self.datasets = [("dataset_" + str(i), ds) for i, ds in enumerate(datasets)]
 
         self.max_depth = max_depth
-        self.lambda_reg = lambda_reg
-        self.threshold_value = threshold_value
-        self.alpha = alpha
         self.results = []
 
     @staticmethod
     def build_registry(
             random_state=None, impurity=gini, segmentor=CARTSegmentor(), n_restarts=20, bias_steps=20,
             max_iter_per_node=10, tau=1e-6, nu=1.0, eta=0.01, tol=1e-3, n_rotations=1, max_features='all',
-            min_features_split=1, min_samples_split=2, lambda_reg=0.0, threshold_value=0.0, alpha=0.0
+            min_features_split=1, min_samples_split=2
     ):
         """
         Constructs a registry of oblique decision tree classifiers, each wrapped in a lambda
@@ -86,7 +80,7 @@ class DepthSweepRunner:
                 Defines axis-aligned split search (e.g., CARTSegmentor, MeanSegmentor).
                 Applies to: HHCART variants, CO2, RandCART, RidgeCART.
 
-        # OC1 & Sparse OC1 Hyperparameters
+        # OC1 Hyperparameters
             n_restarts (int, default=20):
                 Number of random restarts (≥ 1) to escape local minima.
 
@@ -96,21 +90,10 @@ class DepthSweepRunner:
             min_features_split (int, default=1):
                 Minimum non-zero coefficients per split. Must be ≥ 1.
 
-            lambda_reg (float, default=0.01):
-                L1 regularisation strength ≥ 0. Higher values increase sparsity. Typical values are in [0.01, 0.1].
-
-            threshold_value (float, default=0.01):
-                Threshold to zero-out small weights post-optimization. Must be ≥ 0.
-
-        # (Sparse) HHCART (A and D) Controls
+        # HHCART (A and D) Controls
             tau (float, default=1e-6):
                 Reflection tolerance. Small positive value to skip near-axis eigenvectors.
                 Applies to: HHCART(A) and HHCART(D).
-
-            alpha (float, default=1.0):
-                SparsePCA sparsity control ≥ 0. Higher values yield sparser components. For many datasets values
-                [0.1, 5.0] are tested.
-                Applies to: HHCART(D).
 
         # CO2-Specific Hyperparameters
             max_iter_per_node (int, default=10):
@@ -146,13 +129,13 @@ class DepthSweepRunner:
 
         return {
             "hhcart_a": make(HHCartAClassifier, impurity=impurity, segmentor=segmentor, tau=tau),
-            "hhcart_d": make(HHCartDClassifier, impurity=impurity, segmentor=segmentor, tau=tau, alpha=alpha),
+            "hhcart_d": make(HHCartDClassifier, impurity=impurity, segmentor=segmentor, tau=tau),
             "randcart": make(RandCARTClassifier, impurity=impurity, segmentor=CARTSegmentor(), n_rotations=n_rotations),
             "wodt": make(WeightedObliqueDecisionTreeClassifier, max_features=max_features),
             "cart": make(CARTClassifier, impurity=impurity),
             "ridge_cart": make(RidgeCARTClassifier, impurity=impurity, segmentor=segmentor),
             "oc1": make(ObliqueClassifier1, n_restarts=n_restarts, bias_steps=bias_steps,
-                        min_features_split=min_features_split, lambda_reg=lambda_reg, threshold_value=threshold_value),
+                        min_features_split=min_features_split),
             "co2": make(CO2Classifier, impurity=impurity, segmentor=segmentor,
                         max_iter_per_node=max_iter_per_node, nu=nu, eta=eta, tol=tol),
         }
@@ -200,9 +183,12 @@ class DepthSweepRunner:
 
             for model_name, constructor in registry.items():
                 for dataset_name, (X, y) in self.datasets:
+                    # Ensure X is a NumPy array
+                    X_np = X.values if isinstance(X, pd.DataFrame) else X
+
                     # Step 1: Get true maximum depth after fitting full tree once
                     model_full = constructor(self.max_depth)
-                    model_full.fit(X, y)
+                    model_full.fit(X_np, y)
                     full_tree = convert_tree(model_full, model_type=model_name)
                     true_max_depth = full_tree.max_depth
 
@@ -210,19 +196,30 @@ class DepthSweepRunner:
                     for depth in range(0, true_max_depth + 1):
                         model_at_depth = constructor(depth)
                         fit_start = time.perf_counter()
-                        model_at_depth.fit(X, y)
+                        model_at_depth.fit(X_np, y)
                         fit_end = time.perf_counter()
 
                         tree_at_depth = convert_tree(model_at_depth, model_type=model_name)
-                        metrics = evaluate_tree(tree_at_depth, X, y)
+                        metrics = evaluate_tree(tree_at_depth, X_np, y)  # Use X_np here
 
-                        metrics["runtime"] = fit_end - fit_start
+                        # Parse shape and label noise
+                        shape_type = dataset_name.split("_fuzziness")[0]
+                        try:
+                            fuzziness_str = dataset_name.split("_fuzziness_")[1].split("_")[0]
+                            label_noise = float(fuzziness_str) / 1000  # Assuming naming like fuzziness_003
+                        except IndexError:
+                            label_noise = 0.0  # Default if not present
+
                         metrics.update({
+                            "shape": shape_type,
+                            "label_noise": label_noise,
+                            "n_samples": X.shape[0],
+                            "data_dim": X.shape[1],
                             "seed": seed,
                             "dataset": dataset_name,
-                            "data_dim": X.shape[1],
                             "algorithm": model_name,
-                            "depth": depth
+                            "depth": depth,
+                            "runtime": fit_end - fit_start,
                         })
 
                         trees_dict.setdefault((model_name, dataset_name, seed), {})[depth] = tree_at_depth
@@ -233,8 +230,8 @@ class DepthSweepRunner:
 
         # Standard output ordering
         if auto_export:
-
-            desired_cols = [
+            base_cols = [
+                "shape", "label_noise", "n_samples",
                 "seed", "dataset", "data_dim", "algorithm", "depth",
                 "accuracy", "coverage", "density", "f_score",
                 "gini_coverage_all_leaves", "gini_density_all_leaves",
@@ -243,7 +240,8 @@ class DepthSweepRunner:
                 "runtime"
             ]
 
-            df = df[[col for col in desired_cols if col in df.columns]]
+            df = df[[col for col in base_cols if col in df.columns]]
+
             save_depth_sweep_df(df, filename=filename, run_type=run_type, subdir=output_subfolder)
 
         if return_trees and save_tree_dict:

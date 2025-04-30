@@ -46,11 +46,6 @@ def main():
     parser.add_argument("--output-subfolder", type=str, default="delftblue", help="Output subfolder")
     parser.add_argument("--output-filename", type=str, required=True, help="Output CSV filename")
 
-    # Sparsity-related parameters
-    parser.add_argument('--lambda_reg', type=float, default=0.0, help='L1 regularisation strength for OC1')
-    parser.add_argument('--threshold_value', type=float, default=0.0, help='Hard thresholding value for OC1 sparsity')
-    parser.add_argument('--alpha', type=float, default=0.0, help='SparsePCA alpha parameter for HHCART(D)')
-
     args = parser.parse_args()
     print(f"Arguments: {args}")
 
@@ -68,8 +63,8 @@ def main():
     registry = {args.model: DepthSweepRunner.build_registry(random_state=seed)[args.model]}
 
     print("Running depth sweep benchmark...")
-    runner = DepthSweepRunner(datasets=filtered_data, max_depth=args.max_depth,
-                              lambda_reg=args.lambda_reg, threshold_value=args.threshold_value, alpha=args.alpha)
+    runner = DepthSweepRunner(datasets=filtered_data, max_depth=args.max_depth)
+
     runner.run(
         auto_export=True,
         filename=args.output_filename,
