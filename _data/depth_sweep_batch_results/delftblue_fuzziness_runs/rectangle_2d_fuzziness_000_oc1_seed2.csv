@@ -1,6 +1,0 @@
-shape,label_noise,n_samples,seed,dataset,data_dim,algorithm,depth,accuracy,coverage,density,f_score,gini_coverage_all_leaves,gini_density_all_leaves,splits,leaves,total_active_feature_count,avg_active_feature_count,lambda_reg,threshold_value,alpha,runtime
-rectangle_2d,0.0,10000,11,rectangle_2d_fuzziness_000,2,oc1,0,0.7506,0.0,,,0.0,0.0,0,1,0,0.0,0.0,0.0,,0.000497694592922926
-rectangle_2d,0.0,10000,11,rectangle_2d_fuzziness_000,2,oc1,1,0.7506,0.0,,,0.49719326383319973,0.48969525604775366,1,2,2,0.0,0.0,0.0,,48.287479230202734
-rectangle_2d,0.0,10000,11,rectangle_2d_fuzziness_000,2,oc1,2,0.7506,0.0,,,0.6626570435712376,0.6558651771497599,2,3,2,2.0,0.0,0.0,,78.45900425920263
-rectangle_2d,0.0,10000,11,rectangle_2d_fuzziness_000,2,oc1,3,0.8342,0.995589414595028,0.6012106537530266,0.7496980676328502,0.7469927826784282,0.7441687993735986,3,4,2,2.0,0.0,0.0,,99.00338528724387
-rectangle_2d,0.0,10000,11,rectangle_2d_fuzziness_000,2,oc1,4,0.9946,0.9947874899759422,0.9837430610626486,0.9892344497607656,0.7966319165998397,0.7956357597568704,4,5,2,2.0,0.0,0.0,,109.71836552210152

@@ -1,17 +1,17 @@
 from helpers_dataset_conversion import add_noise_dimensions, downsample_dataset, save_dataset
 from src.load_shapes import load_shape_dataset
 
-# 1. Load all datasets from fuzziness_003
-all_datasets = load_shape_dataset(folder_name="shapes", subfolder_name="fuzziness_003")
+# 1. Load all datasets from label_noise_003
+all_datasets = load_shape_dataset(folder_name="shapes", subfolder_name="label_noise_003")
 
 # 2. Filter for target shapes
-target_shapes = ['radial_segment_3d_fuzziness_003']
+target_shapes = ['radial_segment_3d_label_noise_003']
 
 for shape_key in target_shapes:
     X, y = all_datasets[shape_key]
 
-    # Extract base shape name without the fuzziness suffix for cleaner saving
-    base_shape_name = shape_key.replace('_fuzziness_003', '')
+    # Extract base shape name without the label_noise suffix for cleaner saving
+    base_shape_name = shape_key.replace('_label_noise_003', '')
 
     # === Noise Dimensionality Test ===
     for num_noise_dims in [0, 2, 7, 12, 17, 22, 27]:  # Number of noise dimensions to ADD

@@ -20,8 +20,8 @@ def convert_tree(model, model_type):
     Parameters:
         model: The trained model instance.
         model_type (str): The type identifier for the model. Accepted values:
-                          'hhcart_a', 'hhcart_d', 'sparse_hhcart_d', 'randcart',
-                          'co2', 'oc1', 'sparse_oc1', 'wodt', 'ridge_cart', 'cart'.
+                          'hhcart_a', 'hhcart_d', 'randcart', 'co2', 'oc1',
+                          'wodt', 'ridge_cart', 'cart'.
 
     Returns:
         DecisionTree: The converted decision tree.

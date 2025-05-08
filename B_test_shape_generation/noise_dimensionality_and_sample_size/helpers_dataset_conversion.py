@@ -85,47 +85,7 @@ def downsample_dataset(X, y, target_samples):
     return X_sampled, y_sampled
 
 
-# def save_dataset(X, y, test_type, shape_name, fuzziness="003", samples=None, dim=None):
-#     """
-#     Save dataset (X and y) into the appropriate folder with structured naming.
-#
-#     Parameters:
-#     -----------
-#     X : pd.DataFrame
-#     y : np.ndarray
-#     test_type : str
-#         Either 'noise_dimensionality' or 'sample_size'.
-#     shape_name : str
-#         Shape identifier, e.g., 'radial_segment_2d'.
-#     fuzziness : str
-#         Fuzziness level as string, e.g., '003'.
-#     samples : int
-#         Number of samples.
-#     dim : int or None
-#         Total number of dimensions (only for noise_dimensionality test).
-#     """
-#     if test_type == 'noise_dimensionality':
-#         base_dir = os.path.join(DATA_DIR, "shapes_noise_dimensionality_tests", f"fuzziness_{fuzziness}", shape_name)
-#         filename = f"{shape_name}_fuzziness_{fuzziness}_{samples}_samples_dim_{str(dim).zfill(2)}.csv"
-#     elif test_type == 'sample_size':
-#         base_dir = os.path.join(DATA_DIR, "shapes_sample_size_tests", f"fuzziness_{fuzziness}", shape_name)
-#         filename = f"{shape_name}_fuzziness_{fuzziness}_{samples}_samples.csv"
-#     else:
-#         raise ValueError("Invalid test_type. Use 'noise_dimensionality' or 'sample_size'.")
-#
-#     os.makedirs(base_dir, exist_ok=True)
-#
-#     # Save X and y as separate CSVs for compatibility
-#     df_x = pd.DataFrame(X)  # Ensure X is a DataFrame
-#     df_y = pd.DataFrame(y, columns=['label'])
-#
-#     x_path = os.path.join(base_dir, filename.replace(".csv", "_x.csv"))
-#     y_path = os.path.join(base_dir, filename.replace(".csv", "_y.csv"))
-#
-#     df_x.to_csv
-
-
-def save_dataset(X, y, test_type, shape_name, fuzziness="003", samples=None, dim=None):
+def save_dataset(X, y, test_type, shape_name, label_noise="003", samples=None, dim=None):
     """
     Save dataset (X and y) into the appropriate folder with structured naming.
 
@@ -137,19 +97,19 @@ def save_dataset(X, y, test_type, shape_name, fuzziness="003", samples=None, dim
         Either 'noise_dimensionality' or 'sample_size'.
     shape_name : str
         Shape identifier, e.g., 'radial_segment_2d'.
-    fuzziness : str
-        Fuzziness level as string, e.g., '003'.
+    label_noise : str
+        Label Noise value as string, e.g., '003'.
     samples : int
         Number of samples.
     dim : int or None
         Total number of dimensions (only for noise_dimensionality test).
     """
     if test_type == 'noise_dimensionality':
-        base_dir = os.path.join(DATA_DIR, "shapes_noise_dimensionality_tests", f"fuzziness_{fuzziness}", shape_name)
-        filename = f"{shape_name}_fuzziness_{fuzziness}_{samples}_samples_dim_{str(dim).zfill(2)}.csv"
+        base_dir = os.path.join(DATA_DIR, "shapes_noise_dimensionality_tests", f"label_noise_{label_noise}", shape_name)
+        filename = f"{shape_name}_label_noise_{label_noise}_{samples}_samples_dim_{str(dim).zfill(2)}.csv"
     elif test_type == 'sample_size':
-        base_dir = os.path.join(DATA_DIR, "shapes_sample_size_tests", f"fuzziness_{fuzziness}", shape_name)
-        filename = f"{shape_name}_fuzziness_{fuzziness}_{samples}_samples.csv"
+        base_dir = os.path.join(DATA_DIR, "shapes_sample_size_tests", f"label_noise_{label_noise}", shape_name)
+        filename = f"{shape_name}_label_noise_{label_noise}_{samples}_samples.csv"
     else:
         raise ValueError("Invalid test_type. Use 'noise_dimensionality' or 'sample_size'.")
 

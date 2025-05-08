@@ -26,36 +26,72 @@ def create_initial_polygon(x_min, x_max, y_min, y_max):
 
 
 def cut_polygon_with_line(polygon, w, b, side):
-    # Create the line representing the hyperplane: w^T x + b = 0
-    x_min, y_min, x_max, y_max = polygon.bounds
-    if not np.isclose(w[1], 0.0):
-        x_vals = np.array([x_min - 1, x_max + 1])
-        y_vals = -(w[0] * x_vals + b) / w[1]
-        line = LineString([(x_vals[0], y_vals[0]), (x_vals[1], y_vals[1])])
-    else:
-        x_split = -b / w[0]
-        y_vals = np.array([y_min - 1, y_max + 1])
-        line = LineString([(x_split, y_vals[0]), (x_split, y_vals[1])])
+    """
+    Splits a polygon using a hyperplane defined by w^T x + b = 0.
 
+    Parameters:
+        polygon (Polygon): The region to split.
+        w (ndarray): Weight vector (normal to hyperplane).
+        b (float): Bias term.
+        side (str): '<' for left/negative side, '>=' for right/positive side.
+
+    Returns:
+        Polygon or None: The portion of the polygon on the specified side.
+    """
+    x_min, y_min, x_max, y_max = polygon.bounds
     try:
-        pieces = split(polygon, line)
-        if len(pieces.geoms) != 2:
-            return None
-        if side == '<':
-            return min(pieces.geoms, key=lambda p: np.dot(p.centroid.coords[0], w) + b)
+        if not np.isclose(w[1], 0.0):
+            x_vals = np.array([x_min - 1, x_max + 1])
+            y_vals = -(w[0] * x_vals + b) / w[1]
+            line = LineString([(x_vals[0], y_vals[0]), (x_vals[1], y_vals[1])])
         else:
-            return max(pieces.geoms, key=lambda p: np.dot(p.centroid.coords[0], w) + b)
+            if np.isclose(w[0], 0.0):
+                print("[!] Both w[0] and w[1] are near zero. Cannot define hyperplane.")
+                return None
+            x_split = -b / w[0]
+            y_vals = np.array([y_min - 1, y_max + 1])
+            line = LineString([(x_split, y_vals[0]), (x_split, y_vals[1])])
+
+        pieces = split(polygon, line)
+
+        if len(pieces.geoms) != 2:
+            print(f"[!] Unexpected number of split pieces ({len(pieces.geoms)})")
+            return None
+
+        # Determine which side to return based on centroid evaluation
+        def signed_distance(geom):
+            return np.dot(geom.centroid.coords[0], w) + b
+
+        left_piece, right_piece = sorted(pieces.geoms, key=signed_distance)
+        return left_piece if side == '<' else right_piece
+
     except Exception as e:
         print(f"[!] Split error: {e}")
         return None
 
 
+# def construct_region_from_constraints(constraints, initial_region):
+#     region = initial_region
+#     for w, b, side in constraints:
+#         region = cut_polygon_with_line(region, w, b, side)
+#         if region is None or region.is_empty:
+#             return None
+#     return region
+
+
 def construct_region_from_constraints(constraints, initial_region):
     region = initial_region
-    for w, b, side in constraints:
+    for i, (w, b, side) in enumerate(constraints):
+        print(f"\n[DEBUG] Constraint {i}: side {side}, norm(w) = {np.linalg.norm(w):.2e}, b = {b:.2f}")
+        print(f"[DEBUG] Region before cut: area = {region.area:.4e}, bounds = {region.bounds}")
         region = cut_polygon_with_line(region, w, b, side)
-        if region is None or region.is_empty:
+        if region is None:
+            print("[!] Region is None after cut.")
             return None
+        if region.is_empty:
+            print("[!] Region became empty.")
+            return None
+        print(f"[DEBUG] Region after cut: area = {region.area:.4e}, bounds = {region.bounds}")
     return region
 
 
@@ -73,15 +109,21 @@ def plot_oblique_splits_clipped(X, y, trees_dict, max_depth, save_name=None, out
     fig, axes = plt.subplots(n_rows, n_cols, figsize=(12, 4 * n_rows))
     axes = axes.flatten()
 
-    x_min, x_max = X[:, 0].min(), X[:, 0].max()
-    y_min, y_max = X[:, 1].min(), X[:, 1].max()
+    # x_min, x_max = X[:, 0].min(), X[:, 0].max()
+    # y_min, y_max = X[:, 1].min(), X[:, 1].max()
+    x_min, x_max = X.iloc[:, 0].min(), X.iloc[:, 0].max()
+    y_min, y_max = X.iloc[:, 1].min(), X.iloc[:, 1].max()
     bounds = (x_min, x_max, y_min, y_max)
 
     scatter_colors = np.where(y == 0, SECONDARY_LIGHT, PRIMARY_LIGHT)
 
     ax = axes[0]
-    ax.scatter(X[:, 0], X[:, 1], c=scatter_colors, s=5)
-    beautify_subplot(ax, title="Sampled Data Points", xlabel="Feature 1", ylabel="Feature 2")
+    ax.scatter(X.iloc[:, 0], X.iloc[:, 1], c=scatter_colors, s=5)
+    beautify_subplot(ax,
+                     title="Sampled Data Points",
+                     xlabel=X.columns[0],
+                     ylabel=X.columns[1]
+                     )
     ax.set_xlim(x_min, x_max)
     ax.set_ylim(y_min, y_max)
 
@@ -95,22 +137,29 @@ def plot_oblique_splits_clipped(X, y, trees_dict, max_depth, save_name=None, out
             print(f"[!] Invalid region at depth {depth}")
             return
 
-        # Plot the clipped line
-        if not np.isclose(w[1], 0.0):
-            x_vals = np.linspace(x_min - 2, x_max + 2, 2)
-            y_vals = -(w[0] * x_vals + b) / w[1]
-            line_seg = LineString([(x_vals[0], y_vals[0]), (x_vals[1], y_vals[1])])
-        else:
-            x_split = -b / w[0]
-            y_vals = np.linspace(y_min - 2, y_max + 2, 2)
-            line_seg = LineString([(x_split, y_vals[0]), (x_split, y_vals[1])])
+        # Compute and plot the clipped split line
+        try:
+            if not np.isclose(w[1], 0.0):
+                x_vals = np.linspace(x_min - 2, x_max + 2, 2)
+                y_vals = -(w[0] * x_vals + b) / w[1]
+                line_seg = LineString([(x_vals[0], y_vals[0]), (x_vals[1], y_vals[1])])
+            else:
+                if np.isclose(w[0], 0.0):
+                    print(f"[!] Cannot plot vertical split at depth {depth} – zero weights.")
+                    return
+                x_split = -b / w[0]
+                y_vals = np.linspace(y_min - 2, y_max + 2, 2)
+                line_seg = LineString([(x_split, y_vals[0]), (x_split, y_vals[1])])
 
-        clipped = region.intersection(line_seg)
-        if not clipped.is_empty and hasattr(clipped, "xy"):
-            x, y = clipped.xy
-            ax.plot(x, y, 'k--', linewidth=1)
-        else:
-            print(f"[!] No clipped segment at depth {depth}")
+            clipped = region.intersection(line_seg)
+            if not clipped.is_empty and hasattr(clipped, "xy"):
+                x, y = clipped.xy
+                ax.plot(x, y, 'k--', linewidth=1)
+            else:
+                print(f"[!] No clipped segment at depth {depth}")
+        except Exception as e:
+            print(f"[!] Line plotting error at depth {depth}: {e}")
+            return
 
         # Recurse with constraints
         if len(node.children) > 0:
@@ -128,7 +177,7 @@ def plot_oblique_splits_clipped(X, y, trees_dict, max_depth, save_name=None, out
             continue
 
         ax = axes[depth]
-        ax.scatter(X[:, 0], X[:, 1], c=scatter_colors, s=5, alpha=0.6)
+        ax.scatter(X.iloc[:, 0], X.iloc[:, 1], c=scatter_colors, s=5, alpha=0.6)
 
         initial_constraints = []
         plot_split_recursive(pruned_tree.root, initial_constraints, ax, 0)
@@ -252,15 +301,21 @@ def plot_decision_regions_from_dict(X, y, trees_dict, max_depth, save_name=None,
     fig, axes = plt.subplots(n_rows, n_cols, figsize=(12, 4 * n_rows))
     axes = axes.flatten()
 
-    x_min, x_max = X[:, 0].min(), X[:, 0].max()
-    y_min, y_max = X[:, 1].min(), X[:, 1].max()
+    # x_min, x_max = X[:, 0].min(), X[:, 0].max()
+    # y_min, y_max = X[:, 1].min(), X[:, 1].max()
+    x_min, x_max = X.iloc[:, 0].min(), X.iloc[:, 0].max()
+    y_min, y_max = X.iloc[:, 1].min(), X.iloc[:, 1].max()
     h = 0.01
     xx, yy = np.meshgrid(np.arange(x_min, x_max, h), np.arange(y_min, y_max, h))
 
     ax = axes[0]
     scatter_colors = np.where(y == 0, SECONDARY_LIGHT, PRIMARY_LIGHT)
-    ax.scatter(X[:, 0], X[:, 1], c=scatter_colors, s=5)
-    beautify_subplot(ax, title="Sampled Data Points", xlabel="Feature 1", ylabel="Feature 2")
+    ax.scatter(X.iloc[:, 0], X.iloc[:, 1], c=scatter_colors, s=5)
+    beautify_subplot(ax,
+                     title="Sampled Data Points",
+                     xlabel=X.columns[0],
+                     ylabel=X.columns[1]
+                     )
     ax.set_xlim(x_min, x_max)
     ax.set_ylim(y_min, y_max)
 
@@ -313,7 +368,7 @@ def plot_decision_boundaries(tree, X, y, ax=None, show_data=True, xlim=(-1, 1), 
     ax.set_ylim(*ylim)
 
     if show_data:
-        ax.scatter(X[:, 0], X[:, 1], c=y, cmap='coolwarm', s=20, alpha=0.6)
+        ax.scatter(X.iloc[:, 0], X.iloc[:, 1], c=y, cmap='coolwarm', s=20, alpha=0.6)
 
     x_vals = np.linspace(xlim[0], xlim[1], 500)
 
@@ -358,15 +413,22 @@ def plot_oblique_splits_from_dict(X, y, trees_dict, max_depth, save_name=None, o
     fig, axes = plt.subplots(n_rows, n_cols, figsize=(12, 4 * n_rows))
     axes = axes.flatten()
 
-    x_min, x_max = X[:, 0].min(), X[:, 0].max()
-    y_min, y_max = X[:, 1].min(), X[:, 1].max()
+    # x_min, x_max = X[:, 0].min(), X[:, 0].max()
+    # y_min, y_max = X[:, 1].min(), X[:, 1].max()
+
+    x_min, x_max = X.iloc[:, 0].min(), X.iloc[:, 0].max()
+    y_min, y_max = X.iloc[:, 1].min(), X.iloc[:, 1].max()
 
     scatter_colors = np.where(y == 0, SECONDARY_LIGHT, PRIMARY_LIGHT)
 
     # First panel: show data
     ax = axes[0]
-    ax.scatter(X[:, 0], X[:, 1], c=scatter_colors, s=5)
-    beautify_subplot(ax, title="Sampled Data Points", xlabel="Feature 1", ylabel="Feature 2")
+    ax.scatter(X.iloc[:, 0], X.iloc[:, 1], c=scatter_colors, s=5)
+    beautify_subplot(ax,
+                     title="Sampled Data Points",
+                     xlabel=X.columns[0],
+                     ylabel=X.columns[1]
+                     )
     ax.set_xlim(x_min, x_max)
     ax.set_ylim(y_min, y_max)
 
@@ -381,7 +443,7 @@ def plot_oblique_splits_from_dict(X, y, trees_dict, max_depth, save_name=None, o
             continue
 
         ax = axes[depth]
-        ax.scatter(X[:, 0], X[:, 1], c=scatter_colors, s=5, alpha=0.6)
+        ax.scatter(X.iloc[:, 0], X.iloc[:, 1], c=scatter_colors, s=5, alpha=0.6)
 
         x_vals = np.linspace(x_min, x_max, 500)
 

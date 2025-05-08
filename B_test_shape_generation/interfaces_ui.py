@@ -172,13 +172,13 @@ def create_2d_rectangle_interface(defaults=None, save_dir=None):
             "rotation": 45,
             "center_x1": 0.5,
             "center_x2": 0.5,
-            "fuzziness": 0.0
+            "label_noise": 0.0
         }
     base_name = "rectangle_2d"    # for file naming
     plot_title = "Rectangle 2D"   # for display in plot
     defaults, _, output, suffix_widget = setup_interface(defaults, save_dir, base_name, "2D")
 
-    def update(num_samples, width, height, rotation, center_x1, center_x2, fuzziness):
+    def update(num_samples, width, height, rotation, center_x1, center_x2, label_noise):
         center = (center_x1, center_x2)
         return update_interface_2d(
             generate_function=generate_2d_rectangle,
@@ -188,7 +188,7 @@ def create_2d_rectangle_interface(defaults=None, save_dir=None):
             center=center,
             ribs=(width, height),
             rotation=rotation,
-            fuzziness=fuzziness
+            label_noise=label_noise
         )
 
     interactive_widget = widgets.interactive(
@@ -211,9 +211,9 @@ def create_2d_rectangle_interface(defaults=None, save_dir=None):
         center_x2=widgets.FloatSlider(value=defaults["center_x2"], min=0.0, max=1.0, step=0.05,
                                       description="Center X2", style={'description_width': DESCRIPTION_WIDTH},
                                       layout={'width': SLIDER_WIDTH}),
-        fuzziness=widgets.FloatSlider(value=0.00, min=0.0, max=0.2, step=0.01, description="Fuzziness",
-                                      style={'description_width': DESCRIPTION_WIDTH},
-                                      layout={'width': SLIDER_WIDTH})
+        label_noise=widgets.FloatSlider(value=0.00, min=0.0, max=0.2, step=0.01, description="Label Noise",
+                                        style={'description_width': DESCRIPTION_WIDTH},
+                                        layout={'width': SLIDER_WIDTH})
     )
 
     def on_save_clicked(b):
@@ -224,7 +224,7 @@ def create_2d_rectangle_interface(defaults=None, save_dir=None):
             ("rotation", "Rotation", "{}"),
             ("center_x1", "Center X1", "{:.2f}"),
             ("center_x2", "Center X2", "{:.2f}"),
-            ("fuzziness", "Fuzziness", "{:.2f}")
+            ("label_noise", "Label Noise", "{:.2f}")
         ]
         suffix = suffix_widget.value.strip()
         if suffix:
@@ -254,13 +254,13 @@ def create_2d_radial_segment_interface(defaults=None, save_dir=None):
             "arc_span_degrees": 300,
             "rotation": 90,
             "center": (0.5, 0.5),
-            "fuzziness": 0.0
+            "label_noise": 0.0
         }
     base_name = "radial_segment_2d"
     plot_title = "Radial Segment 2D"
     defaults, _, output, suffix_widget = setup_interface(defaults, save_dir, base_name, "2D")
 
-    def update(num_samples, outer_radius, inner_radius, arc_span_degrees, rotation, fuzziness):
+    def update(num_samples, outer_radius, inner_radius, arc_span_degrees, rotation, label_noise):
         return update_interface_2d(
             generate_function=generate_2d_radial_segment,
             plot_title=plot_title,
@@ -271,7 +271,7 @@ def create_2d_radial_segment_interface(defaults=None, save_dir=None):
             inner_radius=inner_radius,
             arc_span_degrees=arc_span_degrees,
             rotation=rotation,
-            fuzziness=fuzziness
+            label_noise=label_noise
         )
 
     interactive_widget = widgets.interactive(
@@ -291,9 +291,9 @@ def create_2d_radial_segment_interface(defaults=None, save_dir=None):
         rotation=widgets.IntSlider(value=defaults["rotation"], min=0, max=360, step=5,
                                    description="Rotation (°)", style={'description_width': DESCRIPTION_WIDTH},
                                    layout={'width': SLIDER_WIDTH}),
-        fuzziness=widgets.FloatSlider(value=0.00, min=0.0, max=0.2, step=0.01, description="Fuzziness",
-                                      style={'description_width': DESCRIPTION_WIDTH},
-                                      layout={'width': SLIDER_WIDTH})
+        label_noise=widgets.FloatSlider(value=0.00, min=0.0, max=0.2, step=0.01, description="Label Noise",
+                                        style={'description_width': DESCRIPTION_WIDTH},
+                                        layout={'width': SLIDER_WIDTH})
     )
 
     def on_save_clicked(b):
@@ -303,7 +303,7 @@ def create_2d_radial_segment_interface(defaults=None, save_dir=None):
             ("inner_radius", "Inner Radius", "{:.2f}"),
             ("arc_span_degrees", "Arc Span", "{}"),
             ("rotation", "Rotation", "{}"),
-            ("fuzziness", "Fuzziness", "{:.2f}")
+            ("label_noise", "Label Noise", "{:.2f}")
         ]
         suffix = suffix_widget.value.strip()
         if suffix:
@@ -333,13 +333,13 @@ def create_2d_barbell_interface(defaults=None, save_dir=None):
             "connector_thickness": 0.04,
             "rotation": 50,
             "center": (0.5, 0.5),
-            "fuzziness": 0.0
+            "label_noise": 0.0
         }
     base_name = "barbell_2d"
     plot_title = "Barbell 2D"
     defaults, _, output, suffix_widget = setup_interface(defaults, save_dir, base_name, "2D")
 
-    def update(num_samples, barbell_length, sphere_radius, connector_thickness, rotation, fuzziness):
+    def update(num_samples, barbell_length, sphere_radius, connector_thickness, rotation, label_noise):
         return update_interface_2d(
             generate_function=generate_2d_barbell,
             plot_title=plot_title,
@@ -350,7 +350,7 @@ def create_2d_barbell_interface(defaults=None, save_dir=None):
             sphere_radius=sphere_radius,
             connector_thickness=connector_thickness,
             rotation=rotation,
-            fuzziness=fuzziness
+            label_noise=label_noise
         )
 
     interactive_widget = widgets.interactive(
@@ -371,9 +371,9 @@ def create_2d_barbell_interface(defaults=None, save_dir=None):
         rotation=widgets.IntSlider(value=defaults["rotation"], min=0, max=360, step=10,
                                    description="Rotation (°)", style={'description_width': DESCRIPTION_WIDTH},
                                    layout={'width': SLIDER_WIDTH}),
-        fuzziness=widgets.FloatSlider(value=0.00, min=0.0, max=0.2, step=0.01, description="Fuzziness",
-                                      style={'description_width': DESCRIPTION_WIDTH},
-                                      layout={'width': SLIDER_WIDTH})
+        label_noise=widgets.FloatSlider(value=0.00, min=0.0, max=0.2, step=0.01, description="Label Noise",
+                                        style={'description_width': DESCRIPTION_WIDTH},
+                                        layout={'width': SLIDER_WIDTH})
     )
 
     def on_save_clicked(b):
@@ -383,7 +383,7 @@ def create_2d_barbell_interface(defaults=None, save_dir=None):
             ("sphere_radius", "Sphere Radius", "{:.2f}"),
             ("connector_thickness", "Connector Thickness", "{:.2f}"),
             ("rotation", "Rotation", "{}"),
-            ("fuzziness", "Fuzziness", "{:.2f}")
+            ("label_noise", "Label Noise", "{:.2f}")
         ]
         suffix = suffix_widget.value.strip()
         if suffix:
@@ -414,14 +414,14 @@ def create_2d_sine_wave_interface(defaults=None, save_dir=None):
             "frequency": 0.5,
             "thickness": 0.10,
             "rotation": 0,
-            "fuzziness": 0.0
+            "label_noise": 0.0
         }
     base_name = "sine_wave_2d"
     plot_title = "Sine Wave 2D"
     defaults, _, output, suffix_widget = setup_interface(defaults, save_dir, base_name, "2D")
 
     def update(num_samples, x_min, x_max, vertical_offset, amplitude, frequency,
-               thickness, rotation, fuzziness):
+               thickness, rotation, label_noise):
         return update_interface_2d(
             generate_function=generate_2d_sine_wave,
             plot_title=plot_title,
@@ -433,7 +433,7 @@ def create_2d_sine_wave_interface(defaults=None, save_dir=None):
             frequency=frequency,
             thickness=thickness,
             rotation=rotation,
-            fuzziness=fuzziness
+            label_noise=label_noise
         )
 
     interactive_widget = widgets.interactive(
@@ -463,9 +463,9 @@ def create_2d_sine_wave_interface(defaults=None, save_dir=None):
         rotation=widgets.IntSlider(value=defaults["rotation"], min=0, max=360, step=5,
                                    description="Rotation (°)", style={'description_width': DESCRIPTION_WIDTH},
                                    layout={'width': SLIDER_WIDTH}),
-        fuzziness=widgets.FloatSlider(value=0.00, min=0.0, max=0.2, step=0.01, description="Fuzziness",
-                                      style={'description_width': DESCRIPTION_WIDTH},
-                                      layout={'width': SLIDER_WIDTH})
+        label_noise=widgets.FloatSlider(value=0.00, min=0.0, max=0.2, step=0.01, description="Label Noise",
+                                        style={'description_width': DESCRIPTION_WIDTH},
+                                        layout={'width': SLIDER_WIDTH})
     )
 
     def on_save_clicked(b):
@@ -478,7 +478,7 @@ def create_2d_sine_wave_interface(defaults=None, save_dir=None):
             ("frequency", "Frequency", "{:.2f}"),
             ("thickness", "Thickness", "{:.2f}"),
             ("rotation", "Rotation", "{}"),
-            ("fuzziness", "Fuzziness", "{:.2f}")
+            ("label_noise", "Label Noise", "{:.2f}")
         ]
         suffix = suffix_widget.value.strip()
         if suffix:
@@ -509,13 +509,13 @@ def create_2d_star_interface(defaults=None, save_dir=None):
             "inner_radius": 0.2,
             "rotation": 0,
             "center": (0.5, 0.5),
-            "fuzziness": 0.0
+            "label_noise": 0.0
         }
     base_name = "star_2d"
     plot_title = "Star 2D"
     defaults, _, output, suffix_widget = setup_interface(defaults, save_dir, base_name, "2D")
 
-    def update(num_samples, num_points, star_size, outer_radius, inner_radius, rotation, fuzziness):
+    def update(num_samples, num_points, star_size, outer_radius, inner_radius, rotation, label_noise):
         return update_interface_2d(
             generate_function=generate_2d_star,
             plot_title=plot_title,
@@ -527,7 +527,7 @@ def create_2d_star_interface(defaults=None, save_dir=None):
             outer_radius=outer_radius,
             inner_radius=inner_radius,
             rotation=rotation,
-            fuzziness=fuzziness
+            label_noise=label_noise
         )
 
     interactive_widget = widgets.interactive(
@@ -550,9 +550,9 @@ def create_2d_star_interface(defaults=None, save_dir=None):
         rotation=widgets.IntSlider(value=defaults["rotation"], min=0, max=360, step=10,
                                    description="Rotation (°)", style={'description_width': DESCRIPTION_WIDTH},
                                    layout={'width': SLIDER_WIDTH}),
-        fuzziness=widgets.FloatSlider(value=0.00, min=0.0, max=0.2, step=0.01, description="Fuzziness",
-                                      style={'description_width': DESCRIPTION_WIDTH},
-                                      layout={'width': SLIDER_WIDTH})
+        label_noise=widgets.FloatSlider(value=0.00, min=0.0, max=0.2, step=0.01, description="Label Noise",
+                                        style={'description_width': DESCRIPTION_WIDTH},
+                                        layout={'width': SLIDER_WIDTH})
     )
 
     def on_save_clicked(b):
@@ -563,7 +563,7 @@ def create_2d_star_interface(defaults=None, save_dir=None):
             ("outer_radius", "Outer Radius", "{:.2f}"),
             ("inner_radius", "Inner Radius", "{:.2f}"),
             ("rotation", "Rotation", "{}"),
-            ("fuzziness", "Fuzziness", "{:.2f}")
+            ("label_noise", "Label Noise", "{:.2f}")
         ]
         suffix = suffix_widget.value.strip()
         if suffix:
@@ -600,14 +600,14 @@ def create_3d_radial_segment_interface(defaults=None, save_dir=None):
             "rotation_x2": 0,
             "rotation_x3": 60,
             "center": (0.5, 0.5, 0.5),
-            "fuzziness": 0.0
+            "label_noise": 0.0
         }
     base_name = "radial_segment_3d"
     plot_title = "Radial Segment 3D"
     defaults, _, output, suffix_widget = setup_interface(defaults, save_dir, base_name, "3D")
 
     def update(num_samples, outer_radius, inner_radius, arc_span_degrees,
-               rotation_x1, rotation_x2, rotation_x3, fuzziness):
+               rotation_x1, rotation_x2, rotation_x3, label_noise):
         return update_interface_3d(
             generate_function=generate_3d_radial_segment,
             plot_title=plot_title,
@@ -620,7 +620,7 @@ def create_3d_radial_segment_interface(defaults=None, save_dir=None):
             rotation_x1=rotation_x1,
             rotation_x2=rotation_x2,
             rotation_x3=rotation_x3,
-            fuzziness=fuzziness
+            label_noise=label_noise
         )
 
     interactive_widget = widgets.interactive(
@@ -646,9 +646,9 @@ def create_3d_radial_segment_interface(defaults=None, save_dir=None):
         rotation_x3=widgets.IntSlider(value=defaults["rotation_x3"], min=0, max=360, step=5,
                                       description="Rotation X3 (°)", style={'description_width': DESCRIPTION_WIDTH},
                                       layout={'width': SLIDER_WIDTH}),
-        fuzziness=widgets.FloatSlider(value=0.00, min=0.0, max=0.2, step=0.01, description="Fuzziness",
-                                      style={'description_width': DESCRIPTION_WIDTH},
-                                      layout={'width': SLIDER_WIDTH})
+        label_noise=widgets.FloatSlider(value=0.00, min=0.0, max=0.2, step=0.01, description="Label Noise",
+                                        style={'description_width': DESCRIPTION_WIDTH},
+                                        layout={'width': SLIDER_WIDTH})
     )
 
     def on_save_clicked(b):
@@ -660,7 +660,7 @@ def create_3d_radial_segment_interface(defaults=None, save_dir=None):
             ("rotation_x1", "Rotation X1", "{}"),
             ("rotation_x2", "Rotation X2", "{}"),
             ("rotation_x2", "Rotation X3", "{}"),
-            ("fuzziness", "Fuzziness", "{:.2f}")
+            ("label_noise", "Label Noise", "{:.2f}")
         ]
         suffix = suffix_widget.value.strip()
         if suffix:
@@ -692,14 +692,14 @@ def create_3d_barbell_interface(defaults=None, save_dir=None):
             "rotation_angle_x2": 50,
             "rotation_angle_x3": 0,
             "center": (0.5, 0.5, 0.5),
-            "fuzziness": 0.0
+            "label_noise": 0.0
         }
     base_name = "barbell_3d"
     plot_title = "Barbell 3D"
     defaults, _, output, suffix_widget = setup_interface(defaults, save_dir, base_name, "3D")
 
     def update(num_samples, barbell_length, sphere_radius, connector_thickness,
-               rotation_angle_x1, rotation_angle_x2, rotation_angle_x3, fuzziness):
+               rotation_angle_x1, rotation_angle_x2, rotation_angle_x3, label_noise):
         return update_interface_3d(
             generate_function=generate_3d_barbell,
             plot_title=plot_title,
@@ -712,7 +712,7 @@ def create_3d_barbell_interface(defaults=None, save_dir=None):
             rotation_angle_x1=rotation_angle_x1,
             rotation_angle_x2=rotation_angle_x2,
             rotation_angle_x3=rotation_angle_x3,
-            fuzziness=fuzziness
+            label_noise=label_noise
         )
 
     interactive_widget = widgets.interactive(
@@ -742,9 +742,9 @@ def create_3d_barbell_interface(defaults=None, save_dir=None):
                                             description="Rotation X3 (°)",
                                             style={'description_width': DESCRIPTION_WIDTH},
                                             layout={'width': SLIDER_WIDTH}),
-        fuzziness=widgets.FloatSlider(value=0.00, min=0.0, max=0.2, step=0.01, description="Fuzziness",
-                                      style={'description_width': DESCRIPTION_WIDTH},
-                                      layout={'width': SLIDER_WIDTH})
+        label_noise=widgets.FloatSlider(value=0.00, min=0.0, max=0.2, step=0.01, description="Label Noise",
+                                        style={'description_width': DESCRIPTION_WIDTH},
+                                        layout={'width': SLIDER_WIDTH})
     )
 
     def on_save_clicked(b):
@@ -756,7 +756,7 @@ def create_3d_barbell_interface(defaults=None, save_dir=None):
             ("rotation_angle_x1", "Rotation X1", "{}"),
             ("rotation_angle_x2", "Rotation X2", "{}"),
             ("rotation_angle_x3", "Rotation X3", "{}"),
-            ("fuzziness", "Fuzziness", "{:.2f}")
+            ("label_noise", "Label Noise", "{:.2f}")
         ]
         suffix = suffix_widget.value.strip()
         if suffix:
@@ -789,14 +789,14 @@ def create_3d_saddle_interface(defaults=None, save_dir=None):
             "rotate_x2_deg": 0,
             "rotate_x3_deg": 0,
             "center": (0.5, 0.5, 0.5),
-            "fuzziness": 0.0
+            "label_noise": 0.0
         }
     base_name = "saddle_3d"
     plot_title = "Saddle 3D"
     defaults, _, output, suffix_widget = setup_interface(defaults, save_dir, base_name, "3D")
 
     def update(num_samples, saddle_height, curve_sharpness_x1, curve_sharpness_x2,
-               surface_thickness, rotate_x1_deg, rotate_x2_deg, rotate_x3_deg, fuzziness):
+               surface_thickness, rotate_x1_deg, rotate_x2_deg, rotate_x3_deg, label_noise):
         return update_interface_3d(
             generate_function=generate_3d_saddle,
             plot_title=plot_title,
@@ -810,7 +810,7 @@ def create_3d_saddle_interface(defaults=None, save_dir=None):
             rotate_x1_deg=rotate_x1_deg,
             rotate_x2_deg=rotate_x2_deg,
             rotate_x3_deg=rotate_x3_deg,
-            fuzziness=fuzziness
+            label_noise=label_noise
         )
 
     interactive_widget = widgets.interactive(
@@ -839,9 +839,9 @@ def create_3d_saddle_interface(defaults=None, save_dir=None):
         rotate_x3_deg=widgets.IntSlider(value=defaults["rotate_x3_deg"], min=0, max=360, step=10,
                                         description="Rotation X3 (°)", style={'description_width': DESCRIPTION_WIDTH},
                                         layout={'width': SLIDER_WIDTH}),
-        fuzziness=widgets.FloatSlider(value=0.00, min=0.0, max=0.2, step=0.01, description="Fuzziness",
-                                      style={'description_width': DESCRIPTION_WIDTH},
-                                      layout={'width': SLIDER_WIDTH})
+        label_noise=widgets.FloatSlider(value=0.00, min=0.0, max=0.2, step=0.01, description="Label Noise",
+                                        style={'description_width': DESCRIPTION_WIDTH},
+                                        layout={'width': SLIDER_WIDTH})
     )
 
     def on_save_clicked(b):
@@ -854,7 +854,7 @@ def create_3d_saddle_interface(defaults=None, save_dir=None):
             ("rotate_x1_deg", "Rotate X1", "{}"),
             ("rotate_x2_deg", "Rotate X2", "{}"),
             ("rotate_x3_deg", "Rotate X3", "{}"),
-            ("fuzziness", "Fuzziness", "{:.2f}")
+            ("label_noise", "Label Noise", "{:.2f}")
         ]
         suffix = suffix_widget.value.strip()
         if suffix:

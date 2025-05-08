@@ -62,7 +62,7 @@ class Node:
         self.RChild = None
         self.class_distribution = None
 
-    def find_best_split(self, max_features='sqrt'):
+    def find_best_split(self, max_features='sqrt', max_iter=1000):
         feature_num = self.X.shape[1]
         # Determine how many features to consider
         if max_features == 'sqrt':
@@ -151,7 +151,7 @@ class Node:
             initial_a,
             method='L-BFGS-B',
             jac=func_gradient,
-            options={'maxiter': 10, 'disp': False}
+            options={'maxiter': max_iter, 'disp': False}
         )
 
         # Store the optimized threshold and parameters
@@ -200,11 +200,12 @@ class BaseObliqueTree(BaseEstimator):
     """
 
     def __init__(self, max_depth=50, min_samples_split=2,
-                 max_features='all', random_state=None):
+                 max_features='all', random_state=None, max_iter=1000):
         self.max_depth = max_depth
         self.min_samples_split = min_samples_split
         self.max_features = max_features
         self.random_state = random_state
+        self.max_iter = max_iter
 
         # Use np.random.RandomState to control randomness consistently
         self.rng = np.random.RandomState(random_state)
@@ -260,7 +261,7 @@ class BaseObliqueTree(BaseEstimator):
             return node.depth
 
         # If best split fails (returns < 0), also mark as leaf
-        if node.find_best_split(self.max_features) < 0:
+        if node.find_best_split(self.max_features, self.max_iter) < 0:
             node.is_leaf = True
             if is_classification:
                 node.class_distribution = compute_class_distribution(
@@ -342,10 +343,11 @@ class WeightedObliqueDecisionTreeClassifier(ClassifierMixin, BaseObliqueTree):
       AAAI Conference on Artificial Intelligence. 2019.
     """
     def __init__(self, max_depth=50, min_samples_split=2,
-                 max_features='all', random_state=None):
+                 max_features='all', random_state=None, max_iter=1000):
         super().__init__(
             max_depth=max_depth,
             min_samples_split=min_samples_split,
             max_features=max_features,
-            random_state=random_state
+            random_state=random_state,
+            max_iter=max_iter
         )

@@ -2,7 +2,7 @@
 shape_generators.py
 
 This module provides functions for generating 2D and 3D geometric shapes
-using Latin Hypercube Sampling (LHS), along with boundary-aware fuzzy labeling.
+using Latin Hypercube Sampling (LHS), along with boundary-aware labeling noise.
 
 Available shapes:
     - 2D: Rectangle, Radial Segment, Barbell, Sine Wave, Star
@@ -16,7 +16,7 @@ Each shape generator returns:
 Features:
     - Latin Hypercube Sampling (LHS)
     - Inverse rotation for evaluation
-    - Fuzzy border noise control via distance-based label flipping
+    - Label border noise control via distance-based label flipping
 """
 
 # Standard library
@@ -72,9 +72,9 @@ def apply_rotation_2d(point, angle_rad):
     return rotation_matrix @ point
 
 
-def apply_fuzzy_label_noise_2d(X, y, shape_polygon, fuzziness=0.0, rng=None):
+def apply_label_noise_2d(X, y, shape_polygon, label_noise=0.0, rng=None):
     """
-    Apply fuzzy noise by flipping labels from 0 → 1 (outside → inside) near the polygon boundary.
+    Apply label noise by flipping labels from 0 → 1 (outside → inside) near the polygon boundary.
 
     The closer a point labeled as 'outside' is to the boundary, the higher the probability it gets flipped to 'inside'.
     Points already labeled as 'inside' (label 1) are never flipped.
@@ -83,12 +83,12 @@ def apply_fuzzy_label_noise_2d(X, y, shape_polygon, fuzziness=0.0, rng=None):
         X (np.ndarray): Sample points of shape (N, 2).
         y (np.ndarray): Binary labels (0 = outside, 1 = inside), shape (N,).
         shape_polygon (shapely.geometry.Polygon): The geometric shape used for computing boundary distance.
-        fuzziness (float): Controls how fast the flip probability decays with distance to boundary.
+        label_noise (float): Controls how fast the flip probability decays with distance to boundary.
                            Bigger values = more flips near the boundary.
         rng (np.random.Generator, optional): Random number generator. If None, a new generator is used.
 
     Returns:
-        np.ndarray: Array of same shape as `y`, with flipped labels (0 → 1) based on fuzziness and proximity to
+        np.ndarray: Array of same shape as `y`, with flipped labels (0 → 1) based on label_noise value and proximity to
         the boundary.
     """
     if rng is None:
@@ -98,7 +98,7 @@ def apply_fuzzy_label_noise_2d(X, y, shape_polygon, fuzziness=0.0, rng=None):
     for i, point in enumerate(X):
         if y[i] == 0:
             d = shape_polygon.boundary.distance(Point(point))
-            flip_prob = np.exp(-d / fuzziness) if fuzziness > 0 else 0.0
+            flip_prob = np.exp(-d / label_noise) if label_noise > 0 else 0.0
             if rng.random() < flip_prob:
                 y_noisy[i] = 1
 
@@ -141,9 +141,9 @@ def apply_rotation_3d(points, rotation_angles):
     return rotation.apply(points)
 
 
-def apply_fuzzy_label_noise_3d(X, y, distance_fn, fuzziness=0.0, rng=None):
+def apply_label_noise_3d(X, y, distance_fn, label_noise=0.0, rng=None):
     """
-    Apply fuzzy noise by flipping labels from 0 → 1 (outside → inside) near the polygon boundary.
+    Apply label noise by flipping labels from 0 → 1 (outside → inside) near the polygon boundary.
 
     The closer a point labeled as 'outside' is to the boundary, the higher the probability it gets flipped to 'inside'.
     Points already labeled as 'inside' (label 1) are never flipped.
@@ -152,11 +152,11 @@ def apply_fuzzy_label_noise_3d(X, y, distance_fn, fuzziness=0.0, rng=None):
         X (np.ndarray): Sample points of shape (N, 3).
         y (np.ndarray): Binary labels (0 = outside, 1 = inside), shape (N,).
         distance_fn (Callable): A function that returns signed distance to boundary (negative for the inside).
-        fuzziness (float): Controls the exponential decay of flip probability based on distance to boundary.
+        label_noise (float): Controls the exponential decay of flip probability based on distance to boundary.
         rng (np.random.Generator, optional): Random number generator. If None, a new generator is created.
 
     Returns:
-        np.ndarray: Modified label array (shape N,) where only 0s may be flipped to 1s based on fuzziness.
+        np.ndarray: Modified label array (shape N,) where only 0s may be flipped to 1s based on label_noise value.
     """
     if rng is None:
         rng = np.random.default_rng()
@@ -165,7 +165,7 @@ def apply_fuzzy_label_noise_3d(X, y, distance_fn, fuzziness=0.0, rng=None):
     for i, point in enumerate(X):
         if y[i] == 0:
             d = abs(distance_fn(point))
-            flip_prob = np.exp(-d / fuzziness) if fuzziness > 0 else 0.0
+            flip_prob = np.exp(-d / label_noise) if label_noise > 0 else 0.0
             if rng.random() < flip_prob:
                 y_noisy[i] = 1
 
@@ -177,9 +177,9 @@ def apply_fuzzy_label_noise_3d(X, y, distance_fn, fuzziness=0.0, rng=None):
 # --------------------------------------------------------
 
 def generate_2d_rectangle(num_samples=5000, center=(0.5, 0.5), ribs=(0.5, 0.5), rotation=45, samples=None,
-                          fuzziness=0.0, random_state=DEFAULT_VARIABLE_SEEDS[0]):
+                          label_noise=0.0, random_state=DEFAULT_VARIABLE_SEEDS[0]):
     """
-    Generate 2D sample points for a rotatable rectangle with fuzzy label noise.
+    Generate 2D sample points for a rotatable rectangle with label noise.
     """
     rng = np.random.default_rng(random_state)
     samples = sample_points_2d(num_samples, rng)
@@ -204,16 +204,16 @@ def generate_2d_rectangle(num_samples=5000, center=(0.5, 0.5), ribs=(0.5, 0.5), 
         (-half_width, half_height)
     ])
 
-    y = apply_fuzzy_label_noise_2d(np.array(rotated_samples), y, rectangle, fuzziness=fuzziness, rng=rng)
+    y = apply_label_noise_2d(np.array(rotated_samples), y, rectangle, label_noise=label_noise, rng=rng)
 
     return df_x, y, samples
 
 
 def generate_2d_radial_segment(num_samples=5000, center=(0.5, 0.5), outer_radius=0.4, inner_radius=0.2,
-                               arc_span_degrees=300, rotation=90, samples=None, fuzziness=0.0,
+                               arc_span_degrees=300, rotation=90, samples=None, label_noise=0.0,
                                random_state=DEFAULT_VARIABLE_SEEDS[0]):
     """
-    Generate 2D sample points for a radial segment (partial annulus) with fuzzy label noise.
+    Generate 2D sample points for a radial segment (partial annulus) with label noise.
     """
     rng = np.random.default_rng(random_state)
     samples = sample_points_2d(num_samples, rng)
@@ -253,14 +253,14 @@ def generate_2d_radial_segment(num_samples=5000, center=(0.5, 0.5), outer_radius
     arc_points += [center + inner_radius * np.array([np.cos(t), np.sin(t)]) for t in arc_inner]
     arc_polygon = Polygon(arc_points)
 
-    # Apply fuzzy noise (only outside→inside flips)
-    y = apply_fuzzy_label_noise_2d(samples, y, arc_polygon, fuzziness=fuzziness, rng=rng)
+    # Apply label noise (only outside→inside flips)
+    y = apply_label_noise_2d(samples, y, arc_polygon, label_noise=label_noise, rng=rng)
 
     return df_x, y, samples
 
 
 def generate_2d_barbell(num_samples=5000, center=(0.5, 0.5), barbell_length=0.6, sphere_radius=0.2,
-                        connector_thickness=0.04, rotation=50, samples=None, fuzziness=0.0,
+                        connector_thickness=0.04, rotation=50, samples=None, label_noise=0.0,
                         random_state=DEFAULT_VARIABLE_SEEDS[0]):
     """
     Generate 2D sample points for a barbell shape.
@@ -301,14 +301,14 @@ def generate_2d_barbell(num_samples=5000, center=(0.5, 0.5), barbell_length=0.6,
     barbell_union = barbell_union.union(Point(circle_A).buffer(sphere_radius))
     barbell_union = barbell_union.union(Point(circle_B).buffer(sphere_radius))
 
-    y = apply_fuzzy_label_noise_2d(np.array(transformed_points), y, shape_polygon=barbell_union,
-                                   fuzziness=fuzziness, rng=rng)
+    y = apply_label_noise_2d(np.array(transformed_points), y, shape_polygon=barbell_union,
+                             label_noise=label_noise, rng=rng)
 
     return df_x, y, samples
 
 
 def generate_2d_sine_wave(num_samples=5000, x_range=(0.1, 0.9), vertical_offset=0.5, amplitude=0.2, frequency=0.5,
-                          thickness=0.10, rotation=0, samples=None, fuzziness=0.0,
+                          thickness=0.10, rotation=0, samples=None, label_noise=0.0,
                           random_state=DEFAULT_VARIABLE_SEEDS[0]):
     """
     Generate 2D sample points for a sine wave.
@@ -345,14 +345,14 @@ def generate_2d_sine_wave(num_samples=5000, x_range=(0.1, 0.9), vertical_offset=
     band = np.concatenate([upper, lower], axis=0)
     shape_polygon = Polygon(band)
 
-    y = apply_fuzzy_label_noise_2d(np.array(transformed_points), y, shape_polygon=shape_polygon,
-                                   fuzziness=fuzziness, rng=rng)
+    y = apply_label_noise_2d(np.array(transformed_points), y, shape_polygon=shape_polygon,
+                             label_noise=label_noise, rng=rng)
 
     return df_x, y, samples
 
 
 def generate_2d_star(num_samples=5000, center=(0.5, 0.5), num_points=5, star_size=1.0,
-                     outer_radius=0.4, inner_radius=0.2, rotation=0, samples=None, fuzziness=0.0,
+                     outer_radius=0.4, inner_radius=0.2, rotation=0, samples=None, label_noise=0.0,
                      random_state=DEFAULT_VARIABLE_SEEDS[0]):
     """
     Generate 2D sample points for a star shape.
@@ -385,8 +385,8 @@ def generate_2d_star(num_samples=5000, center=(0.5, 0.5), num_points=5, star_siz
     # Classify points
     y = np.array([1 if star_polygon.contains(Point(x, y)) else 0 for x, y in samples], dtype=int)
 
-    # Apply fuzziness
-    y = apply_fuzzy_label_noise_2d(samples, y, shape_polygon=star_polygon, fuzziness=fuzziness, rng=rng)
+    # Apply label_noise
+    y = apply_label_noise_2d(samples, y, shape_polygon=star_polygon, label_noise=label_noise, rng=rng)
 
     return df_x, y, samples
 
@@ -397,7 +397,7 @@ def generate_2d_star(num_samples=5000, center=(0.5, 0.5), num_points=5, star_siz
 
 def generate_3d_radial_segment(num_samples=10000, center=(0.5, 0.5, 0.5), outer_radius=0.4, inner_radius=0.2,
                                arc_span_degrees=300, rotation_x1=35, rotation_x2=0, rotation_x3=60, samples=None,
-                               fuzziness=0.0, random_state=DEFAULT_VARIABLE_SEEDS[0]):
+                               label_noise=0.0, random_state=DEFAULT_VARIABLE_SEEDS[0]):
     rng = np.random.default_rng(random_state)
     samples = sample_points_3d(num_samples, rng)
 
@@ -425,14 +425,14 @@ def generate_3d_radial_segment(num_samples=10000, center=(0.5, 0.5, 0.5), outer_
 
     y = np.array([1 if distance_fn(p) <= 0 else 0 for p in samples], dtype=int)
 
-    y = apply_fuzzy_label_noise_3d(samples, y, distance_fn=distance_fn, fuzziness=fuzziness, rng=rng)
+    y = apply_label_noise_3d(samples, y, distance_fn=distance_fn, label_noise=label_noise, rng=rng)
 
     return df_x, y, samples
 
 
 def generate_3d_barbell(num_samples=10000, center=(0.5, 0.5, 0.5), barbell_length=0.8, sphere_radius=0.25,
                         connector_thickness=0.1, rotation_angle_x1=50, rotation_angle_x2=50, rotation_angle_x3=0,
-                        samples=None, fuzziness=0.0, random_state=DEFAULT_VARIABLE_SEEDS[0]):
+                        samples=None, label_noise=0.0, random_state=DEFAULT_VARIABLE_SEEDS[0]):
     rng = np.random.default_rng(random_state)
     samples = sample_points_3d(num_samples, rng)
 
@@ -457,7 +457,7 @@ def generate_3d_barbell(num_samples=10000, center=(0.5, 0.5, 0.5), barbell_lengt
 
     y = np.array([1 if distance_fn(p) <= 0 else 0 for p in samples], dtype=int)
 
-    y = apply_fuzzy_label_noise_3d(samples, y, distance_fn=distance_fn, fuzziness=fuzziness, rng=rng)
+    y = apply_label_noise_3d(samples, y, distance_fn=distance_fn, label_noise=label_noise, rng=rng)
 
     return df_x, y, samples
 
@@ -465,9 +465,9 @@ def generate_3d_barbell(num_samples=10000, center=(0.5, 0.5, 0.5), barbell_lengt
 def generate_3d_saddle(num_samples=10000, center=(0.5, 0.5, 0.5), saddle_height=0.5,
                        curve_sharpness_x1=1.0, curve_sharpness_x2=1.0, surface_thickness=0.2,
                        rotate_x1_deg=0, rotate_x2_deg=0, rotate_x3_deg=0, samples=None,
-                       fuzziness=0.0, random_state=DEFAULT_VARIABLE_SEEDS[0]):
+                       label_noise=0.0, random_state=DEFAULT_VARIABLE_SEEDS[0]):
     """
-    Generate 3D sample points for a saddle shape with fuzzy label noise.
+    Generate 3D sample points for a saddle shape with label noise.
     The saddle surface is defined as a quadratic surface and rotated.
     """
     rng = np.random.default_rng(random_state)
@@ -499,6 +499,6 @@ def generate_3d_saddle(num_samples=10000, center=(0.5, 0.5, 0.5), saddle_height=
 
     y = np.array([1 if distance_fn(p) <= 0 else 0 for p in samples], dtype=int)
 
-    y = apply_fuzzy_label_noise_3d(samples, y, distance_fn, fuzziness=fuzziness, rng=rng)
+    y = apply_label_noise_3d(samples, y, distance_fn, label_noise=label_noise, rng=rng)
 
     return df_x, y, samples

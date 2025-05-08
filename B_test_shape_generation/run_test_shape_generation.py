@@ -1,24 +1,24 @@
 """
-Batch Shape Generation Script (2D & 3D) with Configurable Fuzziness Levels
+Batch Shape Generation Script (2D & 3D) with Configurable Label Noise Levels
 
 This script provides a fast, non-interactive way to generate and save many synthetic
-2D and 3D shapes with varying label noise ("fuzziness"). It is intended for use as a batch runner
+2D and 3D shapes with varying label noise. It is intended for use as a batch runner
 to complement the interactive shape generation interface.
 
 Functionality:
-    - Iterates over multiple predefined shapes and fuzziness levels.
+    - Iterates over multiple predefined shapes and label noise levels.
     - Automatically generates labeled samples using shape parameters.
     - Saves the resulting datasets (features and labels) and visualizations (PDF plots) to disk.
-    - Organizes output into folders by fuzziness level and shape name.
+    - Organizes output into folders by label noise level and shape name.
 
 Shapes:
     - 2D: Rectangle, Radial Segment, Barbell, Sine Wave, Star
     - 3D: Saddle Surface, Radial Segment, Barbell
 
-Fuzziness:
-    - Label fuzziness simulates classification uncertainty by flipping a percentage of labels.
-    - Settable via `fuzz_levels`, applied to all shapes in batch.
-    - Output is organized under the `SHAPES_DIR` path using a suffix based on fuzziness percentage.
+Label Noise:
+    - Label noise simulates classification uncertainty by flipping a percentage of labels.
+    - Settable via `label_noise`, applied to all shapes in batch.
+    - Output is organized under the `SHAPES_DIR` path using a suffix based on label noise value.
 
 Use Case:
     - Rapid dataset generation for model training, testing, and benchmarking.
@@ -38,7 +38,7 @@ from B_test_shape_generation.utils import plot_2d_shape, plot_3d_shape, save_dat
 from src.config.paths import SHAPES_DIR
 
 # === Configuration ===
-fuzz_levels = [0.00, 0.03, 0.05, 0.07]
+label_noise_levels = [0.00, 0.03, 0.05, 0.07]
 num_samples_2d = 10000
 num_samples_3d = 10000
 
@@ -142,8 +142,8 @@ shape_configs = {
 }
 
 # === Generation Loop ===
-for fuzz in fuzz_levels:
-    suffix = f"fuzziness_{int(fuzz * 100):03d}"
+for label_noise in label_noise_levels:
+    suffix = f"label_noise_{int(label_noise * 100):03d}"
     out_dir = SHAPES_DIR / suffix
     out_dir.mkdir(exist_ok=True)
 
@@ -151,7 +151,7 @@ for fuzz in fuzz_levels:
         generator = config["generator"]
         params = config["params"].copy()
         # noinspection PyTypeChecker
-        params["fuzziness"] = fuzz
+        params["label_noise"] = label_noise
 
         # Generate data
         df_x, y, samples = generator(**params)

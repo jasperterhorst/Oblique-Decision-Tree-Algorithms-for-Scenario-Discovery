@@ -1,5 +1,6 @@
 import subprocess
 import os
+import sys
 import time
 from itertools import product
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -10,11 +11,10 @@ DATASETS = [
     "barbell_2d", "sine_wave_2d", "star_2d", "radial_segment_2d",
     "rectangle_2d", "barbell_3d", "radial_segment_3d", "saddle_3d"
 ]
-NOISE_FOLDERS = ["fuzziness_000", "fuzziness_003", "fuzziness_005", "fuzziness_007"]
+NOISE_FOLDERS = ["label_noise_000", "label_noise_003", "label_noise_005", "label_noise_007"]
 MODELS = ["hhcart_a", "hhcart_d", "randcart", "oc1", "wodt", "co2", "cart", "ridge_cart"]
 SEED_INDICES = [0, 1, 2]
 MAX_PARALLEL = 12
-PYTHON_EXEC = "python"
 
 os.makedirs("logs", exist_ok=True)
 
@@ -27,7 +27,7 @@ def run_job(dataset, noise, seed_index, model):
     logfile = f"logs/{dataset}_{noise}_{model}_seed{seed_index}.log"
 
     cmd = [
-        PYTHON_EXEC,
+        sys.executable,
         "run_depth_sweep_benchmark.py",
         "--dataset", dataset,
         "--folder-name", "shapes",

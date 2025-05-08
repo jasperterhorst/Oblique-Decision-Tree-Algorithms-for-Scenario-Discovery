@@ -18,22 +18,6 @@ from src.config.colors import (
 # Helper Function: Automatic Text Wrapping for Notes
 # --------------------------------------------------------
 
-# def format_note_text(note, dimension="2D"):
-#     max_length = 65 if dimension == "2D" else 60
-#     words = note.split()
-#     lines = []
-#     current_line = ""
-#     for word in words:
-#         if len(current_line) + len(word) + 1 <= max_length:
-#             current_line += " " + word if current_line else word
-#         else:
-#             lines.append(current_line)
-#             current_line = word
-#     if current_line:
-#         lines.append(current_line)
-#     return "\n".join(lines)
-
-
 def format_note_text(note, dimension="2D"):
     max_length = 65 if dimension == "2D" else 60
     words = note.split()

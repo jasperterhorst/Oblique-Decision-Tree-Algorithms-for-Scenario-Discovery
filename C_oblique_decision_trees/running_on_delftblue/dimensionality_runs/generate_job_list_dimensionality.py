@@ -2,7 +2,7 @@ from src.load_shapes import load_shape_dataset
 
 
 FOLDER_NAME = "shapes_noise_dimensionality_tests"
-SUBFOLDER_NAME = "fuzziness_003"
+SUBFOLDER_NAME = "label_noise_003"
 SEED_INDICES = [0, 1, 2]
 
 # Paths relative to this script

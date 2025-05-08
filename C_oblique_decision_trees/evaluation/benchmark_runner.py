@@ -54,8 +54,8 @@ class DepthSweepRunner:
     @staticmethod
     def build_registry(
             random_state=None, impurity=gini, segmentor=CARTSegmentor(), n_restarts=20, bias_steps=20,
-            max_iter_per_node=10, tau=1e-6, nu=1.0, eta=0.01, tol=1e-3, n_rotations=1, max_features='all',
-            min_features_split=1, min_samples_split=2
+            tau=1e-6, nu=1.0, eta=0.01, tol=1e-3, n_rotations=1, max_features='all', min_features_split=1,
+            min_samples_split=2, max_iter=1000, max_iter_global=1000000, max_iter_wodt=None, max_iter_co2=None,
     ):
         """
         Constructs a registry of oblique decision tree classifiers, each wrapped in a lambda
@@ -64,12 +64,16 @@ class DepthSweepRunner:
 
         Parameters:
 
-        # General Controls for All Models
+        # General Controls
             random_state (int or None):
                 Seed for reproducibility. Use None for stochastic behaviour.
 
             min_samples_split (int, default=2):
                 Minimum number of samples required to perform a split. Must be ≥ 2.
+
+        # Iteration Control
+        max_iter_global (int, default=1000):
+            Default max optimisation iterations used by CO2 and WODT unless overridden.
 
         # Split Quality & Search Strategies
             impurity (callable):
@@ -96,8 +100,8 @@ class DepthSweepRunner:
                 Applies to: HHCART(A) and HHCART(D).
 
         # CO2-Specific Hyperparameters
-            max_iter_per_node (int, default=10):
-                Max optimisation iterations per node. Must be ≥ 1.
+            max_iter_co2 (int, optional):
+                Overrides global max_iter for CO2. If None, uses `max_iter_global`.
 
             nu (float, default=1.0):
                 Positive smoothing parameter for surrogate loss.
@@ -113,6 +117,9 @@ class DepthSweepRunner:
                 Number of random rotations ≥ 1 applied before splitting.
 
         # WODT Controls
+            max_iter_wodt (int, optional):
+                Overrides global max_iter for WODT. If None, uses `max_iter_global`.
+
             max_features (int, float, or 'all', default='all'):
                 Number of features to consider at each split.
                 - If int: absolute count.
@@ -131,18 +138,20 @@ class DepthSweepRunner:
             "hhcart_a": make(HHCartAClassifier, impurity=impurity, segmentor=segmentor, tau=tau),
             "hhcart_d": make(HHCartDClassifier, impurity=impurity, segmentor=segmentor, tau=tau),
             "randcart": make(RandCARTClassifier, impurity=impurity, segmentor=CARTSegmentor(), n_rotations=n_rotations),
-            "wodt": make(WeightedObliqueDecisionTreeClassifier, max_features=max_features),
+            "wodt": make(WeightedObliqueDecisionTreeClassifier, max_features=max_features,
+                         max_iter=max_iter_wodt if max_iter_wodt is not None else max_iter_global,),
             "cart": make(CARTClassifier, impurity=impurity),
             "ridge_cart": make(RidgeCARTClassifier, impurity=impurity, segmentor=segmentor),
             "oc1": make(ObliqueClassifier1, n_restarts=n_restarts, bias_steps=bias_steps,
                         min_features_split=min_features_split),
             "co2": make(CO2Classifier, impurity=impurity, segmentor=segmentor,
-                        max_iter_per_node=max_iter_per_node, nu=nu, eta=eta, tol=tol),
+                        max_iter_per_node=max_iter_co2 if max_iter_co2 is not None else max_iter_global,
+                        nu=nu, eta=eta, tol=tol),
         }
 
     def run(self, auto_export=True, filename="result.csv", tree_dict_filename="result.pkl",
             n_seeds=1, fixed_seed=None, return_trees=True, registry=None, save_tree_dict=True, batch_mode=False,
-            output_subfolder=None, n_restarts=10, bias_steps=10):
+            output_subfolder=None):
         """
         Run depth sweeps, evaluating all models and saving results.
 
@@ -157,9 +166,6 @@ class DepthSweepRunner:
             save_tree_dict (bool): Whether to persist the trees.
             batch_mode (bool): If True, save outputs to batch results folder.
             output_subfolder (str): Subdirectory to store outputs.
-            n_restarts (int): Number of restarts of hyperplanes in OC1.
-            bias_steps (int): Number changes in the bias for OC1.
-
         Returns:
             (DataFrame, dict): Results and trained trees (if return_trees).
         """
@@ -169,9 +175,7 @@ class DepthSweepRunner:
         run_type = "batch" if batch_mode else "single"
 
         if registry is None:
-            registry = self.build_registry(random_state=fixed_seed or 42, n_restarts=n_restarts, bias_steps=bias_steps,
-                                           lambda_reg=self.lambda_reg, threshold_value=self.threshold_value,
-                                           alpha=self.alpha)
+            registry = self.build_registry(random_state=fixed_seed or 42)
 
         trees_dict = {}
         total_loops = len(seeds) * len(registry) * len(self.datasets) * (self.max_depth + 1)
@@ -203,10 +207,10 @@ class DepthSweepRunner:
                         metrics = evaluate_tree(tree_at_depth, X_np, y)  # Use X_np here
 
                         # Parse shape and label noise
-                        shape_type = dataset_name.split("_fuzziness")[0]
+                        shape_type = dataset_name.split("_label_noise")[0]
                         try:
-                            fuzziness_str = dataset_name.split("_fuzziness_")[1].split("_")[0]
-                            label_noise = float(fuzziness_str) / 1000  # Assuming naming like fuzziness_003
+                            label_noise_str = dataset_name.split("_label_noise_")[1].split("_")[0]
+                            label_noise = float(label_noise_str) / 100  # Assuming naming like label_noise_003
                         except IndexError:
                             label_noise = 0.0  # Default if not present
 
@@ -216,7 +220,6 @@ class DepthSweepRunner:
                             "n_samples": X.shape[0],
                             "data_dim": X.shape[1],
                             "seed": seed,
-                            "dataset": dataset_name,
                             "algorithm": model_name,
                             "depth": depth,
                             "runtime": fit_end - fit_start,
@@ -232,7 +235,7 @@ class DepthSweepRunner:
         if auto_export:
             base_cols = [
                 "shape", "label_noise", "n_samples",
-                "seed", "dataset", "data_dim", "algorithm", "depth",
+                "seed", "data_dim", "algorithm", "depth",
                 "accuracy", "coverage", "density", "f_score",
                 "gini_coverage_all_leaves", "gini_density_all_leaves",
                 "splits", "leaves",

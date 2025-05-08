@@ -2,6 +2,30 @@ import os
 import matplotlib.pyplot as plt
 from src.config.colors import AXIS_LINE_COLOR
 
+ALGORITHM_COLORS = {
+    "CART": "#1f77b4",
+    "HHCART A": "#ff7f0e",
+    "HHCART D": "#2ca02c",
+    "OC1": "#d62728",
+    "RANDCART": "#9467bd",
+    "CO2": "#8c564b",
+    "WODT": "#e377c2",
+    "RIDGE CART": "#7f7f7f",
+}
+
+SHAPE_TYPE_LINESTYLES = {
+    "2D": "",               # solid
+    "3D": (5, 5),           # dashed
+    "Other": (1, 3),        # dotted
+}
+
+NOISE_MARKERS = {
+    "Label Noise 000": "o",
+    "Label Noise 003": "s",
+    "Label Noise 005": "D",
+    "Label Noise 007": "X",
+}
+
 
 def beautify_plot(ax, title=None, xlabel=None, ylabel=None, save_path=None):
     """
@@ -64,7 +88,7 @@ def beautify_plot(ax, title=None, xlabel=None, ylabel=None, save_path=None):
     plt.close(fig)
 
 
-def beautify_subplot(ax, title=None, xlabel=None, ylabel=None):
+def beautify_subplot(ax, title=None, xlabel=None, ylabel=None, xlim=None, ylim=None):
     """
     Apply beautification to individual subplots.
 
@@ -79,15 +103,18 @@ def beautify_subplot(ax, title=None, xlabel=None, ylabel=None):
     plt.rcParams['font.serif'] = ['Times New Roman']
 
     if title:
-        ax.set_title(title, fontsize=12)
-
+        ax.set_title(title, fontsize=18)
     if xlabel:
-        ax.set_xlabel(xlabel, fontsize=10)
+        ax.set_xlabel(xlabel, fontsize=15)
     if ylabel:
-        ax.set_ylabel(ylabel, fontsize=10)
+        ax.set_ylabel(ylabel, fontsize=15)
+    if xlim:
+        ax.set_xlim(*xlim)
+    if ylim:
+        ax.set_ylim(*ylim)
 
-    ax.xaxis.set_tick_params(labelsize=9)
-    ax.yaxis.set_tick_params(labelsize=9)
+    ax.xaxis.set_tick_params(labelsize=13)
+    ax.yaxis.set_tick_params(labelsize=13)
     ax.set_facecolor("white")
 
     ax.spines['top'].set_visible(False)
