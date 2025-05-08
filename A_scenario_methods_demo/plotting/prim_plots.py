@@ -2,31 +2,55 @@
 PRIM and PCA-PRIM plotting routines for the scenario methods demo.
 """
 
+from typing import Optional
 import numpy as np
 from matplotlib.patches import Rectangle, Polygon
+from matplotlib.axes import Axes
 from A_scenario_methods_demo.plotting.base_plots import generic_plot, plot_base
 from A_scenario_methods_demo.utils import interpolate_color, lighten_color
 from A_scenario_methods_demo.pca_rotation_module import transform_box_to_original
-from src.config.colors import (
-    PRIMARY_LIGHT, PRIMARY_MIDDLE, PRIMARY_DARK,
-    SECONDARY_LIGHT, SECONDARY_MIDDLE, SECONDARY_DARK,
+from src.config import (
+    SCATTER_COLORS,
+    EVOLUTION_COLORS,
     QUADRILATERAL_COLOR
 )
 
 
-def plot_original_data(samples, y, quadrilateral, title="Sampled Data", note="",
-                       save_path=None, axis_limits=(0, 1, 0, 1)):
-    def draw(ax):
+def plot_original_data(
+    samples: np.ndarray,
+    y: np.ndarray,
+    quadrilateral: np.ndarray,
+    title: str = "Sampled Data",
+    note: str = "",
+    save_path: Optional[str] = None,
+    axis_limits: tuple[float, float, float, float] = (0, 1, 0, 1)
+) -> None:
+    """
+    Plot original 2D data samples with binary classification and overlay the sampling quadrilateral.
+    """
+    def draw(ax: Axes) -> None:
         xmin, xmax, ymin, ymax = axis_limits
         plot_base(ax, samples, y, quadrilateral, quadrilateral_label="Sampled Quadrilateral", xlim=(xmin, xmax),
                   ylim=(ymin, ymax))
     generic_plot(title, "X-axis", "Y-axis", note, save_path, draw, grid=False)
 
 
-def plot_spatial_evolution(samples, y, quadrilateral, boxes_history,
-                           start_color=SECONDARY_LIGHT, end_color=SECONDARY_DARK,
-                           title="Spatial Evolution", note="", save_path=None, axis_limits=None):
-    def draw(ax):
+def plot_spatial_evolution(
+    samples: np.ndarray,
+    y: np.ndarray,
+    quadrilateral: np.ndarray,
+    boxes_history: list[dict],
+    start_color: str = EVOLUTION_COLORS["start"],
+    end_color: str = EVOLUTION_COLORS["end"],
+    title: str = "Spatial Evolution",
+    note: str = "",
+    save_path: Optional[str] = None,
+    axis_limits: Optional[tuple[float, float, float, float]] = None
+) -> None:
+    """
+    Plot spatial box evolution on the original data using interpolated color to show progression.
+    """
+    def draw(ax: Axes) -> None:
         if axis_limits:
             xmin, xmax, ymin, ymax = axis_limits
         else:
@@ -45,9 +69,19 @@ def plot_spatial_evolution(samples, y, quadrilateral, boxes_history,
     generic_plot(title, "X-axis", "Y-axis", note, save_path, draw, grid=False)
 
 
-def plot_rotated_data(x_rot, y, quadrilateral_rot, title="Rotated Data (PCA Space)", note="", save_path=None,
-                      axis_limits=None):
-    def draw(ax):
+def plot_rotated_data(
+    x_rot: np.ndarray,
+    y: np.ndarray,
+    quadrilateral_rot: np.ndarray,
+    title: str = "Data in PCA–Rotated Space",
+    note: str = "",
+    save_path: Optional[str] = None,
+    axis_limits: Optional[tuple[float, float, float, float]] = None
+) -> None:
+    """
+    Plot rotated 2D data samples (e.g. after PCA) and overlay the rotated sampling quadrilateral.
+    """
+    def draw(ax: Axes) -> None:
         if axis_limits:
             xmin, xmax, ymin, ymax = axis_limits
         else:
@@ -58,16 +92,26 @@ def plot_rotated_data(x_rot, y, quadrilateral_rot, title="Rotated Data (PCA Spac
     generic_plot(title, "PCA 1", "PCA 2", note, save_path, draw, grid=False)
 
 
-def plot_rotated_with_boxes(x_rot, y, quadrilateral_rot, boxes_history_rot,
-                            title="Box Evolution in PCA Space", note="", save_path=None):
-    def draw(ax):
+def plot_rotated_with_boxes(
+    x_rot: np.ndarray,
+    y: np.ndarray,
+    quadrilateral_rot: np.ndarray,
+    boxes_history_rot: list[dict],
+    title: str = "PRIM Evolution in PCA-Rotated Space",
+    note: str = "",
+    save_path: Optional[str] = None
+) -> None:
+    """
+    Plot rotated 2D data samples and overlay a sequence of rectangular boxes to show peeling evolution.
+    """
+    def draw(ax: Axes) -> None:
         xmin, xmax = np.min(x_rot[:, 0]), np.max(x_rot[:, 0])
         ymin, ymax = np.min(x_rot[:, 1]), np.max(x_rot[:, 1])
         plot_base(ax, x_rot, y, quadrilateral_rot, quadrilateral_label="Rotated Quadrilateral", xlim=(xmin, xmax),
                   ylim=(ymin, ymax))
         for i, box in enumerate(boxes_history_rot):
             t = i / (len(boxes_history_rot) - 1) if len(boxes_history_rot) > 1 else 0
-            box_color = interpolate_color(SECONDARY_LIGHT, SECONDARY_DARK, t)
+            box_color = interpolate_color(EVOLUTION_COLORS["start"], EVOLUTION_COLORS["end"], t)
             poly = Polygon(np.array([[box['x'][0], box['y'][0]],
                                      [box['x'][1], box['y'][0]],
                                      [box['x'][1], box['y'][1]],
@@ -79,14 +123,26 @@ def plot_rotated_with_boxes(x_rot, y, quadrilateral_rot, boxes_history_rot,
     generic_plot(title, "PCA 1", "PCA 2", note, save_path, draw, grid=False)
 
 
-def plot_original_with_boxes(original_samples, y, boxes_history_rot, v, mu, quadrilateral,
-                             title="Box Evolution in Original Coordinates", note="", save_path=None):
-    def draw(ax):
+def plot_original_with_boxes(
+    original_samples: np.ndarray,
+    y: np.ndarray,
+    boxes_history_rot: list[dict],
+    v: np.ndarray,
+    mu: np.ndarray,
+    quadrilateral: np.ndarray,
+    title: str = "PRIM Evolution in Original Space",
+    note: str = "",
+    save_path: Optional[str] = None
+) -> None:
+    """
+    Plot original data with evolution boxes projected back from PCA space to original coordinates.
+    """
+    def draw(ax: Axes) -> None:
         plot_base(ax, original_samples, y, quadrilateral, quadrilateral_label="Sampled Quadrilateral",
                   xlim=(0, 1), ylim=(0, 1))
         for i, box_rot in enumerate(boxes_history_rot):
             t = i / (len(boxes_history_rot) - 1) if len(boxes_history_rot) > 1 else 0
-            box_color = interpolate_color(SECONDARY_LIGHT, SECONDARY_DARK, t)
+            box_color = interpolate_color(EVOLUTION_COLORS["start"], EVOLUTION_COLORS["end"], t)
             corners_orig = transform_box_to_original(box_rot, v, mu)
             poly = Polygon(corners_orig, closed=True, fill=False, edgecolor=box_color, linewidth=2,
                            linestyle="--", zorder=4, label="Cut Outline" if i == 0 else None)
@@ -94,21 +150,40 @@ def plot_original_with_boxes(original_samples, y, boxes_history_rot, v, mu, quad
     generic_plot(title, "X-axis", "Y-axis", note, save_path, draw, grid=False)
 
 
-def plot_overlayed_peeling_trajectories(prim_cov, prim_dens, pcaprim_cov, pcaprim_dens,
-                                        title="Overlayed Peeling Trajectories", save_path=None):
-    def draw(ax):
-        ax.plot(prim_cov, prim_dens, linestyle="-", color=PRIMARY_MIDDLE, marker="o", markersize=6,
+def plot_overlayed_peeling_trajectories(
+    prim_cov: list[float],
+    prim_dens: list[float],
+    pcaprim_cov: list[float],
+    pcaprim_dens: list[float],
+    title: str = "PRIM vs PCA-PRIM Peeling Trajectories",
+    save_path: Optional[str] = None
+) -> None:
+    """
+    Overlay two peeling trajectories (PRIM and PCA-PRIM) in coverage-density space for comparison.
+    """
+    def draw(ax: Axes) -> None:
+        ax.plot(prim_cov, prim_dens, linestyle="-", color=EVOLUTION_COLORS["start"], marker="o", markersize=6,
                 label="PRIM Trajectory", zorder=3)
-        ax.plot(pcaprim_cov, pcaprim_dens, linestyle="-", color=SECONDARY_MIDDLE, marker="s", markersize=6,
+        ax.plot(pcaprim_cov, pcaprim_dens, linestyle="-", color=EVOLUTION_COLORS["end"], marker="s", markersize=6,
                 label="PCA-PRIM Trajectory", zorder=3)
         ax.set_xlim(0, 1)
         ax.set_ylim(0, 1)
     generic_plot(title, "Coverage", "Density", "", save_path, draw)
 
 
-def plot_peeling_trajectory(coverage_vals, density_vals, start_color=SECONDARY_LIGHT, end_color=SECONDARY_DARK,
-                            title="Peeling Trajectory", note="", save_path=None):
-    def draw(ax):
+def plot_peeling_trajectory(
+    coverage_vals: list[float],
+    density_vals: list[float],
+    start_color: str = EVOLUTION_COLORS["start"],
+    end_color: str = EVOLUTION_COLORS["end"],
+    title: str = "Peeling Trajectory",
+    note: str = "",
+    save_path: Optional[str] = None
+) -> None:
+    """
+    Plot a peeling trajectory in coverage-density space with a gradient color scheme over steps.
+    """
+    def draw(ax: Axes) -> None:
         n = len(coverage_vals)
         ax.plot(coverage_vals, density_vals, linestyle="-", color="gray", linewidth=1.5, alpha=0.8, zorder=1)
         for i in range(n):
@@ -120,9 +195,31 @@ def plot_peeling_trajectory(coverage_vals, density_vals, start_color=SECONDARY_L
     generic_plot(title, "Coverage", "Density", note, save_path, draw)
 
 
-def plot_peeling_trajectory_with_constraint_colors(coverage_vals, density_vals, boxes_history, orig_bounds,
-                                                   title="Peeling Trajectory with Constraint Colors", save_path=None):
-    def draw(ax):
+def plot_peeling_trajectory_with_constraint_colors(
+    coverage_vals: list[float],
+    density_vals: list[float],
+    boxes_history: list[dict],
+    orig_bounds: dict,
+    title: str = "Peeling Trajectory",
+    save_path: Optional[str] = None
+) -> None:
+    """
+    Plot a peeling trajectory using color to indicate which dimensions were constrained
+    in each step.
+
+    - Dark green: both x and y dimensions were constrained
+    - Light green: only one of the two dimensions was constrained
+    - Grey: no constraint was applied (box still spans the full input space)
+
+    Parameters:
+        coverage_vals (list of float): Coverage values per iteration.
+        density_vals (list of float): Density values per iteration.
+        boxes_history (list of dict): List of box bounds at each iteration.
+        orig_bounds (dict): Original bounds of the space, to check constraints.
+        title (str): Title for the plot.
+        save_path (Optional[str]): Where to save the resulting figure.
+    """
+    def draw(ax: Axes) -> None:
         n = len(coverage_vals)
         for i in range(n):
             box = boxes_history[i]
@@ -131,11 +228,11 @@ def plot_peeling_trajectory_with_constraint_colors(coverage_vals, density_vals, 
             y_constrained = (not np.isclose(box['y'][0], orig_bounds['y'][0], atol=1e-6) or
                              not np.isclose(box['y'][1], orig_bounds['y'][1], atol=1e-6))
             if x_constrained and y_constrained:
-                color = PRIMARY_DARK
+                color = SCATTER_COLORS["interest"]
             elif x_constrained or y_constrained:
-                color = lighten_color(PRIMARY_DARK, amount=0.5)
+                color = lighten_color(SCATTER_COLORS["interest"], amount=0.5)
             else:
-                color = QUADRILATERAL_COLOR  # Use this as a neutral gray
+                color = QUADRILATERAL_COLOR
             ax.scatter(coverage_vals[i], density_vals[i], color=color, s=60, zorder=3)
 
         ax.plot(coverage_vals, density_vals, linestyle="-", color="gray", linewidth=1.5, alpha=0.8, zorder=1)
@@ -144,9 +241,10 @@ def plot_peeling_trajectory_with_constraint_colors(coverage_vals, density_vals, 
         ax.set_xlabel("Coverage")
         ax.set_ylabel("Density")
 
-        dummy_both = ax.scatter([], [], color=PRIMARY_DARK, s=60, label="Both Dimensions Constrained")
-        dummy_one = ax.scatter([], [], color=lighten_color(PRIMARY_DARK, amount=0.5), s=60,
+        dummy_both = ax.scatter([], [], color=SCATTER_COLORS["interest"], s=60, label="Both Dimensions Constrained")
+        dummy_one = ax.scatter([], [], color=lighten_color(SCATTER_COLORS["interest"], amount=0.5), s=60,
                                label="One Dimension Constrained")
         dummy_none = ax.scatter([], [], color=QUADRILATERAL_COLOR, s=60, label="No Constraint")
-        ax.legend(handles=[dummy_both, dummy_one, dummy_none], loc="lower right", fontsize=10)
+        ax.legend(handles=[dummy_both, dummy_one, dummy_none], loc="lower right", fontsize=14)
+
     generic_plot(title, "Coverage", "Density", "", save_path, draw, save_figsize=(6, 5))

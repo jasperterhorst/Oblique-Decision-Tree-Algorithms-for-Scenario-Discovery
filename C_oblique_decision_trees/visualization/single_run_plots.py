@@ -17,7 +17,7 @@ from shapely.ops import split
 
 from C_oblique_decision_trees.core.tree import DecisionNode
 from C_oblique_decision_trees.evaluation.io_utils import get_output_dir
-from src.config.colors import PRIMARY_LIGHT, SECONDARY_LIGHT
+from src.config.colors_and_plot_styles import PRIMARY_LIGHT, SECONDARY_LIGHT
 from src.config.plot_settings import beautify_plot, beautify_subplot
 
 
@@ -68,15 +68,6 @@ def cut_polygon_with_line(polygon, w, b, side):
     except Exception as e:
         print(f"[!] Split error: {e}")
         return None
-
-
-# def construct_region_from_constraints(constraints, initial_region):
-#     region = initial_region
-#     for w, b, side in constraints:
-#         region = cut_polygon_with_line(region, w, b, side)
-#         if region is None or region.is_empty:
-#             return None
-#     return region
 
 
 def construct_region_from_constraints(constraints, initial_region):

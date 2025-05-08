@@ -5,23 +5,44 @@ Provides functions to visualize metrics such as accuracy vs. depth or aggregated
 """
 
 import os
+import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import matplotlib.colors as mcolors
 from matplotlib.ticker import LogFormatterSciNotation
-import seaborn as sns
-import pandas as pd
-from scipy.stats import linregress
 import numpy as np
-from src.config.plot_settings import (beautify_plot, beautify_subplot,
-                                      ALGORITHM_COLORS, SHAPE_TYPE_LINESTYLES, NOISE_MARKERS)
-from src.config.paths import DEPTH_SWEEP_BATCH_RESULTS_OUTPUTS_DIR
-from src.config.settings import DEFAULT_VARIABLE_SEEDS
+import seaborn as sns
+from scipy.stats import linregress
+from typing import Optional
+
+from src.config import (
+    apply_global_plot_settings,
+    beautify_plot,
+    beautify_subplot,
+    save_figure,
+    generate_color_gradient,
+    ALGORITHM_COLORS,
+    SHAPE_TYPE_LINESTYLES,
+    NOISE_MARKERS,
+    DEPTH_SWEEP_BATCH_RESULTS_OUTPUTS_DIR,
+    DEFAULT_VARIABLE_SEEDS
+)
 
 
-def plot_benchmark_metrics(df, metric="accuracy", xlabel="Depth", ylabel=None,
-                           group_by=None, show_std=False, save_name=None, filter_noise=False,
-                           max_depth=None, exclude=None, title=None, title_postfix=None):
+def plot_benchmark_metrics(
+    df: pd.DataFrame,
+    metric: str = "accuracy",
+    xlabel: str = "Depth",
+    ylabel: Optional[str] = None,
+    group_by: Optional[list[str]] = None,
+    show_std: bool = False,
+    save_name: Optional[str] = None,
+    filter_noise: bool = False,
+    max_depth: Optional[int] = None,
+    exclude: Optional[dict] = None,
+    title: Optional[str] = None,
+    title_postfix: Optional[str] = None
+) -> plt.Axes:
     """
     Generate a line plot showing benchmark performance (e.g., accuracy, runtime)
     across tree depths for multiple algorithms and datasets.
@@ -76,6 +97,7 @@ def plot_benchmark_metrics(df, metric="accuracy", xlabel="Depth", ylabel=None,
     ax : matplotlib.axes.Axes
         The axis object of the generated plot (for further tweaking if needed).
     """
+    apply_global_plot_settings()
 
     if group_by is None:
         group_by = ["algorithm", "shape", "label_noise", "data_dim", "n_samples"]
@@ -94,11 +116,6 @@ def plot_benchmark_metrics(df, metric="accuracy", xlabel="Depth", ylabel=None,
         "gini_density_all_leaves": "Gini Density",
     }
     y_label_final = ylabel or LABEL_MAP.get(metric, metric.capitalize())
-
-    import matplotlib.pyplot as plt
-    plt.rcParams['text.usetex'] = False
-    plt.rcParams['font.family'] = 'serif'
-    plt.rcParams['font.serif'] = ['Times New Roman']
 
     plot_df = df.copy()
 
@@ -205,11 +222,6 @@ def plot_benchmark_metrics(df, metric="accuracy", xlabel="Depth", ylabel=None,
     postfix_str = title_postfix if title_postfix else ""
     filename = f"{metric}_vs_depth_by_{group_tag}{postfix_str}.pdf"
 
-    save_dir = os.path.join(DEPTH_SWEEP_BATCH_RESULTS_OUTPUTS_DIR, "plots", "plot_over_depth", metric)
-    os.makedirs(save_dir, exist_ok=True)
-
-    save_path = os.path.join(save_dir, filename)
-
     # === Format Unified Legend === #
     legend = ax.get_legend()
     if legend:
@@ -240,6 +252,11 @@ def plot_benchmark_metrics(df, metric="accuracy", xlabel="Depth", ylabel=None,
         for text in legend.get_texts():
             text.set_fontsize(12)
 
+    save_dir = os.path.join(DEPTH_SWEEP_BATCH_RESULTS_OUTPUTS_DIR, "plots", "plot_over_depth", metric)
+    os.makedirs(save_dir, exist_ok=True)
+
+    save_path = os.path.join(save_dir, filename)
+
     beautify_plot(
         ax=ax,
         title=title,
@@ -268,6 +285,8 @@ def plot_coverage_density_all_shapes_for_algorithm(df, algorithm="hhcart", cover
         save_name (str): Path to save the resulting figure.
         print_points (bool): Whether to print the (depth, coverage, density) points. Default is False.
     """
+    apply_global_plot_settings()
+
     seed = DEFAULT_VARIABLE_SEEDS[seed]
     all_shapes = sorted(df["dataset"].unique())
     ncols = 4
@@ -275,10 +294,6 @@ def plot_coverage_density_all_shapes_for_algorithm(df, algorithm="hhcart", cover
 
     cmap = cm.get_cmap("viridis", max_depth + 1)
     norm = mcolors.Normalize(vmin=0, vmax=max_depth)
-
-    plt.rcParams['text.usetex'] = False
-    plt.rcParams['font.family'] = 'serif'
-    plt.rcParams['font.serif'] = ['Times New Roman']
 
     fig, axes = plt.subplots(nrows=nrows, ncols=ncols, figsize=(4 * ncols + 1, 4 * nrows))
     axes = axes.flatten()
@@ -347,59 +362,43 @@ def plot_coverage_density_all_shapes_for_algorithm(df, algorithm="hhcart", cover
     print(f"\nSaved to: {save_path}")
 
 
-def plot_runtime_over_depth(df, algorithm, vary_by="data_dim", title=None,
-                            save_name="runtime_over_depth_plot.pdf", y_bounds=None):
+def plot_runtime_over_depth(
+    df: pd.DataFrame,
+    algorithm: str,
+    vary_by: str = "data_dim",
+    title: Optional[str] = None,
+    save_name: str = "runtime_over_depth_plot.pdf",
+    y_bounds: Optional[tuple[float, float]] = None
+) -> plt.Axes:
     """
-    Plot average runtime over depth for a single algorithm, varying by dimension or sample size.
+    Plot average runtime over tree depth for a single algorithm, grouped by either feature count or sample size.
 
     Parameters:
-    -----------
-    df : pd.DataFrame
-        Must contain 'depth', 'runtime', 'algorithm', and `vary_by` columns.
-
-    algorithm : str
-        The algorithm to plot (e.g., "OC1", "HHCART D").
-
-    vary_by : str, default="data_dim"
-        Column to vary (either 'data_dim' or 'n_samples').
-
-    title : str, optional
-        Custom title for the plot.
-
-    save_name : str, default="runtime_over_depth_plot.pdf"
-        Output filename for the saved plot.
-
-    y_bounds : tuple(float, float), optional
-        If provided, sets manual y-axis limits.
+        df (pd.DataFrame): Input data containing 'depth', 'runtime', 'algorithm', and vary_by columns.
+        algorithm (str): The algorithm to plot (e.g., "OC1", "HHCART D").
+        vary_by (str): Column to group lines by: either 'data_dim' or 'n_samples'.
+        title (str, optional): Custom plot title.
+        save_name (str, optional): Output filename (PDF).
+        y_bounds (tuple of float, optional): Manual y-axis limits.
 
     Returns:
-    --------
-    ax : matplotlib.axes.Axes
-        The Matplotlib axis object.
+        ax (plt.Axes): The axis object with the rendered plot.
     """
-    # === Preprocessing ===
+    apply_global_plot_settings()
+
     df = df.copy()
     df["algorithm"] = df["algorithm"].str.replace("_", " ").str.upper()
-    algorithm = algorithm.replace("_", " ").upper()
-    df = df[df["algorithm"] == algorithm]
+    algorithm_fmt = algorithm.replace("_", " ").upper()
+    df = df[df["algorithm"] == algorithm_fmt]
 
     if vary_by not in df.columns:
         raise ValueError(f"Column '{vary_by}' not found in dataframe.")
-
     if df.empty:
-        print(f"No data found for algorithm: {algorithm}")
-        return
+        raise ValueError(f"No data found for algorithm: {algorithm_fmt}")
 
     values_sorted = sorted(df[vary_by].unique())
-    alpha_map = {
-        v: 0.3 + 0.7 * ((len(values_sorted) - 1 - i) / (len(values_sorted) - 1 or 1))
-        for i, v in enumerate(values_sorted)
-    }
-
-    # === Plotting ===
-    plt.rcParams['text.usetex'] = False
-    plt.rcParams['font.family'] = 'serif'
-    plt.rcParams['font.serif'] = ['Times New Roman']
+    base_color = ALGORITHM_COLORS.get(algorithm_fmt, "#888888")
+    color_map = dict(zip(values_sorted, generate_color_gradient(base_color, len(values_sorted))))
 
     fig, ax = plt.subplots(figsize=(8.5, 5))
 
@@ -412,22 +411,15 @@ def plot_runtime_over_depth(df, algorithm, vary_by="data_dim", title=None,
         std_runtime = sub.groupby("depth")["runtime"].std()
 
         label = f"{v}D" if vary_by == "data_dim" else f"{v:,} samples"
+        color = color_map[v]
 
-        ax.plot(
-            mean_runtime.index,
-            mean_runtime.values,
-            label=label,
-            color=ALGORITHM_COLORS.get(algorithm, "gray"),
-            alpha=alpha_map[v],
-            linewidth=2,
-        )
-
+        ax.plot(mean_runtime.index, mean_runtime.values, label=label, color=color, linewidth=2)
         ax.fill_between(
             mean_runtime.index,
             mean_runtime - std_runtime,
             mean_runtime + std_runtime,
-            color=ALGORITHM_COLORS.get(algorithm, "gray"),
-            alpha=alpha_map[v] * 0.4,
+            color=color,
+            alpha=0.3,
             linewidth=0,
         )
 
@@ -438,79 +430,75 @@ def plot_runtime_over_depth(df, algorithm, vary_by="data_dim", title=None,
         ax.set_ylim(0, df["runtime"].max() * 1.1)
 
     legend_title = "Feature Count" if vary_by == "data_dim" else "Sample Size"
-    legend = ax.legend(title=legend_title, loc="center left", bbox_to_anchor=(1.05, 0.5))
-    legend.get_title().set_fontsize(18)
-    for text in legend.get_texts():
-        text.set_fontsize(12)
-
-    # === Save logic ===
-    save_path = os.path.join(
-        DEPTH_SWEEP_BATCH_RESULTS_OUTPUTS_DIR,
-        "plots",
-        f"runtime_by_{vary_by}",
-        save_name
+    legend = ax.legend(
+        title=legend_title,
+        loc="center left",
+        bbox_to_anchor=(1.05, 0.5),
+        fontsize=12,
+        title_fontsize=16,
+        frameon=True
     )
-    os.makedirs(os.path.dirname(save_path), exist_ok=True)
 
-    plot_title = title or f"Runtime over Depth for {algorithm}"
-    plot_title = plot_title.replace("_", " ")
+    plot_title = title or f"Runtime over Depth for {algorithm_fmt}"
+    beautify_plot(ax, title=plot_title, xlabel="Depth", ylabel="Runtime (s)")
 
-    beautify_plot(
-        ax=ax,
-        title=plot_title,
-        xlabel="Depth",
-        ylabel="Runtime (s)",
-        save_path=save_path
+    save_figure(
+        fig,
+        subfolder="depth_sweep_batch_results/plots",
+        subsubfolder=f"runtime_by_{vary_by}",
+        filename=save_name.replace(".pdf", "")
     )
 
     return ax
 
 
-def plot_scaling_loglog(df, vary_by="data_dim",
-                        algorithms=("OC1", "HHCART D"),
-                        title=None,
-                        save_name="combined_scaling_loglog.pdf",
-                        fixed_depth=None):
+def plot_scaling_loglog(
+    df: pd.DataFrame,
+    vary_by: str = "data_dim",
+    algorithms: tuple[str, ...] = ("OC1", "HHCART D"),
+    title: Optional[str] = None,
+    save_name: str = "combined_scaling_loglog.pdf",
+    fixed_depth: Optional[int] = None
+) -> plt.Axes:
     """
-    Create a combined log-log plot showing runtime scaling for given algorithms.
+    Create a log-log plot showing runtime scaling across data size or feature dimensionality.
 
     Parameters:
     -----------
     df : pd.DataFrame
-        Input data with columns: 'algorithm', 'depth', 'runtime', and vary_by.
+        Input benchmark data. Must contain 'algorithm', 'depth', 'runtime', and `vary_by` columns.
 
     vary_by : str, default="data_dim"
-        Column to vary on the x-axis (e.g., "data_dim" or "n_samples").
+        Column on the x-axis. Should be either "data_dim" or "n_samples".
 
-    algorithms : tuple of str, default=("OC1", "HHCART D")
-        Algorithms to compare.
+    algorithms : tuple[str, ...], default=("OC1", "HHCART D")
+        Algorithm names to compare. Names are case-insensitive and matched after replacing underscores with spaces.
 
     title : str, optional
-        Plot title.
+        Custom plot title. If None, generated automatically from `vary_by`.
 
-    save_name : str
-        Filename to save the plot.
+    save_name : str, default="combined_scaling_loglog.pdf"
+        Name of the PDF file to save under 'runtime_by_data_dim'.
 
     fixed_depth : int, optional
-        If specified, uses this exact depth for runtime comparison.
-        If None, uses the maximum depth per vary_by group.
+        If specified, only include runs with this depth. If None, use maximum depth per `vary_by`.
 
     Returns:
     --------
     ax : matplotlib.axes.Axes
+        The plot axis.
     """
+    apply_global_plot_settings()
+
     df = df.copy()
     df["algorithm"] = df["algorithm"].str.replace("_", " ").str.upper()
     vary_label = "Feature Count" if vary_by == "data_dim" else "Sample Count"
 
-    plt.rcParams['text.usetex'] = False
-    plt.rcParams['font.family'] = 'serif'
-    plt.rcParams['font.serif'] = ['Times New Roman']
-
     fig, ax = plt.subplots(figsize=(8.5, 5))
 
     for algo in algorithms:
-        algo_df = df[df["algorithm"] == algo.upper()]
+        algo_fmt = algo.replace("_", " ").upper()
+        algo_df = df[df["algorithm"] == algo_fmt]
         if algo_df.empty:
             continue
 
@@ -524,44 +512,46 @@ def plot_scaling_loglog(df, vary_by="data_dim",
         x_vals = grouped[vary_by].values
         y_vals = grouped["runtime"].values
 
-        # Linear regression in log-log space
+        # Fit regression line in log-log space
         slope, intercept, *_ = linregress(np.log10(x_vals), np.log10(y_vals))
         y_fit = 10 ** (intercept + slope * np.log10(x_vals))
 
-        label = f"{algo} (slope = {slope:.2f})"
-        ax.plot(x_vals, y_vals, label=label,
-                color=ALGORITHM_COLORS.get(algo.upper(), "gray"),
-                marker="o", linewidth=2)
-        ax.plot(x_vals, y_fit, linestyle="dashed",
-                color=ALGORITHM_COLORS.get(algo.upper(), "gray"), alpha=0.5)
+        label = f"{algo_fmt} (slope = {slope:.2f})"
+        color = ALGORITHM_COLORS.get(algo_fmt, "gray")
+        ax.plot(x_vals, y_vals, label=label, color=color, marker="o", linewidth=2)
+        ax.plot(x_vals, y_fit, linestyle="--", color=color, alpha=0.5)
 
     ax.set_xscale("log")
     ax.set_yscale("log")
     ax.xaxis.set_major_formatter(LogFormatterSciNotation())
     ax.yaxis.set_major_formatter(LogFormatterSciNotation())
-    ax.set_xlabel(vary_label)
-    ax.set_ylabel("Runtime (s)")
 
-    plot_title = title or f"Runtime Scaling with {vary_label}"
+    plot_title = title or f"Runtime Scaling by {vary_label}"
     ax.set_title(plot_title.replace("_", " "))
 
-    ax.legend(loc="center left", bbox_to_anchor=(1.05, 0.5), fontsize=12, title="Algorithm")
-    ax.get_legend().get_title().set_fontsize(18)
+    ax.legend(loc="lower right", fontsize=12, title="Algorithm", frameon=True)
+    ax.get_legend().get_title().set_fontsize(16)
 
-    save_path = os.path.join(
-        DEPTH_SWEEP_BATCH_RESULTS_OUTPUTS_DIR, "plots", "runtime_by_data_dim", save_name
+    save_path = (
+        DEPTH_SWEEP_BATCH_RESULTS_OUTPUTS_DIR
+        / "plots"
+        / "runtime_by_data_dim"
+        / save_name
     )
-    os.makedirs(os.path.dirname(save_path), exist_ok=True)
 
-    beautify_plot(ax=ax, title=plot_title, xlabel=vary_label, ylabel="Runtime (s)", save_path=save_path)
-
+    beautify_plot(ax=ax, title=plot_title, xlabel=vary_label, ylabel="Runtime (s)")
+    save_figure(fig, subfolder="depth_sweep_batch_results/plots/runtime_by_data_dim",
+                filename=save_name.replace(".pdf", ""))
     return ax
 
 
 def plot_metrics_vs_depth_grouped_by_dims_or_samples(
-    df, algorithm, input_axis="data_dim", metrics=("accuracy", "coverage", "density"),
-    save_name=None
-):
+    df: pd.DataFrame,
+    algorithm: str,
+    input_axis: str = "data_dim",
+    metrics: tuple[str, ...] = ("accuracy", "coverage", "density"),
+    save_name: str = None
+) -> plt.Figure:
     """
     Plot average metric trajectories over depth for one algorithm, grouped by feature count or sample size.
 
@@ -585,11 +575,9 @@ def plot_metrics_vs_depth_grouped_by_dims_or_samples(
     Returns:
     --------
     fig : matplotlib.figure.Figure
+        The generated figure.
     """
-    # === Plot settings ===
-    plt.rcParams["text.usetex"] = False
-    plt.rcParams["font.family"] = "serif"
-    plt.rcParams["font.serif"] = ["Times New Roman"]
+    apply_global_plot_settings()
 
     assert input_axis in ["data_dim", "n_samples"], "input_axis must be 'data_dim' or 'n_samples'"
     for m in metrics:
@@ -602,14 +590,11 @@ def plot_metrics_vs_depth_grouped_by_dims_or_samples(
 
     if df.empty:
         print(f"No data for algorithm {algorithm}")
-        return
+        return plt.figure()
 
     values_sorted = sorted(df[input_axis].unique())
-
-    # Get base color from ALGORITHM_COLORS, fallback to gray
     base_color = ALGORITHM_COLORS.get(algorithm, "#888888")
-    cmap = cm.get_cmap("Greens" if "HHCART" in algorithm else "Reds", len(values_sorted))
-    color_map = {v: cmap(i) for i, v in enumerate(values_sorted)}
+    color_map = dict(zip(values_sorted, generate_color_gradient(base_color, len(values_sorted))))
 
     fig, axes = plt.subplots(nrows=1, ncols=len(metrics), figsize=(6 * len(metrics), 5), sharex=True)
 
@@ -639,7 +624,6 @@ def plot_metrics_vs_depth_grouped_by_dims_or_samples(
             ylim=(0, 1)
         )
 
-    # Add shared legend
     handles, labels = axes[0].get_legend_handles_labels()
     fig.legend(
         handles, labels,
@@ -670,19 +654,35 @@ def plot_metrics_vs_depth_grouped_by_dims_or_samples(
 
 
 def plot_metrics_vs_depth_grouped_by_label_noise(
-    df, algorithm, metrics=("accuracy", "coverage", "density"), save_name=None
-):
-    def generate_interpolated_colormap(base_color, n_levels):
-        base_rgb = mcolors.to_rgb(base_color)
-        light_rgb = tuple(1 - 0.4 * (1 - c) for c in base_rgb)
-        dark_rgb = tuple(0.5 * c for c in base_rgb)
-        cmap = mcolors.LinearSegmentedColormap.from_list("custom_interp", [light_rgb, base_rgb, dark_rgb], N=n_levels)
-        return [cmap(i / (n_levels - 1)) for i in range(n_levels)]
+    df: pd.DataFrame,
+    algorithm: str,
+    metrics: tuple[str, ...] = ("accuracy", "coverage", "density"),
+    save_name: str = None
+) -> plt.Figure:
+    """
+    Plot average metric trajectories over depth for one algorithm, grouped by label noise.
 
-    # === Setup ===
-    plt.rcParams["text.usetex"] = False
-    plt.rcParams["font.family"] = "serif"
-    plt.rcParams["font.serif"] = ["Times New Roman"]
+    Parameters:
+    -----------
+    df : pd.DataFrame
+        Input benchmark data.
+
+    algorithm : str
+        Algorithm to filter and plot.
+
+    metrics : tuple of str
+        Metrics to plot. Each is rendered as a subplot with shared x-axis (depth).
+
+    save_name : str, optional
+        Output PDF path. If None, autogenerated.
+
+    Returns:
+    --------
+    fig : matplotlib.figure.Figure
+        The generated figure.
+    """
+    apply_global_plot_settings()
+    from src.config.colors_and_plot_styles import generate_color_gradient
 
     df = df.copy()
     for m in metrics:
@@ -693,13 +693,12 @@ def plot_metrics_vs_depth_grouped_by_label_noise(
     df = df[df["algorithm"] == algorithm]
     if df.empty:
         print(f"No data for algorithm {algorithm}")
-        return
+        return plt.figure()
 
     df["label_noise"] = df["label_noise"].astype(str)
     values_sorted = sorted(df["label_noise"].unique())
     base_color = ALGORITHM_COLORS.get(algorithm, "#888888")
-    colors = generate_interpolated_colormap(base_color, len(values_sorted))
-    color_map = dict(zip(values_sorted, colors))
+    color_map = dict(zip(values_sorted, generate_color_gradient(base_color, len(values_sorted))))
 
     fig, axes = plt.subplots(nrows=1, ncols=len(metrics), figsize=(6 * len(metrics), 5), sharex=True)
 
@@ -738,7 +737,6 @@ def plot_metrics_vs_depth_grouped_by_label_noise(
     fig.suptitle(f"{algorithm} – Performance by Label Noise Level", fontsize=22)
     fig.tight_layout(rect=(0, 0, 0.965, 1))
 
-    # === Save ===
     folder = os.path.join(DEPTH_SWEEP_BATCH_RESULTS_OUTPUTS_DIR, "plots", "performance_by_label_noise")
     os.makedirs(folder, exist_ok=True)
     if save_name is None or not os.path.dirname(save_name):

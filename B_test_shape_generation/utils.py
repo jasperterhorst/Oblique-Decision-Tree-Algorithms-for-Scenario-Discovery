@@ -8,7 +8,7 @@ import os
 import matplotlib.pyplot as plt
 from IPython.display import display
 import pandas as pd
-from src.config.colors import (
+from src.config.colors_and_plot_styles import (
     PRIMARY_LIGHT, PRIMARY_DARK,
     AXIS_LINE_COLOR, GRID_COLOR
 )

@@ -1,83 +1,76 @@
+"""
+plot_settings.py
+
+Shared styling utilities for plot generation.
+"""
+
 import os
 import matplotlib.pyplot as plt
-from src.config.colors import AXIS_LINE_COLOR
-
-ALGORITHM_COLORS = {
-    "CART": "#1f77b4",
-    "HHCART A": "#ff7f0e",
-    "HHCART D": "#2ca02c",
-    "OC1": "#d62728",
-    "RANDCART": "#9467bd",
-    "CO2": "#8c564b",
-    "WODT": "#e377c2",
-    "RIDGE CART": "#7f7f7f",
-}
-
-SHAPE_TYPE_LINESTYLES = {
-    "2D": "",               # solid
-    "3D": (5, 5),           # dashed
-    "Other": (1, 3),        # dotted
-}
-
-NOISE_MARKERS = {
-    "Label Noise 000": "o",
-    "Label Noise 003": "s",
-    "Label Noise 005": "D",
-    "Label Noise 007": "X",
-}
+from matplotlib.axes import Axes
+from src.config.colors_and_plot_styles import AXIS_LINE_COLOR
 
 
-def beautify_plot(ax, title=None, xlabel=None, ylabel=None, save_path=None):
+def apply_global_plot_settings() -> None:
+    """
+    Set global matplotlib font and layout parameters.
+
+    This function should be called at the beginning of any script
+    that generates figures to ensure consistent font and style settings.
+    """
+    plt.rcParams.update({
+        'text.usetex': False,
+        'font.family': 'serif',
+        'font.serif': ['Times New Roman'],
+        'axes.labelsize': 20,
+        'axes.titlesize': 24,
+        'xtick.labelsize': 16,
+        'ytick.labelsize': 16,
+        'legend.fontsize': 15,
+        'figure.dpi': 100,
+        'savefig.dpi': 300,
+        'axes.spines.top': False,
+        'axes.spines.right': False,
+        'grid.color': 'grey',
+        'grid.linestyle': 'dashed',
+        'grid.linewidth': 0.5,
+    })
+
+
+def beautify_plot(ax: Axes, title: str = None, xlabel: str = None,
+                  ylabel: str = None, save_path: str = None) -> None:
     """
     Apply standardized beautification to a Matplotlib plot.
 
-    - Respects custom legend passed externally.
-    - Replaces underscores in legend labels.
-    - Adds vertical spacing between legend entries.
+    Parameters:
+        ax (Axes): The plot axis to format.
+        title (str, optional): Title of the plot.
+        xlabel (str, optional): Label for the x-axis.
+        ylabel (str, optional): Label for the y-axis.
+        save_path (str, optional): Path to save the figure (PDF).
     """
-    plt.rcParams['text.usetex'] = False
-    plt.rcParams['font.family'] = 'serif'
-    plt.rcParams['font.serif'] = ['Times New Roman']
-
     fig = ax.get_figure()
 
     if title:
         ax.set_title(title, fontsize=24, pad=20, wrap=True)
-
     if xlabel:
         ax.set_xlabel(xlabel, fontsize=20, labelpad=10)
     else:
         ax.set_xlabel(ax.get_xlabel() or 'X-axis', fontsize=20, labelpad=10)
-
     if ylabel:
         ax.set_ylabel(ylabel, fontsize=20, labelpad=10)
     else:
         ax.set_ylabel(ax.get_ylabel() or 'Y-axis', fontsize=20, labelpad=10)
 
-    # === Legend formatting ===
+    _style_axes(ax)
+
     legend = ax.get_legend()
     if legend:
-        # Replace underscores with spaces in labels
         for text in legend.get_texts():
             text.set_text(text.get_text().replace("_", " "))
             text.set_fontsize(15)
-
-        # Optional: add spacing between entries
-        legend._legend_box.sep = 8  # vertical spacing between entries
+        legend._legend_box.sep = 8
         legend.get_frame().set_facecolor("white")
         legend.get_frame().set_edgecolor("gray")
-
-    ax.xaxis.set_tick_params(labelsize=16)
-    ax.yaxis.set_tick_params(labelsize=16)
-    ax.set_facecolor("white")
-
-    ax.spines['top'].set_visible(False)
-    ax.spines['right'].set_visible(False)
-    ax.spines['left'].set_color(AXIS_LINE_COLOR)
-    ax.spines['bottom'].set_color(AXIS_LINE_COLOR)
-
-    ax.grid(True, linestyle='dashed', color='grey', linewidth=0.5)
-    ax.tick_params(axis='both', colors=AXIS_LINE_COLOR)
 
     if save_path:
         os.makedirs(os.path.dirname(save_path), exist_ok=True)
@@ -88,20 +81,19 @@ def beautify_plot(ax, title=None, xlabel=None, ylabel=None, save_path=None):
     plt.close(fig)
 
 
-def beautify_subplot(ax, title=None, xlabel=None, ylabel=None, xlim=None, ylim=None):
+def beautify_subplot(ax: Axes, title: str = None, xlabel: str = None,
+                     ylabel: str = None, xlim: tuple = None, ylim: tuple = None) -> None:
     """
-    Apply beautification to individual subplots.
+    Apply standardized beautification to an individual subplot.
 
     Parameters:
-        ax (matplotlib.axes.Axes): The subplot axis to beautify.
-        title (str): Title of the subplot.
-        xlabel (str): Label for the x-axis.
-        ylabel (str): Label for the y-axis.
+        ax (Axes): The subplot axis to beautify.
+        title (str, optional): Title of the subplot.
+        xlabel (str, optional): Label for the x-axis.
+        ylabel (str, optional): Label for the y-axis.
+        xlim (tuple, optional): (min, max) for x-axis limits.
+        ylim (tuple, optional): (min, max) for y-axis limits.
     """
-    plt.rcParams['text.usetex'] = False
-    plt.rcParams['font.family'] = 'serif'
-    plt.rcParams['font.serif'] = ['Times New Roman']
-
     if title:
         ax.set_title(title, fontsize=18)
     if xlabel:
@@ -113,8 +105,16 @@ def beautify_subplot(ax, title=None, xlabel=None, ylabel=None, xlim=None, ylim=N
     if ylim:
         ax.set_ylim(*ylim)
 
-    ax.xaxis.set_tick_params(labelsize=13)
-    ax.yaxis.set_tick_params(labelsize=13)
+    _style_axes(ax)
+
+
+def _style_axes(ax: Axes) -> None:
+    """
+    Apply spine, grid, tick, and face color styling to an axis.
+
+    Parameters:
+        ax (Axes): The axis to style.
+    """
     ax.set_facecolor("white")
 
     ax.spines['top'].set_visible(False)
@@ -122,5 +122,109 @@ def beautify_subplot(ax, title=None, xlabel=None, ylabel=None, xlim=None, ylim=N
     ax.spines['left'].set_color(AXIS_LINE_COLOR)
     ax.spines['bottom'].set_color(AXIS_LINE_COLOR)
 
+    ax.tick_params(axis='both', colors=AXIS_LINE_COLOR, labelsize=13)
     ax.grid(True, linestyle='dashed', color='grey', linewidth=0.5)
-    ax.tick_params(axis='both', colors=AXIS_LINE_COLOR)
+
+
+# import os
+# import matplotlib.pyplot as plt
+# from src.config.colors_and_plot_styles import AXIS_LINE_COLOR
+#
+#
+# def beautify_plot(ax, title=None, xlabel=None, ylabel=None, save_path=None):
+#     """
+#     Apply standardized beautification to a Matplotlib plot.
+#
+#     - Respects custom legend passed externally.
+#     - Replaces underscores in legend labels.
+#     - Adds vertical spacing between legend entries.
+#     """
+#     plt.rcParams['text.usetex'] = False
+#     plt.rcParams['font.family'] = 'serif'
+#     plt.rcParams['font.serif'] = ['Times New Roman']
+#
+#     fig = ax.get_figure()
+#
+#     if title:
+#         ax.set_title(title, fontsize=24, pad=20, wrap=True)
+#
+#     if xlabel:
+#         ax.set_xlabel(xlabel, fontsize=20, labelpad=10)
+#     else:
+#         ax.set_xlabel(ax.get_xlabel() or 'X-axis', fontsize=20, labelpad=10)
+#
+#     if ylabel:
+#         ax.set_ylabel(ylabel, fontsize=20, labelpad=10)
+#     else:
+#         ax.set_ylabel(ax.get_ylabel() or 'Y-axis', fontsize=20, labelpad=10)
+#
+#     # === Legend formatting ===
+#     legend = ax.get_legend()
+#     if legend:
+#         # Replace underscores with spaces in labels
+#         for text in legend.get_texts():
+#             text.set_text(text.get_text().replace("_", " "))
+#             text.set_fontsize(15)
+#
+#         # Optional: add spacing between entries
+#         legend._legend_box.sep = 8  # vertical spacing between entries
+#         legend.get_frame().set_facecolor("white")
+#         legend.get_frame().set_edgecolor("gray")
+#
+#     ax.xaxis.set_tick_params(labelsize=16)
+#     ax.yaxis.set_tick_params(labelsize=16)
+#     ax.set_facecolor("white")
+#
+#     ax.spines['top'].set_visible(False)
+#     ax.spines['right'].set_visible(False)
+#     ax.spines['left'].set_color(AXIS_LINE_COLOR)
+#     ax.spines['bottom'].set_color(AXIS_LINE_COLOR)
+#
+#     ax.grid(True, linestyle='dashed', color='grey', linewidth=0.5)
+#     ax.tick_params(axis='both', colors=AXIS_LINE_COLOR)
+#
+#     if save_path:
+#         os.makedirs(os.path.dirname(save_path), exist_ok=True)
+#         fig.savefig(save_path, bbox_inches='tight')
+#         print(f"Figure saved: {save_path}")
+#
+#     plt.show()
+#     plt.close(fig)
+#
+#
+# def beautify_subplot(ax, title=None, xlabel=None, ylabel=None, xlim=None, ylim=None):
+#     """
+#     Apply beautification to individual subplots.
+#
+#     Parameters:
+#         ax (matplotlib.axes.Axes): The subplot axis to beautify.
+#         title (str): Title of the subplot.
+#         xlabel (str): Label for the x-axis.
+#         ylabel (str): Label for the y-axis.
+#     """
+#     plt.rcParams['text.usetex'] = False
+#     plt.rcParams['font.family'] = 'serif'
+#     plt.rcParams['font.serif'] = ['Times New Roman']
+#
+#     if title:
+#         ax.set_title(title, fontsize=18)
+#     if xlabel:
+#         ax.set_xlabel(xlabel, fontsize=15)
+#     if ylabel:
+#         ax.set_ylabel(ylabel, fontsize=15)
+#     if xlim:
+#         ax.set_xlim(*xlim)
+#     if ylim:
+#         ax.set_ylim(*ylim)
+#
+#     ax.xaxis.set_tick_params(labelsize=13)
+#     ax.yaxis.set_tick_params(labelsize=13)
+#     ax.set_facecolor("white")
+#
+#     ax.spines['top'].set_visible(False)
+#     ax.spines['right'].set_visible(False)
+#     ax.spines['left'].set_color(AXIS_LINE_COLOR)
+#     ax.spines['bottom'].set_color(AXIS_LINE_COLOR)
+#
+#     ax.grid(True, linestyle='dashed', color='grey', linewidth=0.5)
+#     ax.tick_params(axis='both', colors=AXIS_LINE_COLOR)
