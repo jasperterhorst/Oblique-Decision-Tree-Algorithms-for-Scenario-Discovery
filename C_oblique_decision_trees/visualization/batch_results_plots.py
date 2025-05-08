@@ -104,7 +104,8 @@ def plot_benchmark_metrics(
 
     if metric not in df.columns:
         print(f"Metric '{metric}' not found in DataFrame columns.")
-        return
+        _, ax = plt.subplots()
+        return ax
 
     LABEL_MAP = {
         "runtime": "Runtime",
