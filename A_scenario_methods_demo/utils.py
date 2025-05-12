@@ -5,6 +5,7 @@ Includes color helpers, box indexing, and matplotlib styling.
 
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
 from matplotlib.colors import to_rgb, to_hex
 from typing import Tuple, cast
 
@@ -46,13 +47,21 @@ def interpolate_color(color1: str, color2: str, t: float) -> str:
 
 
 def setup_matplotlib() -> None:
-    """
-    Set standard matplotlib parameters for consistent styling.
-    """
-    import matplotlib.pyplot as plt
-    plt.rcParams["text.usetex"] = False
-    plt.rcParams["font.family"] = "serif"
-    plt.rcParams["font.serif"] = ["Times New Roman"]
+    plt.rcParams.update({
+        "text.usetex": False,
+        "font.family": "serif",
+        "font.serif": ["Times New Roman"],
+        "axes.titlesize": 16,       # Plot title (slightly smaller for side-by-side)
+        "axes.labelsize": 14,       # Axis labels
+        "xtick.labelsize": 12,      # Ticks
+        "ytick.labelsize": 12,
+        "legend.fontsize": 10,      # Legend text
+        "legend.framealpha": 0.9,  # Legend background transparency
+        "legend.fancybox": True,      # Rounded corners
+        "legend.edgecolor": "gray",  # Legend border color
+        "figure.dpi": 100,          # Render quality
+        "savefig.dpi": 300,
+    })
 
 
 def get_points_in_box(box: dict, data: pd.DataFrame) -> np.ndarray:

@@ -1,7 +1,7 @@
 # segmentor.py
 import numpy as np
 from abc import ABC, abstractmethod
-from _adopted_oblique_trees.split_criteria import gini, twoing, mse
+from _adopted_oblique_trees.split_criteria import gini
 
 
 class SegmentorBase(ABC):

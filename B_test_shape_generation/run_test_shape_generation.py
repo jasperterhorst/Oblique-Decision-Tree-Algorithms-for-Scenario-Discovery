@@ -171,8 +171,15 @@ for label_noise in label_noise_levels:
 
         # Generate and save plot
         if "2d" in shape_name:
+            # Save with note
+            plot_2d_shape(samples, y, title=plot_title, save_path=shape_folder / f"{full_prefix}_note.pdf",
+                          note=note_formatted, show_note=True)
+            # Save without note
             plot_2d_shape(samples, y, title=plot_title, save_path=shape_folder / f"{full_prefix}.pdf",
-                          note=note_formatted)
+                          note=note_formatted, show_note=False)
         else:
+            # Save with note
+            plot_3d_shape(samples, y, title=plot_title, save_path=shape_folder / f"{full_prefix}_note.pdf",
+                          note=note_formatted, show_note=True)
             plot_3d_shape(samples, y, title=plot_title, save_path=shape_folder / f"{full_prefix}.pdf",
-                          note=note_formatted)
+                          note=note_formatted, show_note=False)

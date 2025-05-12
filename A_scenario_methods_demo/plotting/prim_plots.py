@@ -30,7 +30,7 @@ def plot_original_data(
     """
     def draw(ax: Axes) -> None:
         xmin, xmax, ymin, ymax = axis_limits
-        plot_base(ax, samples, y, quadrilateral, quadrilateral_label="Sampled Quadrilateral", xlim=(xmin, xmax),
+        plot_base(ax, samples, y, quadrilateral, quadrilateral_label="Quadrilateral", xlim=(xmin, xmax),
                   ylim=(ymin, ymax))
     generic_plot(title, "X-axis", "Y-axis", note, save_path, draw, grid=False)
 
@@ -73,7 +73,7 @@ def plot_rotated_data(
     x_rot: np.ndarray,
     y: np.ndarray,
     quadrilateral_rot: np.ndarray,
-    title: str = "Data in PCA–Rotated Space",
+    title: str = "Data in PCA-Rotated Space",
     note: str = "",
     save_path: Optional[str] = None,
     axis_limits: Optional[tuple[float, float, float, float]] = None
@@ -87,7 +87,7 @@ def plot_rotated_data(
         else:
             xmin, xmax = np.min(x_rot[:, 0]), np.max(x_rot[:, 0])
             ymin, ymax = np.min(x_rot[:, 1]), np.max(x_rot[:, 1])
-        plot_base(ax, x_rot, y, quadrilateral_rot, quadrilateral_label="Rotated Quadrilateral", xlim=(xmin, xmax),
+        plot_base(ax, x_rot, y, quadrilateral_rot, quadrilateral_label="Quadrilateral", xlim=(xmin, xmax),
                   ylim=(ymin, ymax))
     generic_plot(title, "PCA 1", "PCA 2", note, save_path, draw, grid=False)
 
@@ -107,7 +107,7 @@ def plot_rotated_with_boxes(
     def draw(ax: Axes) -> None:
         xmin, xmax = np.min(x_rot[:, 0]), np.max(x_rot[:, 0])
         ymin, ymax = np.min(x_rot[:, 1]), np.max(x_rot[:, 1])
-        plot_base(ax, x_rot, y, quadrilateral_rot, quadrilateral_label="Rotated Quadrilateral", xlim=(xmin, xmax),
+        plot_base(ax, x_rot, y, quadrilateral_rot, quadrilateral_label="Quadrilateral", xlim=(xmin, xmax),
                   ylim=(ymin, ymax))
         for i, box in enumerate(boxes_history_rot):
             t = i / (len(boxes_history_rot) - 1) if len(boxes_history_rot) > 1 else 0
@@ -138,7 +138,7 @@ def plot_original_with_boxes(
     Plot original data with evolution boxes projected back from PCA space to original coordinates.
     """
     def draw(ax: Axes) -> None:
-        plot_base(ax, original_samples, y, quadrilateral, quadrilateral_label="Sampled Quadrilateral",
+        plot_base(ax, original_samples, y, quadrilateral, quadrilateral_label="Quadrilateral",
                   xlim=(0, 1), ylim=(0, 1))
         for i, box_rot in enumerate(boxes_history_rot):
             t = i / (len(boxes_history_rot) - 1) if len(boxes_history_rot) > 1 else 0
@@ -245,6 +245,6 @@ def plot_peeling_trajectory_with_constraint_colors(
         dummy_one = ax.scatter([], [], color=lighten_color(SCATTER_COLORS["interest"], amount=0.5), s=60,
                                label="One Dimension Constrained")
         dummy_none = ax.scatter([], [], color=QUADRILATERAL_COLOR, s=60, label="No Constraint")
-        ax.legend(handles=[dummy_both, dummy_one, dummy_none], loc="lower right", fontsize=14)
+        ax.legend(handles=[dummy_both, dummy_one, dummy_none], loc="lower right")
 
-    generic_plot(title, "Coverage", "Density", "", save_path, draw, save_figsize=(6, 5))
+    generic_plot(title, "Coverage", "Density", "", save_path, draw, save_figsize=(4.7, 3.7))

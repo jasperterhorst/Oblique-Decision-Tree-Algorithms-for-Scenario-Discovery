@@ -25,7 +25,7 @@ def generic_plot(
     save_path: Optional[str],
     draw_func: Callable[..., None],
     display_figsize: tuple[float, float] = (4, 3),
-    save_figsize: tuple[float, float] = (6, 5),
+    save_figsize: tuple[float, float] = (4.7, 3.7),
     grid: bool = True
 ) -> None:
     """
@@ -61,14 +61,14 @@ def generic_plot(
     if grid:
         ax.grid(True, linestyle="--", linewidth=0.5, color=GRID_COLOR)
 
-    ax.tick_params(axis="both", labelsize=14, colors="gray")
-    ax.set_title(title, fontsize=22, pad=15)
-    ax.set_xlabel(xlabel, fontsize=18, labelpad=10)
-    ax.set_ylabel(ylabel, fontsize=18, labelpad=10)
+    ax.tick_params(axis="both", colors="gray")
+    ax.set_title(title, pad=15)
+    ax.set_xlabel(xlabel, labelpad=10)
+    ax.set_ylabel(ylabel, labelpad=10)
 
     handles, labels = ax.get_legend_handles_labels()
     if handles:
-        ax.legend(handles, labels, loc="lower right", fontsize=14, frameon=True)
+        ax.legend(handles, labels, loc="lower right", frameon=True)
 
     if note:
         fig.text(0.5, 0.01, note, va="bottom", ha="center", fontsize=14, color="gray")
@@ -76,7 +76,7 @@ def generic_plot(
     plt.tight_layout()
     if save_path:
         os.makedirs(os.path.dirname(save_path), exist_ok=True)
-        fig.savefig(save_path, bbox_inches="tight")
+        fig.savefig(save_path, bbox_inches="tight", dpi=300)
         print(f"Figure saved to: {save_path}")
 
     plt.show()
@@ -88,7 +88,7 @@ def plot_base(
     samples: np.ndarray,
     y: np.ndarray,
     quadrilateral: np.ndarray,
-    quadrilateral_label: str = "Sampled Quadrilateral",
+    quadrilateral_label: str = "Quadrilateral",
     xlim: Optional[tuple[float, float]] = None,
     ylim: Optional[tuple[float, float]] = None
 ) -> None:

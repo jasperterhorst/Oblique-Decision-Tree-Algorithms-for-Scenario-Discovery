@@ -23,6 +23,7 @@ import numpy as np
 from _adopted_oblique_trees.segmentor import CARTSegmentor
 from sklearn.base import ClassifierMixin
 
+
 # =============================================================================
 # Tree Node Structure
 # =============================================================================

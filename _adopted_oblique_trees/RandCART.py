@@ -107,7 +107,7 @@ class Rand_CART(BaseEstimator):
 
         if self._compare_with_cart:
             imp_cart, sr_cart, left_cart, right_cart = self.segmentor(X, y, self.impurity)
-            if not best_result or imp_cart > best_score:
+            if not best_result or imp_cart < best_score:
                 Q = np.eye(n_features)
                 best_result = (Q, sr_cart, left_cart, right_cart)
 

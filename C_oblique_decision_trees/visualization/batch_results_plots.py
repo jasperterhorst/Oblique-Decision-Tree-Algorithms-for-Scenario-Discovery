@@ -29,7 +29,7 @@ from src.config import (
 )
 
 
-def plot_benchmark_metrics(
+def plot_metric_over_depth_by_algorithm_and_group(
     df: pd.DataFrame,
     metric: str = "accuracy",
     xlabel: str = "Depth",
@@ -269,101 +269,7 @@ def plot_benchmark_metrics(
     return ax
 
 
-def plot_coverage_density_all_shapes_for_algorithm(df, algorithm="hhcart", coverage_col="coverage",
-                                                   density_col="density", max_depth=15, seed=1,
-                                                   save_name=None, print_points=False):
-    """
-    Plot coverage vs. density trade-off across depths for each shape, using one algorithm and one seed.
-    Each point is colored by depth and connected by a line. Each subplot shows (depth, cov, dens) values.
-
-    Parameters:
-        df (pd.DataFrame): Benchmark results.
-        algorithm (str): Algorithm to visualize (e.g., 'hhcart').
-        coverage_col (str): Column name for coverage values.
-        density_col (str): Column name for density values.
-        max_depth (int): Maximum depth to color.
-        seed (int): Choose which seeds from the list of DEFAULT_VARIABLE_SEEDS.
-        save_name (str): Path to save the resulting figure.
-        print_points (bool): Whether to print the (depth, coverage, density) points. Default is False.
-    """
-    apply_global_plot_settings()
-
-    seed = DEFAULT_VARIABLE_SEEDS[seed]
-    all_shapes = sorted(df["dataset"].unique())
-    ncols = 4
-    nrows = (len(all_shapes) + ncols - 1) // ncols
-
-    cmap = cm.get_cmap("viridis", max_depth + 1)
-    norm = mcolors.Normalize(vmin=0, vmax=max_depth)
-
-    fig, axes = plt.subplots(nrows=nrows, ncols=ncols, figsize=(4 * ncols + 1, 4 * nrows))
-    axes = axes.flatten()
-
-    for i, shape in enumerate(all_shapes):
-        ax = axes[i]
-        filtered = df[
-            (df["algorithm"] == algorithm) &
-            (df["dataset"] == shape) &
-            (df["seed"] == seed) &
-            df[coverage_col].apply(np.isfinite) &
-            df[density_col].apply(np.isfinite)
-        ].copy()
-
-        if filtered.empty:
-            ax.set_title(f"{shape}\n(No Data)")
-            ax.axis("off")
-            continue
-
-        filtered.sort_values("depth", inplace=True)
-        cov = filtered[coverage_col].values
-        dens = filtered[density_col].values
-        depths = filtered["depth"].values
-
-        if print_points:
-            print(f"\n=== {shape.upper()} ===")
-            for d, c, den in zip(depths, cov, dens):
-                print(f"Depth {d}: Coverage = {c:.3f}, Density = {den:.3f}")
-
-        # === LINE and SCATTER === #
-        ax.plot(dens, cov, color="gray", linestyle="-", linewidth=1, zorder=1)
-
-        for d, x, y in zip(depths, dens, cov):
-            color = cmap(norm(d))
-            ax.scatter(x, y, color=color, edgecolor="black", s=40, zorder=2)
-            ax.text(x + 0.01, y + 0.01, f"{d}", fontsize=7, alpha=0.6)
-
-        ax.set_xlim(0, 1)
-        ax.set_ylim(0, 1)
-
-        beautify_subplot(
-            ax,
-            title=shape.replace("_", " ").title(),
-            xlabel="Density",
-            ylabel="Coverage"
-        )
-
-    # Remove unused subplots
-    for j in range(len(all_shapes), len(axes)):
-        axes[j].axis("off")
-
-    # Add colorbar on right
-    sm = cm.ScalarMappable(cmap=cmap, norm=norm)
-    sm.set_array([])
-    fig.subplots_adjust(right=0.92, hspace=0.3)
-    cbar_ax = fig.add_axes((0.94, 0.15, 0.015, 0.7))
-    cbar = fig.colorbar(sm, cax=cbar_ax)
-    cbar.set_label("Tree Depth", fontsize=13)
-
-    fig.suptitle(f"Coverage–Density Tradeoff\n{algorithm.upper()}, Seed {seed}", fontsize=16)
-
-    save_path = save_name or os.path.join(
-        DEPTH_SWEEP_BATCH_RESULTS_OUTPUTS_DIR, "plots", f"coverage_density_colormap_{algorithm}.pdf"
-    )
-    fig.savefig(save_path, bbox_inches="tight")
-    print(f"\nSaved to: {save_path}")
-
-
-def plot_runtime_over_depth(
+def plot_runtime_over_depth_grouped_by_data_dim_or_samples(
     df: pd.DataFrame,
     algorithm: str,
     vary_by: str = "data_dim",
@@ -453,7 +359,7 @@ def plot_runtime_over_depth(
     return ax
 
 
-def plot_scaling_loglog(
+def plot_loglog_runtime_scaling_by_dimension_or_sample_count(
     df: pd.DataFrame,
     vary_by: str = "data_dim",
     algorithms: tuple[str, ...] = ("OC1", "HHCART D"),
@@ -546,7 +452,7 @@ def plot_scaling_loglog(
     return ax
 
 
-def plot_metrics_vs_depth_grouped_by_dims_or_samples(
+def plot_multiple_metrics_over_depth_by_dim_or_sample_size(
     df: pd.DataFrame,
     algorithm: str,
     input_axis: str = "data_dim",
@@ -654,7 +560,7 @@ def plot_metrics_vs_depth_grouped_by_dims_or_samples(
     return fig
 
 
-def plot_metrics_vs_depth_grouped_by_label_noise(
+def plot_multiple_metrics_over_depth_by_label_noise(
     df: pd.DataFrame,
     algorithm: str,
     metrics: tuple[str, ...] = ("accuracy", "coverage", "density"),
@@ -750,3 +656,97 @@ def plot_metrics_vs_depth_grouped_by_label_noise(
     print(f"[SAVED] {save_path}")
     plt.close(fig)
     return fig
+
+
+def plot_coverage_density_all_shapes_for_algorithm(df, algorithm="hhcart", coverage_col="coverage",
+                                                   density_col="density", max_depth=15, seed=1,
+                                                   save_name=None, print_points=False):
+    """
+    Plot coverage vs. density trade-off across depths for each shape, using one algorithm and one seed.
+    Each point is colored by depth and connected by a line. Each subplot shows (depth, cov, dens) values.
+
+    Parameters:
+        df (pd.DataFrame): Benchmark results.
+        algorithm (str): Algorithm to visualize (e.g., 'hhcart').
+        coverage_col (str): Column name for coverage values.
+        density_col (str): Column name for density values.
+        max_depth (int): Maximum depth to color.
+        seed (int): Choose which seeds from the list of DEFAULT_VARIABLE_SEEDS.
+        save_name (str): Path to save the resulting figure.
+        print_points (bool): Whether to print the (depth, coverage, density) points. Default is False.
+    """
+    apply_global_plot_settings()
+
+    seed = DEFAULT_VARIABLE_SEEDS[seed]
+    all_shapes = sorted(df["dataset"].unique())
+    ncols = 4
+    nrows = (len(all_shapes) + ncols - 1) // ncols
+
+    cmap = cm.get_cmap("viridis", max_depth + 1)
+    norm = mcolors.Normalize(vmin=0, vmax=max_depth)
+
+    fig, axes = plt.subplots(nrows=nrows, ncols=ncols, figsize=(4 * ncols + 1, 4 * nrows))
+    axes = axes.flatten()
+
+    for i, shape in enumerate(all_shapes):
+        ax = axes[i]
+        filtered = df[
+            (df["algorithm"] == algorithm) &
+            (df["dataset"] == shape) &
+            (df["seed"] == seed) &
+            df[coverage_col].apply(np.isfinite) &
+            df[density_col].apply(np.isfinite)
+        ].copy()
+
+        if filtered.empty:
+            ax.set_title(f"{shape}\n(No Data)")
+            ax.axis("off")
+            continue
+
+        filtered.sort_values("depth", inplace=True)
+        cov = filtered[coverage_col].values
+        dens = filtered[density_col].values
+        depths = filtered["depth"].values
+
+        if print_points:
+            print(f"\n=== {shape.upper()} ===")
+            for d, c, den in zip(depths, cov, dens):
+                print(f"Depth {d}: Coverage = {c:.3f}, Density = {den:.3f}")
+
+        # === LINE and SCATTER === #
+        ax.plot(dens, cov, color="gray", linestyle="-", linewidth=1, zorder=1)
+
+        for d, x, y in zip(depths, dens, cov):
+            color = cmap(norm(d))
+            ax.scatter(x, y, color=color, edgecolor="black", s=40, zorder=2)
+            ax.text(x + 0.01, y + 0.01, f"{d}", fontsize=7, alpha=0.6)
+
+        ax.set_xlim(0, 1)
+        ax.set_ylim(0, 1)
+
+        beautify_subplot(
+            ax,
+            title=shape.replace("_", " ").title(),
+            xlabel="Density",
+            ylabel="Coverage"
+        )
+
+    # Remove unused subplots
+    for j in range(len(all_shapes), len(axes)):
+        axes[j].axis("off")
+
+    # Add colorbar on right
+    sm = cm.ScalarMappable(cmap=cmap, norm=norm)
+    sm.set_array([])
+    fig.subplots_adjust(right=0.92, hspace=0.3)
+    cbar_ax = fig.add_axes((0.94, 0.15, 0.015, 0.7))
+    cbar = fig.colorbar(sm, cax=cbar_ax)
+    cbar.set_label("Tree Depth", fontsize=13)
+
+    fig.suptitle(f"Coverage–Density Tradeoff\n{algorithm.upper()}, Seed {seed}", fontsize=16)
+
+    save_path = save_name or os.path.join(
+        DEPTH_SWEEP_BATCH_RESULTS_OUTPUTS_DIR, "plots", f"coverage_density_colormap_{algorithm}.pdf"
+    )
+    fig.savefig(save_path, bbox_inches="tight")
+    print(f"\nSaved to: {save_path}")

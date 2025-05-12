@@ -44,7 +44,7 @@ def format_note_text(note, dimension="2D"):
 # --------------------------------------------------------
 # 2D Plotting Function
 # --------------------------------------------------------
-def plot_2d_shape(samples, y, title="2D Shape", save_path=None, note=""):
+def plot_2d_shape(samples, y, title="2D Shape", save_path=None, note="", show_note=True):
     plt.rcParams['text.usetex'] = False
     plt.rcParams['font.family'] = 'serif'
     plt.rcParams['font.serif'] = ['Times New Roman']
@@ -72,7 +72,7 @@ def plot_2d_shape(samples, y, title="2D Shape", save_path=None, note=""):
     ax.spines['bottom'].set_color(AXIS_LINE_COLOR)
     ax.tick_params(axis='both', colors=AXIS_LINE_COLOR)
 
-    if note:
+    if note and show_note:
         formatted_note = format_note_text(note, dimension="2D")
         fig.text(0.5, -0.01, formatted_note, va='top', ha='center',
                  fontsize=14, color=AXIS_LINE_COLOR)
@@ -90,7 +90,7 @@ def plot_2d_shape(samples, y, title="2D Shape", save_path=None, note=""):
 # 3D Plotting Function
 # --------------------------------------------------------
 
-def plot_3d_shape(samples, y, title="3D Shape", save_path=None, note=""):
+def plot_3d_shape(samples, y, title="3D Shape", save_path=None, note="", show_note=True):
     plt.rcParams['text.usetex'] = False
     plt.rcParams['font.family'] = 'serif'
     plt.rcParams['font.serif'] = ['Times New Roman']
@@ -125,7 +125,7 @@ def plot_3d_shape(samples, y, title="3D Shape", save_path=None, note=""):
 
     ax.grid(True, linestyle='--', linewidth=0.5, color=GRID_COLOR)
 
-    if note:
+    if note and show_note:
         formatted_note = format_note_text(note, dimension="3D")
         fig.text(0.5, 0.08, formatted_note, va='top', ha='center',
                  fontsize=14, color=AXIS_LINE_COLOR)

@@ -129,10 +129,17 @@ def save_interface_data(interactive_widget, file_prefix, plot_title, save_dir, o
     fp = file_prefix.lower().replace(" ", "_")
     # Save CSV files
     save_data(df_x, y, file_prefix=fp, save_dir=save_dir)
-    # Save PDF figure
-    image_path = os.path.join(save_dir, f"{fp}.pdf")
+
     plot_function = plot_2d_shape if dimension == "2D" else plot_3d_shape
-    plot_function(samples, y, title=f"{plot_title}", save_path=image_path, note=note)
+
+    # Save PDF with note
+    image_path = os.path.join(save_dir, f"{fp}_note.pdf")
+    plot_function(samples, y, title=f"{plot_title}", save_path=image_path, note=note, show_note=True)
+
+    # Save PDF without note
+    image_path_clean = os.path.join(save_dir, f"{fp}.pdf")
+    plot_function(samples, y, title=f"{plot_title}", save_path=image_path_clean, note=note, show_note=False)
+
     with output:
         print(f"{plot_title} data and image saved successfully to: {save_dir}")
 
@@ -592,7 +599,7 @@ def create_3d_radial_segment_interface(defaults=None, save_dir=None):
     """
     if defaults is None:
         defaults = {
-            "num_samples": 10000,
+            "num_samples": 5000,
             "outer_radius": 0.4,
             "inner_radius": 0.2,
             "arc_span_degrees": 300,
@@ -684,7 +691,7 @@ def create_3d_barbell_interface(defaults=None, save_dir=None):
     """
     if defaults is None:
         defaults = {
-            "num_samples": 10000,
+            "num_samples": 5000,
             "barbell_length": 0.8,
             "sphere_radius": 0.25,
             "connector_thickness": 0.1,
@@ -780,7 +787,7 @@ def create_3d_saddle_interface(defaults=None, save_dir=None):
     """
     if defaults is None:
         defaults = {
-            "num_samples": 10000,
+            "num_samples": 5000,
             "saddle_height": 0.5,
             "curve_sharpness_x1": 1.0,
             "curve_sharpness_x2": 1.0,

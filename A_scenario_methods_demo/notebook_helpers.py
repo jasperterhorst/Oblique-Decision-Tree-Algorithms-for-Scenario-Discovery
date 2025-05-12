@@ -13,6 +13,7 @@ from typing import Any
 from matplotlib.colors import to_rgba
 from matplotlib.patches import Rectangle
 from IPython.display import display
+from pathlib import Path
 
 from A_scenario_methods_demo.analysis import run_analysis
 from A_scenario_methods_demo.plotting.base_plots import plot_base, generic_plot
@@ -40,6 +41,7 @@ SAVE_PATHS = {
     "overlay": SCENARIO_METHODS_DEMO_OUTPUTS_DIR / "peeling_trajectory_prim_vs_pca_prim.pdf",
     "cart": SCENARIO_METHODS_DEMO_OUTPUTS_DIR / "CART" / "cart_plot.pdf",
 }
+
 
 # === Evolution directories ===
 PRIM_EVOLUTION_DIR = SCENARIO_METHODS_DEMO_OUTPUTS_DIR / "PRIM" / "evolution"
@@ -186,13 +188,13 @@ def save_cart_plots(
     results = run_analysis(num_dots, quad_coords, frac_inside, frac_outside,
                            peel_frac, prim_mass_min, cart_mass_min)
 
-    cart_dir = SAVE_PATHS["cart"].parent
-    cart_dir.mkdir(parents=True, exist_ok=True)
+    cart_save_path = get_cart_save_path(cart_mass_min)
+    cart_save_path.parent.mkdir(parents=True, exist_ok=True)
 
     plot_cart_spatial_evolution(
         results["samples"], results["y_labels"], results["quadrilateral"],
         results["cart_boxes"], results["cart_class"],
-        save_path=SAVE_PATHS["cart"], axis_limits=(0, 1, 0, 1)
+        save_path=str(cart_save_path), axis_limits=(0, 1, 0, 1)
     )
 
     print("[✓] Saved CART plot.")
@@ -215,12 +217,12 @@ def _save_individual_prim_boxes(results: dict) -> None:
 
         def draw(ax):
             plot_base(ax, results["samples"], results["y_labels"], results["quadrilateral"],
-                      quadrilateral_label="Sampled Quadrilateral", xlim=(0, 1), ylim=(0, 1))
+                      quadrilateral_label="Quadrilateral", xlim=(0, 1), ylim=(0, 1))
             ax.add_patch(rect)
 
         out_path = PRIM_EVOLUTION_DIR / f"box_{i + 1}.pdf"
         generic_plot(f"PRIM Box {i + 1}", "X-axis", "Y-axis", "", str(out_path), draw,
-                     save_figsize=(6, 5), grid=False)
+                     save_figsize=(4.7, 3.7), grid=False)
 
 
 def _save_individual_pcaprim_boxes(results: dict) -> None:
@@ -239,14 +241,28 @@ def _save_individual_pcaprim_boxes(results: dict) -> None:
 
         def draw(ax):
             plot_base(ax, results["X_rot"], results["y_labels"], results["quadrilateral_rot"],
-                      quadrilateral_label="Rotated Quadrilateral")
+                      quadrilateral_label="Quadrilateral")
             ax.add_patch(rect)
             ax.set_xlim(results["X_rot"][:, 0].min(), results["X_rot"][:, 0].max())
             ax.set_ylim(results["X_rot"][:, 1].min(), results["X_rot"][:, 1].max())
 
         out_path = PCA_PRIM_EVOLUTION_DIR / f"box_{i + 1}.pdf"
         generic_plot(f"PCA-PRIM Box {i + 1}", "PCA 1", "PCA 2", "", str(out_path), draw,
-                     save_figsize=(6, 5), grid=False)
+                     save_figsize=(4.7, 3.7), grid=False)
+
+
+def get_cart_save_path(cart_mass_min: float) -> Path:
+    """
+    Generate a dynamic save path for the CART plot, including the mass threshold in the filename.
+
+    Parameters:
+        cart_mass_min (float): Minimum box mass threshold.
+
+    Returns:
+        str: Path to save the CART plot.
+    """
+    filename = f"cart_plot_mass_{cart_mass_min:.2f}.pdf"
+    return SCENARIO_METHODS_DEMO_OUTPUTS_DIR / "CART" / filename
 
 
 def _display_cart_summary_table(results: dict, table_output: Any) -> None:

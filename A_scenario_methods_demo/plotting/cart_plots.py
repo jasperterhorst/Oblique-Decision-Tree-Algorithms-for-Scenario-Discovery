@@ -101,11 +101,13 @@ def plot_cart_spatial_evolution(
 
         # Legend
         legend_handles = [
-            Line2D([], [], color=SCATTER_COLORS["no_interest"], marker='o', linestyle='None', markersize=6, label="Not of Interest"),
-            Line2D([], [], color=SCATTER_COLORS["interest"], marker='o', linestyle='None', markersize=6, label="Of Interest"),
+            Line2D([], [], color=SCATTER_COLORS["no_interest"], marker='o', linestyle='None',
+                   markersize=6, label="Not of Interest"),
+            Line2D([], [], color=SCATTER_COLORS["interest"], marker='o', linestyle='None',
+                   markersize=6, label="Of Interest"),
             Line2D([], [], color=CART_OUTLINE_COLOR, linewidth=2, label="CART Boundaries"),
-            Patch(facecolor=QUADRILATERAL_COLOR, edgecolor="none", label="Sampled Quadrilateral")
+            Patch(facecolor=QUADRILATERAL_COLOR, edgecolor="none", label="Quadrilateral")
         ]
-        ax.legend(handles=legend_handles, loc="lower right", fontsize=14)
+        ax.legend(handles=legend_handles, loc="lower right")
 
     generic_plot(title, "X-axis", "Y-axis", note, save_path, draw, grid=False)
