@@ -130,7 +130,7 @@ def plot_original_with_boxes(
     v: np.ndarray,
     mu: np.ndarray,
     quadrilateral: np.ndarray,
-    title: str = "PRIM Evolution in Original Space",
+    title: str = "PCA-PRIM Evolution in Original Space",
     note: str = "",
     save_path: Optional[str] = None
 ) -> None:

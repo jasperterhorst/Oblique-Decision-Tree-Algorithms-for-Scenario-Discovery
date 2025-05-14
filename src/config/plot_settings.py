@@ -22,7 +22,7 @@ def apply_global_plot_settings() -> None:
         'font.family': 'serif',
         'font.serif': ['Times New Roman'],
         'axes.labelsize': 20,
-        'axes.titlesize': 24,
+        'axes.titlesize': 21,
         'xtick.labelsize': 16,
         'ytick.labelsize': 16,
         'legend.fontsize': 15,
