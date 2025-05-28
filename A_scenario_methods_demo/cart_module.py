@@ -3,6 +3,7 @@ CART algorithm wrapper for scenario discovery.
 Extracts axis-aligned boxes with coverage and density metrics.
 """
 
+from typing import Tuple, List, Dict
 import numpy as np
 import pandas as pd
 from sklearn.tree import DecisionTreeClassifier
@@ -11,7 +12,11 @@ from A_scenario_methods_demo.utils import get_points_in_box
 from src.config import DEFAULT_VARIABLE_SEEDS
 
 
-def get_cart_boxes(tree: DecisionTreeClassifier, x_bounds: tuple, y_bounds: tuple) -> list:
+def get_cart_boxes(
+    tree: DecisionTreeClassifier,
+    x_bounds: Tuple[float, float],
+    y_bounds: Tuple[float, float]
+) -> List[Dict[str, object]]:
     """
     Recursively extract leaf regions (boxes) from a fitted decision tree.
 

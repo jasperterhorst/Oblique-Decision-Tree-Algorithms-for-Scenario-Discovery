@@ -18,11 +18,11 @@ from C_oblique_decision_tree_benchmark.evaluation import evaluate_tree, save_dep
 from _adopted_oblique_trees.HouseHolder_CART import HHCartAClassifier, HHCartDClassifier
 from _adopted_oblique_trees.RandCART import RandCARTClassifier
 from _adopted_oblique_trees.CO2 import CO2Classifier
-from _adopted_oblique_trees.Oblique_Classifier_1 import ObliqueClassifier1
+from _adopted_oblique_trees.Modified_Oblique_Classifier_1 import ModifiedObliqueClassifier1
 from _adopted_oblique_trees.WODT import WeightedObliqueDecisionTreeClassifier
 from _adopted_oblique_trees.RidgeCART import RidgeCARTClassifier
 from _adopted_oblique_trees.CART import CARTClassifier
-from _adopted_oblique_trees.segmentor import CARTSegmentor, MeanSegmentor
+from _adopted_oblique_trees.segmentor import CARTSegmentor
 from _adopted_oblique_trees.split_criteria import gini
 
 from src.config.settings import DEFAULT_VARIABLE_SEEDS
@@ -84,12 +84,10 @@ class DepthSweepRunner:
                 Defines axis-aligned split search (e.g., CARTSegmentor, MeanSegmentor).
                 Applies to: HHCART variants, CO2, RandCART, RidgeCART.
 
-        # OC1 Hyperparameters
+        # MOC1 Hyperparameters
             n_restarts (int, default=20):
                 Number of random restarts (≥ 1) to escape local minima.
 
-            bias_steps (int, default=20):
-                Number of discrete bias perturbation steps. Must be ≥ 1.
 
             min_features_split (int, default=1):
                 Minimum non-zero coefficients per split. Must be ≥ 1.
@@ -142,8 +140,8 @@ class DepthSweepRunner:
                          max_iter=max_iter_wodt if max_iter_wodt is not None else max_iter_global,),
             "cart": make(CARTClassifier, impurity=impurity),
             "ridge_cart": make(RidgeCARTClassifier, impurity=impurity, segmentor=segmentor),
-            "oc1": make(ObliqueClassifier1, n_restarts=n_restarts, bias_steps=bias_steps,
-                        min_features_split=min_features_split),
+            "moc1": make(ModifiedObliqueClassifier1, n_restarts=n_restarts, bias_steps=bias_steps,
+                         min_features_split=min_features_split),
             "co2": make(CO2Classifier, impurity=impurity, segmentor=segmentor,
                         max_iter_per_node=max_iter_co2 if max_iter_co2 is not None else max_iter_global,
                         nu=nu, eta=eta, tol=tol),

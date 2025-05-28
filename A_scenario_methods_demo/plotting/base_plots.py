@@ -3,7 +3,7 @@ Base plotting routines for the scenario methods demo.
 """
 
 import os
-from typing import Callable, Optional
+from typing import Callable, Optional, Tuple
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.axes import Axes
@@ -24,8 +24,8 @@ def generic_plot(
     note: Optional[str],
     save_path: Optional[str],
     draw_func: Callable[..., None],
-    display_figsize: tuple[float, float] = (4, 3),
-    save_figsize: tuple[float, float] = (4.7, 3.7),
+    display_figsize: Tuple[float, float] = (4, 3),
+    save_figsize: Tuple[float, float] = (4.7, 3.7),
     grid: bool = True
 ) -> None:
     """
@@ -89,8 +89,8 @@ def plot_base(
     y: np.ndarray,
     quadrilateral: np.ndarray,
     quadrilateral_label: str = "Quadrilateral",
-    xlim: Optional[tuple[float, float]] = None,
-    ylim: Optional[tuple[float, float]] = None
+    xlim: Optional[Tuple[float, float]] = None,
+    ylim: Optional[Tuple[float, float]] = None
 ) -> None:
     """
     Plot classified sample points and a background quadrilateral.

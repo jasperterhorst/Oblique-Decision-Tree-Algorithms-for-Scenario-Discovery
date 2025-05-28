@@ -7,7 +7,7 @@ Provides a single interface to convert different model types into the standardiz
 from C_oblique_decision_tree_benchmark.converters.hhcart_converter import convert_hhcart
 from C_oblique_decision_tree_benchmark.converters.randcart_converter import convert_randcart
 from C_oblique_decision_tree_benchmark.converters.co2_converter import convert_co2
-from C_oblique_decision_tree_benchmark.converters.oc1_converter import convert_oc1
+from C_oblique_decision_tree_benchmark.converters.oc1_converter import convert_moc1
 from C_oblique_decision_tree_benchmark.converters.wodt_converter import convert_wodt
 from C_oblique_decision_tree_benchmark.converters.ridgecart_converter import convert_ridge_cart
 from C_oblique_decision_tree_benchmark.converters.cart_converter import convert_cart
@@ -20,7 +20,7 @@ def convert_tree(model, model_type):
     Parameters:
         model: The trained model instance.
         model_type (str): The type identifier for the model. Accepted values:
-                          'hhcart_a', 'hhcart_d', 'randcart', 'co2', 'oc1',
+                          'hhcart_a', 'hhcart_d', 'randcart', 'co2', 'moc1',
                           'wodt', 'ridge_cart', 'cart'.
 
     Returns:
@@ -35,8 +35,8 @@ def convert_tree(model, model_type):
         return convert_randcart(model)
     elif model_type == 'co2':
         return convert_co2(model)
-    elif model_type == 'oc1':
-        return convert_oc1(model)
+    elif model_type == 'moc1':
+        return convert_moc1(model)
     elif model_type == 'wodt':
         return convert_wodt(model)
     elif model_type == 'ridge_cart':

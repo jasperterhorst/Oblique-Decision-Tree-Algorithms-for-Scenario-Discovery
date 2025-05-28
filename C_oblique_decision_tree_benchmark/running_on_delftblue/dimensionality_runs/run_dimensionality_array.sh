@@ -1,8 +1,8 @@
 #!/bin/bash
 #SBATCH --job-name=DepthSweepDimensionality
-#SBATCH --time=10:00:00
+#SBATCH --time=20:00:00
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=29
+#SBATCH --cpus-per-task=43
 #SBATCH --partition=compute
 #SBATCH --mem-per-cpu=1G
 #SBATCH --account=Research-TPM-MAS
@@ -15,7 +15,7 @@ export OMP_NUM_THREADS=1
 
 mkdir -p logs
 
-MAX_PARALLEL=29
+MAX_PARALLEL=43
 
 while read -r JOB; do
     bash -c "$JOB" &

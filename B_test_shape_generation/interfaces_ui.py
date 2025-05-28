@@ -666,7 +666,7 @@ def create_3d_radial_segment_interface(defaults=None, save_dir=None):
             ("arc_span_degrees", "Arc Span", "{}"),
             ("rotation_x1", "Rotation X1", "{}"),
             ("rotation_x2", "Rotation X2", "{}"),
-            ("rotation_x2", "Rotation X3", "{}"),
+            ("rotation_x3", "Rotation X3", "{}"),
             ("label_noise", "Label Noise", "{:.2f}")
         ]
         suffix = suffix_widget.value.strip()

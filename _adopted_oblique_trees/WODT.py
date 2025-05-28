@@ -5,10 +5,20 @@
 import numpy as np
 from scipy.optimize import minimize
 from sklearn.base import BaseEstimator, ClassifierMixin, is_classifier
+import hashlib
 
 # Global constants for numeric stability
 EPSILON_EPSILON = 1e-220
 EPSILON = 1e-50
+
+
+def deterministic_seed(*args):
+    """
+    Generate a consistent integer seed from a tuple of arguments using SHA-256.
+    """
+    data = "_".join(map(str, args))
+    digest = hashlib.sha256(data.encode("utf-8")).digest()
+    return int.from_bytes(digest[:4], "little")  # Return a 32-bmaxmax it integer
 
 
 class SplitQuestion:
@@ -157,6 +167,14 @@ class Node:
         # Store the optimized threshold and parameters
         self.split.threshold = result.x[0]
         self.split.paras = result.x[1:]
+
+        # # === Debug block: print optimiser stats ===
+        # print(f"[Node depth {self.depth}] Optimisation terminated with status {result.status}: {result.message}")
+        # print(f"  Iterations used: {result.nit}")
+        # print(f"  Final objective: {result.fun:.6f}")
+        # print(f"  ||Gradient||_inf: {np.max(np.abs(result.jac)):.4e}")
+        # print(f"  Threshold: {self.split.threshold:.4f}, ||paras||: {np.linalg.norm(self.split.paras):.4f}")
+
         return 1
 
     def grow_stump(self):
@@ -171,13 +189,13 @@ class Node:
             self.depth + 1, SplitQuestion(), l_sample_ids,
             self.X, self.Y, self.class_num,
             rng=None,
-            node_seed=hash((self.rng_seed, self.depth + 1, 0)) % (2 ** 32)
+            node_seed=deterministic_seed(self.rng_seed, self.depth + 1, 0)
         )
         self.RChild = Node(
             self.depth + 1, SplitQuestion(), r_sample_ids,
             self.X, self.Y, self.class_num,
             rng=None,
-            node_seed=hash((self.rng_seed, self.depth + 1, 1)) % (2 ** 32)
+            node_seed=deterministic_seed(self.rng_seed, self.depth + 1, 1)
         )
 
         # If one side is empty, label that child as leaf using current node's distribution
@@ -228,7 +246,7 @@ class BaseObliqueTree(BaseEstimator):
         self.classNum = self.Y.max() + 1
         self.sampleNum = self.X.shape[0]
 
-        root_seed = hash((self.random_state, 0)) % (2 ** 32)
+        root_seed = deterministic_seed(self.random_state, 0)
         self.root_node = Node(
             depth=0,
             split=SplitQuestion(),

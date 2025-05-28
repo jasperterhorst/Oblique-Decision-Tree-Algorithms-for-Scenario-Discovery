@@ -1,18 +1,18 @@
 """
-Converter module for OC1 models.
+Converter module for MOC1 model.
 
-Converts a trained OC1 model into a standardized DecisionTree.
+Converts a trained MOC1 model into a standardized DecisionTree.
 """
 
 from C_oblique_decision_tree_benchmark.core.tree import DecisionTree, DecisionNode, LeafNode
 
 
-def convert_oc1(model):
+def convert_moc1(model):
     """
-    Convert a trained OC1 model into a standardized DecisionTree.
+    Convert a trained MOC1 model into a standardized DecisionTree.
 
     Parameters:
-        model: An OC1 model with an attribute 'tree_' containing a 'root_node'.
+        model: An MOC1 model with an attribute 'tree_' containing a 'root_node'.
                Non-leaf nodes should have attributes: is_leaf(), w, b, left_child, right_child.
                Leaf nodes should have a 'value' attribute.
 

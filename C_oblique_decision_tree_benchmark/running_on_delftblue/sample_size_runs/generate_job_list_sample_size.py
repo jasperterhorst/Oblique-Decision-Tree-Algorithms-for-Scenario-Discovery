@@ -5,7 +5,7 @@ from src.load_shapes import load_shape_dataset
 FOLDER_NAME = "shapes_sample_size_tests"
 SUBFOLDER_NAME = "label_noise_003"
 SEED_INDICES = [0, 1, 2]
-MODELS_WITH_SEEDS = ["oc1"]
+MODELS_WITH_SEEDS = ["moc1"]
 MODELS_SINGLE_RUN = ["hhcart_d"]
 
 # Initialise job list with standard logs folder creation
@@ -17,17 +17,17 @@ dataset_prefixes = sorted(all_datasets.keys())
 
 # Generate job commands
 for dataset_prefix in dataset_prefixes:
-    # OC1 runs with varying seeds
+    # MOC1 runs with varying seeds
     for seed in SEED_INDICES:
-        output_file = f"{dataset_prefix}_oc1_seed{seed}.csv"
-        log_file = f"logs/{dataset_prefix}_oc1_seed{seed}.log"
+        output_file = f"{dataset_prefix}_moc1_seed{seed}.csv"
+        log_file = f"logs/{dataset_prefix}_moc1_seed{seed}.log"
         cmd = (
             f"python ../run_depth_sweep_benchmark.py "
             f"--dataset {dataset_prefix} "
             f"--folder-name {FOLDER_NAME} "
             f"--subfolder-name {SUBFOLDER_NAME} "
             f"--seed-index {seed} "
-            f"--model oc1 "
+            f"--model moc1 "
             f"--output-filename {output_file} "
             f"--output-subfolder delftblue_sample_size_runs > {log_file} 2>&1"
         )

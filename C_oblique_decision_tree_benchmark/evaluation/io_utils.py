@@ -32,7 +32,7 @@ def get_output_dir(run_type="single", subdir=None):
 # =============================================================================
 
 
-def save_trees_dict(trees_dict, filename="oc1_barbell_2d_no_noise.pkl", run_type="single", subdir=None):
+def save_trees_dict(trees_dict, filename="moc1_barbell_2d_no_noise.pkl", run_type="single", subdir=None):
     """
     Save the trees dictionary to a pickle file.
 
@@ -51,7 +51,7 @@ def save_trees_dict(trees_dict, filename="oc1_barbell_2d_no_noise.pkl", run_type
     print(f"[OK] Saved trees_dict to: {file_path}")
 
 
-def load_trees_dict(filename="oc1_barbell_2d_no_noise.pkl", run_type="single", subdir=None):
+def load_trees_dict(filename="moc1_barbell_2d_no_noise.pkl", run_type="single", subdir=None):
     """
     Load the trees dictionary from a pickle file.
 

@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --job-name=DepthSweepLabelNoise
 #SBATCH --time=20:00:00
-#SBATCH --array=0-671%80
+#SBATCH --array=0-671%100
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=1
 #SBATCH --partition=compute

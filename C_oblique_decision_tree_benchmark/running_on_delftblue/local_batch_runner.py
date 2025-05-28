@@ -12,7 +12,7 @@ DATASETS = [
     "rectangle_2d", "barbell_3d", "radial_segment_3d", "saddle_3d"
 ]
 NOISE_FOLDERS = ["label_noise_000", "label_noise_003", "label_noise_005", "label_noise_007"]
-MODELS = ["hhcart_a", "hhcart_d", "randcart", "oc1", "wodt", "co2", "cart", "ridge_cart"]
+MODELS = ["hhcart_a", "hhcart_d", "randcart", "moc1", "wodt", "co2", "cart", "ridge_cart"]
 SEED_INDICES = [0, 1, 2]
 MAX_PARALLEL = 12
 

@@ -2,7 +2,7 @@
 PRIM and PCA-PRIM plotting routines for the scenario methods demo.
 """
 
-from typing import Optional
+from typing import Optional, Tuple, List
 import numpy as np
 from matplotlib.patches import Rectangle, Polygon
 from matplotlib.axes import Axes
@@ -23,7 +23,7 @@ def plot_original_data(
     title: str = "Sampled Data",
     note: str = "",
     save_path: Optional[str] = None,
-    axis_limits: tuple[float, float, float, float] = (0, 1, 0, 1)
+    axis_limits: Tuple[float, float, float, float] = (0, 1, 0, 1)
 ) -> None:
     """
     Plot original 2D data samples with binary classification and overlay the sampling quadrilateral.
@@ -39,13 +39,13 @@ def plot_spatial_evolution(
     samples: np.ndarray,
     y: np.ndarray,
     quadrilateral: np.ndarray,
-    boxes_history: list[dict],
+    boxes_history: List[dict],
     start_color: str = EVOLUTION_COLORS["start"],
     end_color: str = EVOLUTION_COLORS["end"],
     title: str = "Spatial Evolution",
     note: str = "",
     save_path: Optional[str] = None,
-    axis_limits: Optional[tuple[float, float, float, float]] = None
+    axis_limits: Optional[Tuple[float, float, float, float]] = None
 ) -> None:
     """
     Plot spatial box evolution on the original data using interpolated color to show progression.
@@ -76,7 +76,7 @@ def plot_rotated_data(
     title: str = "Data in PCA-Rotated Space",
     note: str = "",
     save_path: Optional[str] = None,
-    axis_limits: Optional[tuple[float, float, float, float]] = None
+    axis_limits: Optional[Tuple[float, float, float, float]] = None
 ) -> None:
     """
     Plot rotated 2D data samples (e.g. after PCA) and overlay the rotated sampling quadrilateral.
@@ -96,7 +96,7 @@ def plot_rotated_with_boxes(
     x_rot: np.ndarray,
     y: np.ndarray,
     quadrilateral_rot: np.ndarray,
-    boxes_history_rot: list[dict],
+    boxes_history_rot: List[dict],
     title: str = "PRIM Evolution in PCA-Rotated Space",
     note: str = "",
     save_path: Optional[str] = None
@@ -126,7 +126,7 @@ def plot_rotated_with_boxes(
 def plot_original_with_boxes(
     original_samples: np.ndarray,
     y: np.ndarray,
-    boxes_history_rot: list[dict],
+    boxes_history_rot: List[dict],
     v: np.ndarray,
     mu: np.ndarray,
     quadrilateral: np.ndarray,
@@ -151,10 +151,10 @@ def plot_original_with_boxes(
 
 
 def plot_overlayed_peeling_trajectories(
-    prim_cov: list[float],
-    prim_dens: list[float],
-    pcaprim_cov: list[float],
-    pcaprim_dens: list[float],
+    prim_cov: List[float],
+    prim_dens: List[float],
+    pcaprim_cov: List[float],
+    pcaprim_dens: List[float],
     title: str = "PRIM vs PCA-PRIM Peeling Trajectories",
     save_path: Optional[str] = None
 ) -> None:
@@ -172,8 +172,8 @@ def plot_overlayed_peeling_trajectories(
 
 
 def plot_peeling_trajectory(
-    coverage_vals: list[float],
-    density_vals: list[float],
+    coverage_vals: List[float],
+    density_vals: List[float],
     start_color: str = EVOLUTION_COLORS["start"],
     end_color: str = EVOLUTION_COLORS["end"],
     title: str = "Peeling Trajectory",
@@ -196,9 +196,9 @@ def plot_peeling_trajectory(
 
 
 def plot_peeling_trajectory_with_constraint_colors(
-    coverage_vals: list[float],
-    density_vals: list[float],
-    boxes_history: list[dict],
+    coverage_vals: List[float],
+    density_vals: List[float],
+    boxes_history: List[dict],
     orig_bounds: dict,
     title: str = "Peeling Trajectory",
     save_path: Optional[str] = None

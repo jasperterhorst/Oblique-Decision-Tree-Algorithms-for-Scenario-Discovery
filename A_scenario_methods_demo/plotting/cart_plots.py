@@ -2,7 +2,7 @@
 CART plotting for the scenario methods demo.
 """
 
-from typing import Optional
+from typing import Optional, List
 import numpy as np
 from matplotlib.axes import Axes
 from matplotlib.patches import Rectangle, Polygon, Patch
@@ -20,8 +20,8 @@ def plot_cart_spatial_evolution(
     samples: np.ndarray,
     y: np.ndarray,
     quadrilateral: np.ndarray,
-    cart_boxes: list[dict],
-    cart_classifications: list[int],
+    cart_boxes: List[dict],
+    cart_classifications: List[int],
     title: str = "CART Boxes on Data",
     note: str = "",
     save_path: Optional[str] = None,

@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --job-name=DepthSweepSampleSize
-#SBATCH --time=10:00:00
+#SBATCH --time=20:00:00
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=24
 #SBATCH --partition=compute

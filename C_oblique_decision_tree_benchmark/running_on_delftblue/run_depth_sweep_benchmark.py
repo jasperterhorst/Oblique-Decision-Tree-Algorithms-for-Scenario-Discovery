@@ -40,7 +40,7 @@ def main():
     parser.add_argument("--subfolder-name", type=str, required=True, help="Subfolder path within folder-name")
     parser.add_argument("--seed-index", type=int, required=True, help="Index into DEFAULT_VARIABLE_SEEDS")
     parser.add_argument("--model", type=str, required=True,
-                        choices=["hhcart_a", "hhcart_d", "randcart", "oc1", "wodt", "co2", "cart", "ridge_cart"],
+                        choices=["hhcart_a", "hhcart_d", "randcart", "moc1", "wodt", "co2", "cart", "ridge_cart"],
                         help="Model to benchmark")
     parser.add_argument("--max-depth", type=int, default=12, help="Maximum tree depth")
     parser.add_argument("--output-subfolder", type=str, default="delftblue", help="Output subfolder")

@@ -49,7 +49,7 @@ ALGORITHM_COLORS = {
     "CART": "#1f77b4",
     "HHCART A": "#ff7f0e",
     "HHCART D": "#2ca02c",
-    "OC1": "#d62728",
+    "MOC1": "#d62728",
     "RANDCART": "#9467bd",
     "CO2": "#8c564b",
     "WODT": "#e377c2",

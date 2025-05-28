@@ -43,7 +43,7 @@ def compute_coverage(tree, X, y):
     selected = (y_pred == 1)
     total_relevant = np.sum(relevant)
     if total_relevant == 0:
-        return np.nan
+        return 0.0
     return np.sum(relevant & selected) / total_relevant
 
 
@@ -65,7 +65,7 @@ def compute_density(tree, X, y):
     selected = (y_pred == 1)
     total_selected = np.sum(selected)
     if total_selected == 0:
-        return np.nan
+        return 0.0
     return np.sum((y == 1) & selected) / total_selected
 
 
@@ -187,15 +187,18 @@ def count_total_constrained_dimensions(tree):
 
 def compute_average_active_feature_count(tree):
     """
-    Compute the average active feature count per decision node.
-
-    Each node (accessed via tree.root.children) is expected to have a 'weights' attribute.
-
-    Returns:
-        float: Average number of nonzero weights per node, or 0.0 if no weights are found.
+    Compute the average number of non-zero features used across all decision nodes in the tree,
+    including the root node.
     """
-    active_feature_counts = [
-        np.count_nonzero(node.weights)
-        for node in tree.root.children if hasattr(node, 'weights')
-    ]
-    return np.mean(active_feature_counts) if active_feature_counts else 0.0
+    decision_nodes = []
+
+    def traverse(node):
+        if isinstance(node, DecisionNode):
+            decision_nodes.append(node)
+        for child in node.children:
+            traverse(child)
+
+    traverse(tree.root)
+
+    counts = [np.count_nonzero(node.weights) for node in decision_nodes]
+    return np.mean(counts) if counts else 0.0

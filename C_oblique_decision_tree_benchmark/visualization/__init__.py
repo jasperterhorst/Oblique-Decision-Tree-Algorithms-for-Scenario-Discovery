@@ -11,7 +11,8 @@ from .batch_results_plots import (plot_coverage_density_all_shapes_for_algorithm
                                   plot_runtime_over_depth_grouped_by_data_dim_or_samples,
                                   plot_loglog_runtime_scaling_by_dimension_or_sample_count,
                                   plot_multiple_metrics_over_depth_by_dim_or_sample_size,
-                                  plot_multiple_metrics_over_depth_by_label_noise)
+                                  plot_multiple_metrics_over_depth_by_label_noise,
+                                  plot_active_features_over_depth_grouped_by_data_dim_or_samples)
 
 __all__ = [
     "print_tree_structure",
@@ -24,5 +25,6 @@ __all__ = [
     "plot_runtime_over_depth_grouped_by_data_dim_or_samples",
     "plot_loglog_runtime_scaling_by_dimension_or_sample_count",
     "plot_multiple_metrics_over_depth_by_dim_or_sample_size",
-    "plot_multiple_metrics_over_depth_by_label_noise"
+    "plot_multiple_metrics_over_depth_by_label_noise",
+    "plot_active_features_over_depth_grouped_by_data_dim_or_samples"
 ]

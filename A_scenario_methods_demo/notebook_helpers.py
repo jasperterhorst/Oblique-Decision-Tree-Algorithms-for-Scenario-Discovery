@@ -8,7 +8,7 @@ Figures and data are saved under: /_data/scenario_methods_demo_outputs
 """
 
 import pandas as pd
-from typing import Any
+from typing import Any, List
 
 from matplotlib.colors import to_rgba
 from matplotlib.patches import Rectangle
@@ -52,10 +52,10 @@ PCA_PRIM_EVOLUTION_DIR.mkdir(parents=True, exist_ok=True)
 
 # === Main interactive update ===
 def update_plots(
-    quad_sliders: list[Any], num_dots: int,
+    quad_sliders: List[Any], num_dots: int,
     frac_inside: float, frac_outside: float,
     peel_frac: float, prim_mass_min: float, cart_mass_min: float,
-    plot_outputs: list[Any], table_output: Any
+    plot_outputs: List[Any], table_output: Any
 ) -> dict:
     """
     Updates all interactive notebook plots for PRIM, PCA-PRIM, and CART.
@@ -106,7 +106,7 @@ def update_plots(
 
 # === Save PRIM and PCA-PRIM figures ===
 def save_prim_plots(
-    quad_sliders: list[Any], num_dots: int,
+    quad_sliders: List[Any], num_dots: int,
     frac_inside: float, frac_outside: float,
     peel_frac: float, prim_mass_min: float, cart_mass_min: float
 ) -> None:
@@ -168,7 +168,7 @@ def save_prim_plots(
 
 
 def save_cart_plots(
-    quad_sliders: list[Any], num_dots: int,
+    quad_sliders: List[Any], num_dots: int,
     frac_inside: float, frac_outside: float,
     peel_frac: float, prim_mass_min: float, cart_mass_min: float
 ) -> None:

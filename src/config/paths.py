@@ -14,6 +14,7 @@ SHAPES_DIR = DATA_DIR / "shapes"
 SCENARIO_METHODS_DEMO_OUTPUTS_DIR = DATA_DIR / "scenario_methods_demo_outputs"
 DEPTH_SWEEP_BATCH_RESULTS_OUTPUTS_DIR = DATA_DIR / "depth_sweep_batch_results"
 DEPTH_SWEEP_SINGLE_RUN_RESULTS_OUTPUTS_DIR = DATA_DIR / "depth_sweep_single_run_results"
+HAMARAT_DATA_DIR = DATA_DIR / "hamarat_et_al_2013"
 
 # Ensure required directories exist
 for path in [

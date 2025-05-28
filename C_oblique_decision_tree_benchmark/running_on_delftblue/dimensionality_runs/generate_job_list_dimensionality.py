@@ -3,7 +3,7 @@ from src.load_shapes import load_shape_dataset
 
 FOLDER_NAME = "shapes_noise_dimensionality_tests"
 SUBFOLDER_NAME = "label_noise_003"
-SEED_INDICES = [0, 1, 2]
+SEED_INDICES = [0, 1, 2, 3, 4]
 
 # Paths relative to this script
 LOG_DIR = "logs"
@@ -16,17 +16,17 @@ all_datasets = load_shape_dataset(folder_name=FOLDER_NAME, subfolder_name=SUBFOL
 dataset_prefixes = sorted(all_datasets.keys())
 
 for dataset_prefix in dataset_prefixes:
-    # OC1 with seeds
+    # MOC1 with seeds
     for seed in SEED_INDICES:
-        output_file = f"{dataset_prefix}_oc1_seed{seed}.csv"
-        log_file = f"{LOG_DIR}/{dataset_prefix}_oc1_seed{seed}.log"
+        output_file = f"{dataset_prefix}_moc1_seed{seed}.csv"
+        log_file = f"{LOG_DIR}/{dataset_prefix}_moc1_seed{seed}.log"
         cmd = (
             f"python ../run_depth_sweep_benchmark.py "
             f"--dataset {dataset_prefix} "
             f"--folder-name {FOLDER_NAME} "
             f"--subfolder-name {SUBFOLDER_NAME} "
             f"--seed-index {seed} "
-            f"--model oc1 "
+            f"--model moc1 "
             f"--output-filename {output_file} "
             f"--output-subfolder delftblue_dimensionality_runs > {log_file} 2>&1"
         )

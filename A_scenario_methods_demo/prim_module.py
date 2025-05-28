@@ -5,6 +5,7 @@ Includes peeling logic and performance metric calculation (coverage and density)
 
 import numpy as np
 import pandas as pd
+from typing import Tuple
 from A_scenario_methods_demo.utils import get_points_in_box
 
 
@@ -80,7 +81,7 @@ def manual_prim(data: pd.DataFrame, target: np.ndarray, peel_alpha: float = 0.05
     return boxes_history, box
 
 
-def compute_box_metrics(box: dict, data: pd.DataFrame, target: np.ndarray) -> tuple[float, float]:
+def compute_box_metrics(box: dict, data: pd.DataFrame, target: np.ndarray) -> Tuple[float, float]:
     """
     Compute coverage and density for a given box.
 

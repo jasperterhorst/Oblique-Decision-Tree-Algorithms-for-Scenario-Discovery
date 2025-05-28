@@ -45,12 +45,6 @@ Key Corrections and Enhancements:
      the Householder reflection matrix, ensuring alignment between axis-aligned splits
      in reflected space and oblique boundaries in the original feature space.
 
-6. Optional Sparsity Control for HHCART(D) (Extension):
-   - Extension: Integrated SparsePCA into HHCART(D). By configuring the `alpha` parameter,
-     users can induce sparsity in the dominant eigenvector, simplifying decision boundaries
-     without significantly compromising performance. When `alpha=0`, the algorithm defaults
-     to standard dense behaviour.
-
 Algorithm Variants:
 -------------------
 - `HHCartAClassifier` (HHCART(A)):

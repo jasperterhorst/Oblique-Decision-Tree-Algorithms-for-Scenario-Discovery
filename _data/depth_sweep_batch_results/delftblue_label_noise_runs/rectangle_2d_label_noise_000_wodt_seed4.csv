@@ -1,0 +1,7 @@
+shape,label_noise,n_samples,seed,data_dim,algorithm,depth,accuracy,coverage,density,f_score,gini_coverage_all_leaves,gini_density_all_leaves,splits,leaves,total_active_feature_count,avg_active_feature_count,runtime
+rectangle_2d,0.0,10000,47,2,wodt,0,0.7484,0.0,0.0,0.0,0.0,0.0,0,1,0,0.0,0.00027342885732650757
+rectangle_2d,0.0,10000,47,2,wodt,1,0.7484,0.0,0.0,0.0,0.0,0.0,1,2,2,2.0,0.009207084774971008
+rectangle_2d,0.0,10000,47,2,wodt,2,0.7484,0.0,0.0,0.0,0.5,0.5,2,3,2,2.0,0.07892034016549587
+rectangle_2d,0.0,10000,47,2,wodt,3,0.7484,0.0,0.0,0.0,0.6666666666666667,0.6666666666666667,3,4,2,2.0,0.13709897082298994
+rectangle_2d,0.0,10000,47,2,wodt,4,0.8298,1.0,0.5964912280701754,0.7472527472527472,0.75,0.75,4,5,2,2.0,0.22041155118495226
+rectangle_2d,0.0,10000,47,2,wodt,5,1.0,1.0,1.0,1.0,0.8,0.8,5,6,2,2.0,0.27150668762624264
