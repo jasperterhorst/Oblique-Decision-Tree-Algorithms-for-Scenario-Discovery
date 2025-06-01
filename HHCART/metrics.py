@@ -1,110 +1,152 @@
+"""
+Tree Evaluation Metrics (metrics.py)
+------------------------------------
+Provides performance and interpretability metrics for scenario discovery trees.
+
+Performance metrics:
+- Accuracy
+- Coverage
+- Density
+- F-score (harmonic mean of coverage and density)
+
+Interpretability metrics:
+- Total number of active features across all splits
+- Average number of active features per internal node
+"""
+
 import numpy as np
+from typing import Union, Sequence
 from sklearn.metrics import accuracy_score
 
-from HHCART.tree import DecisionNode
+from HHCART.tree import DecisionNode, DecisionTree
 
 
 # =============================================================================
 # PERFORMANCE METRICS
 # =============================================================================
 
-def compute_accuracy(tree, X, y):
+def compute_accuracy(
+    tree: DecisionTree,
+    X: np.ndarray,
+    y: Union[np.ndarray, Sequence[int]]
+) -> float:
     """
-    Compute the accuracy of a model on a given dataset.
+    Compute standard classification accuracy for the decision tree.
 
-    Parameters:
-        tree: A trained model with a `predict` method.
-        X (iterable): An iterable of input feature vectors.
-        y (iterable): An iterable of true labels.
+    Args:
+        tree (DecisionTree): Fitted tree with `.predict(x)` method.
+        X (np.ndarray): Feature matrix (samples × features).
+        y (np.ndarray or list of int): True binary labels.
 
     Returns:
-        float: The accuracy score as a fraction.
+        float: Fraction of correctly predicted labels.
     """
-    y_pred = np.array([tree.predict(x) for x in X]).astype(int)
+    y_pred = np.array([tree.predict(x) for x in X])
     return accuracy_score(y, y_pred)
 
 
-def compute_coverage(tree, X, y):
+def compute_coverage(
+    tree: DecisionTree,
+    X: np.ndarray,
+    y: Union[np.ndarray, Sequence[int]]
+) -> float:
     """
-    Compute the coverage metric as the proportion of relevant instances (where y == 1)
-    that are correctly captured by the model.
+    Compute the coverage metric as the proportion of relevant (label=1) samples
+    that are correctly captured in the selected region (prediction=1).
 
-    Parameters:
-        tree: A trained model with a `predict` method.
-        X (iterable): An iterable of input feature vectors.
-        y (iterable): An iterable of true labels.
+    Args:
+        tree (DecisionTree): Fitted tree with `.predict(x)` method.
+        X (np.ndarray): Feature matrix.
+        y (np.ndarray or list of int): True binary labels.
 
     Returns:
-        float: The coverage metric as a fraction, or np.nan if no relevant instances exist.
+        float: Coverage score, or np.nan if no positive labels exist.
     """
-    y = np.array(y)
+    y = np.asarray(y)
     y_pred = np.array([tree.predict(x) for x in X])
+
     relevant = (y == 1)
     selected = (y_pred == 1)
     total_relevant = np.sum(relevant)
+
     if total_relevant == 0:
-        return np.nan
+        return 0.0
+
     return np.sum(relevant & selected) / total_relevant
 
 
-def compute_density(tree, X, y):
+def compute_density(
+    tree: DecisionTree,
+    X: np.ndarray,
+    y: Union[np.ndarray, Sequence[int]]
+) -> float:
     """
-    Compute the density metric as the proportion of instances within the selected region
-    (where the model predicts 1) that are actually of interest (where y == 1).
+    Compute the density metric as the proportion of selected points (prediction=1)
+    that are relevant (label=1).
 
-    Parameters:
-        tree: A trained model with a `predict` method.
-        X (iterable): An iterable of input feature vectors.
-        y (iterable): An iterable of true binary labels.
+    Args:
+        tree (DecisionTree): Fitted tree with `.predict(x)` method.
+        X (np.ndarray): Feature matrix.
+        y (np.ndarray or list of int): True binary labels.
 
     Returns:
-        float: The density metric as a fraction, or np.nan if no instances are selected.
+        float: Density score, or np.nan if no points are selected.
     """
-    y = np.array(y)
+    y = np.asarray(y)
     y_pred = np.array([tree.predict(x) for x in X])
+
     selected = (y_pred == 1)
     total_selected = np.sum(selected)
+
     if total_selected == 0:
-        return np.nan
+        return 0.0
+
     return np.sum((y == 1) & selected) / total_selected
 
 
-def compute_f_score(tree, X, y):
+def compute_f_score(
+    tree: DecisionTree,
+    X: np.ndarray,
+    y: Union[np.ndarray, Sequence[int]]
+) -> float:
     """
-    Compute the F metric as the harmonic mean of density and coverage.
+    Compute the harmonic mean of coverage and density (F-score).
 
-    In the context of scenario discovery, this is defined as:
-        F = 2 * (density * coverage) / (density + coverage)
-
-    Parameters:
-        tree: A trained model with a `predict` method.
-        X (iterable): Input feature vectors.
-        y (iterable): True binary labels.
+    Args:
+        tree (DecisionTree): Fitted tree with `.predict(x)` method.
+        X (np.ndarray): Feature matrix.
+        y (np.ndarray or list of int): True binary labels.
 
     Returns:
-        float: The F metric value, or np.nan if either coverage or density is undefined.
+        float: F-score, or np.nan if either component is undefined.
     """
     coverage = compute_coverage(tree, X, y)
     density = compute_density(tree, X, y)
+
     if np.isnan(coverage) or np.isnan(density):
         return np.nan
     if coverage + density == 0:
         return 0.0
+
     return 2 * coverage * density / (coverage + density)
 
 
 # =============================================================================
-# INTERPRETABILITY & COMPLEXITY METRICS
+# INTERPRETABILITY METRICS
 # =============================================================================
-def count_total_constrained_dimensions(tree):
-    """
-    Count the number of unique features (dimensions) used across all splits in the decision tree.
 
-    Parameters:
-        tree (DecisionTree): The decision tree object.
+def count_total_constrained_dimensions(
+    tree: DecisionTree
+) -> int:
+    """
+    Count the number of unique input features (non-zero weights)
+    used across all internal decision nodes.
+
+    Args:
+        tree (DecisionTree): Oblique tree with `.root` node.
 
     Returns:
-        int: Number of distinct non-zero feature indices used in decision nodes.
+        int: Total number of distinct features used in split decisions.
     """
     constrained_dims = set()
     nodes_to_visit = [tree.root]
@@ -120,17 +162,24 @@ def count_total_constrained_dimensions(tree):
     return len(constrained_dims)
 
 
-def compute_average_active_feature_count(tree):
+def compute_average_active_feature_count(
+    tree: DecisionTree
+) -> float:
     """
-    Compute the average active feature count per decision node.
+    Compute the average number of active features (non-zero weights)
+    per internal decision node.
 
-    Each node (accessed via tree.root.children) is expected to have a 'weights' attribute.
+    Args:
+        tree (DecisionTree): Oblique tree with `.root` node.
 
     Returns:
-        float: Average number of nonzero weights per node, or 0.0 if no weights are found.
+        float: Average number of active features per internal node.
     """
-    active_feature_counts = [
-        np.count_nonzero(node.weights)
-        for node in tree.root.children if hasattr(node, 'weights')
-    ]
-    return np.mean(active_feature_counts) if active_feature_counts else 0.0
+    counts = []
+
+    for node in tree.root.children:
+        if hasattr(node, "weights"):
+            count = np.count_nonzero(node.weights)
+            counts.append(count)
+
+    return np.mean(counts) if counts else 0.0

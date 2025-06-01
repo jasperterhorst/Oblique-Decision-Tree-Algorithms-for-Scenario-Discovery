@@ -13,3 +13,10 @@ Usage:
 """
 
 from .core import HHCartD
+from .io import save_load
+
+# Export under clear names
+save_model = save_load.save_full_model
+load_model = save_load.load_full_model
+
+__all__ = ["HHCartD", "save_model", "load_model"]

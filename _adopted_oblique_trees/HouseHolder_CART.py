@@ -120,7 +120,7 @@ class HHCARTNode:
 
 class HouseHolderCART(BaseEstimator):
     def __init__(self, impurity, segmentor, max_depth, min_samples_split=2, method='eig',
-                 tau=1e-4, random_state=None, **kwargs):
+                 tau=0.05, random_state=None, **kwargs):
         self.impurity = impurity
         self.segmentor = segmentor  # segmentor is expected to perform CART-style split search
         self.method = method
@@ -287,7 +287,6 @@ class HHCartDClassifier(ClassifierMixin, HouseHolderCART):
             if X_c.shape[0] <= 1:
                 continue
 
-            # Compute covariance matrix for the class
             S = np.cov(X_c, rowvar=False)
             eigvals, eigvecs = np.linalg.eigh(S)
             mu = eigvecs[:, -1]
@@ -305,21 +304,30 @@ class HHCartDClassifier(ClassifierMixin, HouseHolderCART):
                 X_reflected = X @ H
 
                 impurity_ref, sr_ref, left_i, right_i = self.segmentor(X_reflected, y, self.impurity)
-                if impurity_ref < impurity_best:
+                if sr_ref is not None and impurity_ref < impurity_best:
                     impurity_best = impurity_ref
                     sr = sr_ref
                     left_indices = left_i
                     right_indices = right_i
                     best_H = H
 
+        # Try fallback: axis-aligned CART split
+        impurity_cart, sr_cart, left_cart, right_cart = self.segmentor(X, y, self.impurity)
+        if sr_cart is not None and impurity_cart < impurity_best:
+            impurity_best = impurity_cart
+            sr = sr_cart
+            left_indices = left_cart
+            right_indices = right_cart
+            best_H = np.eye(n_features)
 
         if not sr:
             return self._generate_leaf_node(cur_depth, y)
 
-        i, treshold = sr
+        i, threshold = sr
         weights = np.zeros(n_features + 1)
         weights[:-1] = best_H[:, i]
-        weights[-1] = treshold
+        weights[-1] = threshold
+
         left_indices = X.dot(weights[:-1]) - weights[-1] < 0
         right_indices = ~left_indices
         X_left, y_left = X[left_indices], y[left_indices]
@@ -338,6 +346,73 @@ class HHCartDClassifier(ClassifierMixin, HouseHolderCART):
         )
         self._nodes.append(node)
         return node
+
+    # def _generate_node(self, X, y, cur_depth):
+    #     if self._terminate(X, y, cur_depth):
+    #         return self._generate_leaf_node(cur_depth, y)
+    #
+    #     n_objects, n_features = X.shape
+    #     best_H = np.eye(n_features)
+    #     impurity_best = float('inf')
+    #     sr = None
+    #     left_indices = right_indices = None
+    #
+    #     classes = np.unique(y)
+    #     for c in classes:
+    #         X_c = X[y == c]
+    #         if X_c.shape[0] <= 1:
+    #             continue
+    #
+    #         # Compute covariance matrix for the class
+    #         S = np.cov(X_c, rowvar=False)
+    #         eigvals, eigvecs = np.linalg.eigh(S)
+    #         mu = eigvecs[:, -1]
+    #
+    #         if np.allclose(mu, 0):
+    #             continue
+    #
+    #         check_ = np.sqrt(((np.eye(n_features) - mu) ** 2).sum(axis=1))
+    #         if (check_ > self.tau).sum() > 0:
+    #             i = np.argmax(check_)
+    #             e = np.zeros(n_features)
+    #             e[i] = 1.0
+    #             w = (e - mu) / norm(e - mu)
+    #             H = np.eye(n_features) - 2 * np.outer(w, w)
+    #             X_reflected = X @ H
+    #
+    #             impurity_ref, sr_ref, left_i, right_i = self.segmentor(X_reflected, y, self.impurity)
+    #             if sr_ref is not None and impurity_ref < impurity_best:
+    #                 impurity_best = impurity_ref
+    #                 sr = sr_ref
+    #                 left_indices = left_i
+    #                 right_indices = right_i
+    #                 best_H = H
+    #
+    #     if not sr:
+    #         return self._generate_leaf_node(cur_depth, y)
+    #
+    #     i, treshold = sr
+    #     weights = np.zeros(n_features + 1)
+    #     weights[:-1] = best_H[:, i]
+    #     weights[-1] = treshold
+    #     left_indices = X.dot(weights[:-1]) - weights[-1] < 0
+    #     right_indices = ~left_indices
+    #     X_left, y_left = X[left_indices], y[left_indices]
+    #     X_right, y_right = X[right_indices], y[right_indices]
+    #
+    #     if len(y_right) <= self._min_samples or len(y_left) <= self._min_samples:
+    #         return self._generate_leaf_node(cur_depth, y)
+    #
+    #     node = HHCARTNode(
+    #         cur_depth, y,
+    #         split_rules=sr,
+    #         weights=weights,
+    #         left_child=self._generate_node(X_left, y_left, cur_depth + 1),
+    #         right_child=self._generate_node(X_right, y_right, cur_depth + 1),
+    #         is_leaf=False
+    #     )
+    #     self._nodes.append(node)
+    #     return node
 
     def __init__(self, impurity, segmentor=CARTSegmentor(), max_depth=50, min_samples_split=2,
                  random_state=None, alpha=0.0, **kwargs):

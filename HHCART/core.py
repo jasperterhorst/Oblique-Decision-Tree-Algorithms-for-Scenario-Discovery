@@ -1,35 +1,67 @@
 """
 HHCART Public Interface (core.py)
 ---------------------------------
-Defines the high-level `HHCartD` class, providing a user-friendly API for training
-Householder-reflected oblique decision trees over top-K feature subsets.
+Provides a clean API for training and inspecting Householder-reflected
+oblique decision trees (HHCART-D) using the full input feature space.
 
-Example usage:
+Main features:
+- Progressive tree building across depths
+- Depth-based selection for evaluation
+- Visualisation hooks for trade-offs and splits
 
-    from HHCART import HHCartD
-    hh = HHCartD(X_df, y_array, max_depth=6, feature_selector="mutual_info")
-    hh.build_tree(k_range=[1, 2, 3])
-    hh.plot_tradeoff()
-    hh.select(depth=3, k=2)
+Example:
+    hh = HHCartD(X_df, y_array, max_depth=6)
+    hh.build_tree()
+    hh.select(depth=3)
     hh.inspect()
-
-Supports integration with custom feature selectors, metric logging, and dynamic plotting.
+    hh.plot_tradeoff()
 """
 
-import os
-import pickle
+import time
 import pandas as pd
-import numpy as np
-from tqdm import tqdm
-from HHCART.HHCartDLayerwise import HHCartDLayerwiseClassifier
+from pathlib import Path
+from typing import Optional
+from datetime import datetime
+
+from HHCART.HHCartDPruning import HHCartDPruningClassifier
 from HHCART.split_criteria import gini
-from HHCART.feature_selectors import FEATURE_SELECTOR_REGISTRY
 from HHCART.visualisation import bind_plotting_methods
+from HHCART.io.save_load import save_full_model
 
 
 class HHCartD:
-    def __init__(self, X, y, *, max_depth=6, min_samples_split=10, min_purity=0.95,
-                 tau=1e-4, random_state=None, feature_selector=None):
+    """
+    High-level interface for building HHCART-D decision trees with full feature sets.
+    """
+
+    def __init__(
+        self,
+        X: pd.DataFrame,
+        y,
+        *,
+        max_depth: int = 6,
+        min_samples_split: int = 2,
+        min_purity: float = 1,
+        tau: float = 0.05,
+        random_state: int = None,
+        save_dir: Optional[Path] = None,
+        debug: bool = False,
+    ):
+        """
+        Initialise the HHCART-D model wrapper.
+
+        Args:
+            X (pd.DataFrame): Feature matrix (rows = samples, columns = features).
+            y (pd.Series or np.ndarray): Binary target labels.
+            max_depth (int): Maximum tree depth to explore.
+            min_samples_split (int): Minimum samples to allow further splitting.
+            min_purity (float): Minimum class purity to accept a node as pure.
+            tau (float): Tolerance for numerical stability in reflection steps.
+            random_state (int, optional): Seed for reproducible splits.
+            debug (bool, optional): Whether to enable debugging tree build process.
+        """
+        if not isinstance(X, pd.DataFrame):
+            print(f"[⚠] Expected X as pd.DataFrame, got {type(X)}")
         self.X = X
         self.y = y
         self.max_depth = max_depth
@@ -37,129 +69,157 @@ class HHCartD:
         self.min_purity = min_purity
         self.tau = tau
         self.random_state = random_state
+        self.save_dir: Optional[Path] = None
+        self.debug = debug
 
-        if isinstance(feature_selector, str):
-            if feature_selector in FEATURE_SELECTOR_REGISTRY:
-                self.feature_selector = FEATURE_SELECTOR_REGISTRY[feature_selector]
-            else:
-                raise ValueError(f"Unknown feature selector name: {feature_selector}")
-        else:
-            self.feature_selector = feature_selector
+        self.model_type = "hhcart_d"  # used in folder name
 
-        self.trees_by_depth = {}      # {(k, depth): tree}
-        self.metrics_by_depth = {}    # {(k, depth): metrics dict}
-        self.metrics_df = None
-        self.selected_depth = None
-        self.selected_k = None
+        self.trees_by_depth = {}      # Stores trained trees at each depth
+        self.metrics_by_depth = {}    # Stores dict of evaluation metrics per depth
+        self.metrics_df = None        # Combined metrics table (used for plotting)
+        self.selected_depth = None    # User-specified depth for inspection
 
+        # Attach plotting tools dynamically (e.g., .plot_tradeoff)
         bind_plotting_methods(self)
 
-    def build_tree(self, *, k_range=None):
-        if self.feature_selector and k_range:
-            print("🔍 Computing feature scores using selector...")
-            scores = np.asarray(self.feature_selector(self.X, self.y))
-            sorted_idx = np.argsort(scores)[::-1]
-            rows = []
+    def build_tree(self, model_title: Optional[str] = None) -> None:
+        """
+        Train HHCART-D trees and save the result under data/model_title/.
 
-            for k in k_range:
-                print(f"\n🌲 Building tree with top-{k} features:")
-                selected_features = self.X.columns[sorted_idx[:k]]
-                print("   ➤ Selected features:", list(selected_features))
+        Args:
+            model_title (str, optional): Folder name to save the model. If None, auto-generated.
+        """
+        # Clear any previously stored trees or metrics
+        self.trees_by_depth.clear()
+        self.metrics_by_depth.clear()
+        self.metrics_df = None
+        self.selected_depth = None
 
-                X_k = self.X[selected_features]
-                model = HHCartDLayerwiseClassifier(
-                    impurity=gini,
-                    max_depth=self.max_depth,
-                    min_samples_split=self.min_samples_split,
-                    min_purity=self.min_purity,
-                    tau=self.tau,
-                    random_state=self.random_state,
-                )
-                model.fit(X_k, self.y)
+        # Set up the model and build the tree to max depth
+        model = HHCartDPruningClassifier(
+            impurity=gini,
+            max_depth=self.max_depth,
+            min_samples_split=self.min_samples_split,
+            min_purity=self.min_purity,
+            tau=self.tau,
+            debug=self.debug,
+        )
+        start_time = time.perf_counter()
+        model.fit(self.X, self.y)
+        end_time = time.perf_counter()
+        train_duration = end_time - start_time
 
-                for d, metrics in model.metrics_by_depth.items():
-                    if d == 0:
-                        continue  # Skip trivial depth
-                    self.trees_by_depth[(k, d)] = model.trees_by_depth[d]
-                    m = metrics.copy()
-                    m.update({"k": k, "depth": d, "n_features": k, "n_samples": self.X.shape[0]})
-                    self.metrics_by_depth[(k, d)] = m
-                    rows.append(m)
+        # Store each depth's tree and metrics
+        rows = []
+        for depth, metrics in model.metrics_by_depth.items():
+            self.trees_by_depth[depth] = model.trees_by_depth[depth]
 
-                print(f"✅ Done: Built tree up to depth {max(model.metrics_by_depth.keys())}")
-                final_metrics = model.metrics_by_depth[max(model.metrics_by_depth.keys())]
-                print(f"   Accuracy: {final_metrics['accuracy']:.3f}, "
-                      f"Coverage: {final_metrics['coverage']:.3f}, "
-                      f"Density: {final_metrics['density']:.3f}")
+            m = metrics.copy()
+            m.update({
+                "depth": depth,
+                "n_features": self.X.shape[1],
+                "n_samples": self.X.shape[0],
+                "runtime": train_duration
+            })
+            self.metrics_by_depth[depth] = m
+            rows.append(m)
 
-            self.metrics_df = pd.DataFrame(rows)
+        self.metrics_df = pd.DataFrame(rows)
 
-        else:
-            print("⚠️ No feature selection specified — using all features.")
-            model = HHCartDLayerwiseClassifier(
-                impurity=gini,
-                max_depth=self.max_depth,
-                min_samples_split=self.min_samples_split,
-                min_purity=self.min_purity,
-                tau=self.tau,
-                random_state=self.random_state,
-            )
+        # === Save under /data/model_title ===
+        timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        final_title = model_title or f"{self.model_type}_depth_{self.max_depth}_{timestamp}"
+        self.save_dir = save_full_model(self, name=final_title)
 
-            model.fit(self.X, self.y)
+        print(f"[✓] Tree of depth {max(self.trees_by_depth.keys())} built and saved to: {self.save_dir}")
 
-            # with tqdm(total=self.max_depth, desc="Training (all features)", unit="depth") as pbar:
-            #     model.fit(self.X, self.y)
-            #     for _ in model.metrics_by_depth:
-            #         pbar.update(1)
+    def available_depths(self) -> list[int]:
+        """
+        Return a list of all available tree depths built in this model.
 
-            rows = []
-            for d, metrics in model.metrics_by_depth.items():
-                if d == 0:
-                    continue
-                self.trees_by_depth[(None, d)] = model.trees_by_depth[d]
-                m = metrics.copy()
-                m.update({"k": None, "depth": d, "n_features": self.X.shape[1], "n_samples": self.X.shape[0]})
-                self.metrics_by_depth[(None, d)] = m
-                rows.append(m)
+        Returns:
+            list[int]: Sorted list of trained depths.
+        """
+        return sorted(self.trees_by_depth.keys())
 
-            self.metrics_df = pd.DataFrame(rows)
-            print(f"✅ Tree built to depth {max(model.metrics_by_depth.keys())}")
+    def get_tree_by_depth(self, depth: int):
+        """
+        Return the decision tree pruned to a specific depth.
 
-    def select(self, depth, k=None):
+        Args:
+            depth (int): Tree depth to retrieve.
+
+        Returns:
+            DecisionTree: Pruned decision tree.
+
+        Raises:
+            ValueError: If no tree exists at the requested depth.
+        """
+        if depth not in self.trees_by_depth:
+            raise ValueError(f"[❌] No tree found at depth={depth}.")
+        return self.trees_by_depth[depth]
+
+    @property
+    def coverage_by_depth(self) -> dict[int, float]:
+        return dict(zip(self.metrics_df["depth"], self.metrics_df["coverage"]))
+
+    @property
+    def density_by_depth(self) -> dict[int, float]:
+        return dict(zip(self.metrics_df["depth"], self.metrics_df["density"]))
+
+    def select(self, depth: int) -> None:
+        """
+        Set a specific tree depth for downstream inspection or plotting.
+
+        Args:
+            depth (int): Tree depth to activate.
+
+        Raises:
+            ValueError: If no tree exists at the requested depth.
+        """
+        if depth not in self.trees_by_depth:
+            raise ValueError(f"[❌] No tree exists at depth={depth}. Did you call .build_tree()?")
+
         self.selected_depth = depth
-        self.selected_k = k
+        print(f"[✓] Selected tree at depth {depth}.")
 
     def get_selected_tree(self):
-        key = (self.selected_k, self.selected_depth)
-        if key not in self.trees_by_depth:
-            raise ValueError(f"Tree for k={self.selected_k}, depth={self.selected_depth} not found.")
-        return self.trees_by_depth[key]
+        """
+        Return the currently selected tree object.
 
-    def feature_selector_top_k(self, k):
-        if not self.feature_selector:
-            raise ValueError("Feature selector is not defined.")
-        scores = np.asarray(self.feature_selector(self.X, self.y))
-        top_k = np.argsort(scores)[::-1][:k]
-        return self.X.columns[top_k].tolist()
+        Returns:
+            DecisionTree: A trained decision tree at selected depth.
 
-    def print_tree(self, depth, k=None):
-        key = (k, depth)
-        if key not in self.trees_by_depth:
-            raise ValueError(f"No tree found for k={k}, depth={depth}")
-        print(f"Tree structure for k={k}, depth={depth}:")
-        self.trees_by_depth[key].print_structure()
+        Raises:
+            ValueError: If no depth was selected or if the tree is missing.
+        """
+        if self.selected_depth is None:
+            raise ValueError("[❌] No depth selected. Use .select(depth) first.")
+        if self.selected_depth not in self.trees_by_depth:
+            raise ValueError(f"[❌] No tree found at depth={self.selected_depth}.")
+        return self.trees_by_depth[self.selected_depth]
 
-    def inspect(self):
+    def print_tree(self, depth: int) -> None:
+        """
+        Print the structure of the decision tree at a given depth.
+
+        Args:
+            depth (int): Tree depth to print.
+
+        Raises:
+            ValueError: If no such tree has been trained.
+        """
+        if depth not in self.trees_by_depth:
+            raise ValueError(f"[❌] No tree found at depth={depth}.")
+        print(f"\n[🌳] Tree structure at depth {depth}:\n")
+        self.trees_by_depth[depth].print_structure()
+
+    def inspect(self) -> None:
+        """
+        Print the structure of the currently selected tree.
+
+        Raises:
+            ValueError: If no tree is currently selected.
+        """
+        print(f"\n[🔍] Inspecting tree at selected depth {self.selected_depth}...\n")
         self.get_selected_tree().print_structure()
-
-    def save(self, folder_path):
-        os.makedirs(folder_path, exist_ok=True)
-        metrics_path = os.path.join(folder_path, "metrics.csv")
-        trees_path = os.path.join(folder_path, "trees.pkl")
-
-        self.metrics_df.to_csv(metrics_path, index=False)
-        with open(trees_path, "wb") as f:
-            pickle.dump(self.trees_by_depth, f)
-
-        print(f"✅ Saved metrics to {metrics_path}")
-        print(f"✅ Saved trees to {trees_path}")

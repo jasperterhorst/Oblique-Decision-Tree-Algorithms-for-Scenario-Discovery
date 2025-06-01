@@ -1,0 +1,8 @@
+{
+    "max_depth": 8,
+    "min_samples_split": 2,
+    "min_purity": 1,
+    "tau": 0.05,
+    "random_state": null,
+    "saved_at": "2025-05-29_23-43-41"
+}
