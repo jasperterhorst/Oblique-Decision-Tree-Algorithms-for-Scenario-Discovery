@@ -13,8 +13,8 @@ DEFAULT_SEEDS = [0, 1, 2, 3, 4]
 
 # Custom seeds per model (override default)
 MODEL_SEEDS = {
-    "hhcart_a": [0],  # Run only seed 0 for HHCART(A)
-    "hhcart_d": [0],  # Run only seed 0 for HHCART(D)
+    "hhcart_a": [0],  # Run only seed 0 for HHCART_SD(A)
+    "hhcart_d": [0],  # Run only seed 0 for HHCART_SD(D)
     "cart": [0],  # Run only seed 0 for CART
     "ridge_cart": [0],  # Run only seed 0 for RidgeCART
 }

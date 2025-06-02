@@ -241,7 +241,7 @@ def plot_runtime_over_depth_grouped_by_data_dim_or_samples(
 
     Parameters:
         df (pd.DataFrame): Input data containing 'depth', 'runtime', 'algorithm', and vary_by columns.
-        algorithm (str): The algorithm to plot (e.g., "MOC1", "HHCART D").
+        algorithm (str): The algorithm to plot (e.g., "MOC1", "HHCART_SD D").
         vary_by (str): Column to group lines by: either 'data_dim' or 'n_samples'.
         title (str, optional): Custom plot title.
         save_name (str, optional): Output filename (PDF).
@@ -340,7 +340,7 @@ def plot_active_features_over_depth_grouped_by_data_dim_or_samples(
 
     Parameters:
         df (pd.DataFrame): Input data containing 'depth', 'avg_active_feature_count', 'algorithm', and vary_by columns.
-        algorithm (str): The algorithm to plot (e.g., "MOC1", "HHCART D").
+        algorithm (str): The algorithm to plot (e.g., "MOC1", "HHCART_SD D").
         vary_by (str): Column to group lines by: either 'data_dim' or 'n_samples'.
         title (str, optional): Custom plot title.
         save_name (str, optional): Output filename (PDF).
@@ -426,7 +426,7 @@ def plot_active_features_over_depth_grouped_by_data_dim_or_samples(
 def plot_loglog_runtime_scaling_by_dimension_or_sample_count(
     df: pd.DataFrame,
     vary_by: str = "data_dim",
-    algorithms: Tuple[str, ...] = ("MOC1", "HHCART D"),
+    algorithms: Tuple[str, ...] = ("MOC1", "HHCART_SD D"),
     title: Optional[str] = None,
     save_name: str = "combined_scaling_loglog.pdf",
     max_depth: Optional[int] = None,
@@ -442,7 +442,7 @@ def plot_loglog_runtime_scaling_by_dimension_or_sample_count(
     vary_by : str, default="data_dim"
         Column on the x-axis. Should be either "data_dim" or "n_samples".
 
-    algorithms : tuple[str, ...], default=("MOC1", "HHCART D")
+    algorithms : tuple[str, ...], default=("MOC1", "HHCART_SD D")
         Algorithm names to compare. Names are case-insensitive and matched after replacing underscores with spaces.
 
     title : str, optional

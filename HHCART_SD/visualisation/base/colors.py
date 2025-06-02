@@ -1,8 +1,8 @@
 """
-Color and Style Definitions for HHCART Visualisations
+Color and Style Definitions for HHCART_SD Visualisations
 ------------------------------------------------------
 Centralized palette and helper utilities for consistent color use across
-HHCART decision tree visualisation tools.
+HHCART_SD decision tree visualisation tools.
 """
 
 import numpy as np
@@ -65,28 +65,3 @@ def generate_color_gradient(base_color: str, n_levels: int) -> list:
 
     cmap = mcolors.LinearSegmentedColormap.from_list("custom_interp", gradient_rgb, N=n_levels)
     return [cmap(i / (n_levels - 1)) for i in range(n_levels)]
-
-
-# def generate_color_gradient(base_color: str, n_levels: int) -> list:
-#     """
-#     Generate a perceptually balanced gradient from light to dark based on a base colour.
-#
-#     Args:
-#         base_color (str): Base colour in hex or matplotlib name.
-#         n_levels (int): Number of colour levels to produce.
-#
-#     Returns:
-#         list: List of opaque hex colour strings.
-#     """
-#     base_rgb = mcolors.to_rgb(base_color)
-#     light_rgb = tuple(min(1.0, 1 - 0.4 * (1 - c)) for c in base_rgb)
-#     dark_rgb = tuple(max(0.0, 0.5 * c) for c in base_rgb)
-#
-#     gradient_rgb = [
-#         (0.0, light_rgb),
-#         (0.5, base_rgb),
-#         (1.0, dark_rgb),
-#     ]
-#
-#     cmap = mcolors.LinearSegmentedColormap.from_list("custom_interp", gradient_rgb, N=n_levels)
-#     return [to_hex(cmap(i / (n_levels - 1))) for i in range(n_levels)]

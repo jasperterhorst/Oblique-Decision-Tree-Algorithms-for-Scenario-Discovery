@@ -47,8 +47,8 @@ EVOLUTION_COLORS = {
 # === Oblique Tree Visualization Colors and Styles ===
 ALGORITHM_COLORS = {
     "CART": "#1f77b4",
-    "HHCART A": "#ff7f0e",
-    "HHCART D": "#2ca02c",
+    "HHCART_SD A": "#ff7f0e",
+    "HHCART_SD D": "#2ca02c",
     "MOC1": "#d62728",
     "RANDCART": "#9467bd",
     "CO2": "#8c564b",

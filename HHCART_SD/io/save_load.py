@@ -1,7 +1,7 @@
 """
 Model Save/Load Utilities (save_load.py)
 ----------------------------------------
-Save and restore full HHCART-D model instances, including trained trees,
+Save and restore full HHCART_SD-D model instances, including trained trees,
 metrics, metadata, and dataset references. Output plots and artefacts
 can be saved alongside the model but outside the pickled object.
 """
@@ -17,9 +17,9 @@ import pandas as pd
 import numpy as np
 
 from typing import TYPE_CHECKING
+from HHCART_SD.visualisation import bind_plotting_methods
 if TYPE_CHECKING:
-    from HHCART.core import HHCartD
-
+    from HHCART_SD.core import HHCartD
 
 # Root folder where all saved models are stored
 DATA_ROOT = os.path.join(os.getcwd(), "data")
@@ -72,7 +72,7 @@ def select_model_folder(model_dirs: list[str]) -> str:
 
 def save_full_model(model: "HHCartD", name: Optional[str] = None) -> str:
     """
-    Save the full HHCART-D model instance to disk, including trees, metrics,
+    Save the full HHCART_SD-D model instance to disk, including trees, metrics,
     metadata, and optionally the training data. Output folder is:
         data/<generated_name>/model/
 
@@ -137,13 +137,13 @@ def save_full_model(model: "HHCartD", name: Optional[str] = None) -> str:
     with open(os.path.join(model_dir, "metadata.json"), "w") as f:
         json.dump(metadata, f, indent=4)
 
-    print(f"[💾] HHCART-D model saved to: {model_dir}")
+    print(f"[💾] HHCART_SD-D model saved to: {model_dir}")
     return model_root
 
 
 def load_full_model(path: Optional[str] = None) -> "HHCartD":
     """
-    Load a previously saved HHCART-D model from disk. Expects the model files to be under:
+    Load a previously saved HHCART_SD-D model from disk. Expects the model files to be under:
         data/<model_name>/model/
 
     Args:
@@ -200,7 +200,7 @@ def load_full_model(path: Optional[str] = None) -> "HHCartD":
             f"Please check your path and folder structure."
         )
 
-    from HHCART.core import HHCartD
+    from HHCART_SD.core import HHCartD
 
     # Load decision trees
     try:
@@ -267,6 +267,9 @@ def load_full_model(path: Optional[str] = None) -> "HHCartD":
     model.trees_by_depth = trees_by_depth
     model.metrics_by_depth = metrics_by_depth
     model.metrics_df = metrics_df
+
+    # Rebind latest plotting functions
+    bind_plotting_methods(model)
 
     model.save_dir = Path(path)
 

@@ -78,11 +78,11 @@ class DepthSweepRunner:
         # Split Quality & Search Strategies
             impurity (callable):
                 Function to evaluate split quality (e.g., gini, entropy).
-                Applies to: HHCART variants, CO2, RandCART, RidgeCART, CART.
+                Applies to: HHCART_SD variants, CO2, RandCART, RidgeCART, CART.
 
             segmentor (object):
                 Defines axis-aligned split search (e.g., CARTSegmentor, MeanSegmentor).
-                Applies to: HHCART variants, CO2, RandCART, RidgeCART.
+                Applies to: HHCART_SD variants, CO2, RandCART, RidgeCART.
 
         # MOC1 Hyperparameters
             n_restarts (int, default=20):
@@ -92,10 +92,10 @@ class DepthSweepRunner:
             min_features_split (int, default=1):
                 Minimum non-zero coefficients per split. Must be ≥ 1.
 
-        # HHCART (A and D) Controls
+        # HHCART_SD (A and D) Controls
             tau (float, default=1e-6):
                 Reflection tolerance. Small positive value to skip near-axis eigenvectors.
-                Applies to: HHCART(A) and HHCART(D).
+                Applies to: HHCART_SD(A) and HHCART_SD(D).
 
         # CO2-Specific Hyperparameters
             max_iter_co2 (int, optional):

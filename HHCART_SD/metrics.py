@@ -18,7 +18,7 @@ import numpy as np
 from typing import Union, Sequence
 from sklearn.metrics import accuracy_score
 
-from HHCART.tree import DecisionNode, DecisionTree
+from HHCART_SD.tree import DecisionNode, DecisionTree, LeafNode
 
 
 # =============================================================================
@@ -183,3 +183,25 @@ def compute_average_active_feature_count(
             counts.append(count)
 
     return np.mean(counts) if counts else 0.0
+
+
+def count_class1_leaves(tree) -> int:
+    """
+    Count the number of leaf nodes in the tree that predict Class 1.
+
+    Args:
+        tree (DecisionTree): A trained decision tree object.
+
+    Returns:
+        int: Number of Class 1 leaves in the tree.
+    """
+    count = 0
+
+    def visit(node):
+        nonlocal count
+        if isinstance(node, LeafNode) and node.prediction == 1:
+            count += 1
+
+    tree.traverse(visit)
+
+    return count

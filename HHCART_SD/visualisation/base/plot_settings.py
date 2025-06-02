@@ -1,7 +1,7 @@
 """
-HHCART Plot Style Settings
+HHCART_SD Plot Style Settings
 ---------------------------
-Shared matplotlib styling utilities for formatting all HHCART visualisations.
+Shared matplotlib styling utilities for formatting all HHCART_SD visualisations.
 Ensures consistent fonts, axis styles, gridlines, and export settings.
 """
 
@@ -48,7 +48,7 @@ def beautify_plot(ax: Axes, title: str = None, xlabel: str = None,
     fig = ax.get_figure()
 
     if title:
-        ax.set_title(title, fontsize=24, pad=20, wrap=True)
+        ax.set_title(title, fontsize=20, pad=20, wrap=True)
     if xlabel:
         ax.set_xlabel(xlabel or 'X-axis', fontsize=20, labelpad=10)
     if ylabel:

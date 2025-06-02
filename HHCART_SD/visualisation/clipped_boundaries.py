@@ -5,7 +5,7 @@ Plot recursively clipped decision boundaries for all depths of an HHCartD model.
 
 Supports:
 - Polygon clipping of decision boundaries using valid region constraints
-- 2D scatter visualisation with labelled colour overlays
+- 2D scatter visualisation with labelled color overlays
 - Optional saving using the save_figure utility
 """
 
@@ -15,10 +15,10 @@ from shapely.geometry import box, LineString
 from shapely.ops import split as shapely_split
 from typing import Optional
 
-from HHCART.visualisation.base.save_figure import save_figure
-from HHCART.visualisation.base.colors import PRIMARY_LIGHT, SECONDARY_LIGHT
-from HHCART.visualisation.base.plot_settings import beautify_subplot, apply_global_plot_settings
-from HHCART.tree import DecisionNode
+from .base.save_figure import save_figure
+from .base.colors import PRIMARY_LIGHT, SECONDARY_LIGHT
+from .base.plot_settings import beautify_subplot, apply_global_plot_settings
+from ..tree import DecisionNode
 
 
 # === Polygon Utilities ===

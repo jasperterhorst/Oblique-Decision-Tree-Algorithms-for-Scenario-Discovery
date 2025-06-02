@@ -1,5 +1,5 @@
 """
-Tree Evaluation Metrics (evaluation.py)
+Tree Evaluation Metrics (evaluator.py)
 ---------------------------------------
 Computes performance, interpretability, and structural metrics
 for a trained decision tree, using standard scenario discovery criteria.
@@ -13,13 +13,14 @@ Supported metrics include:
 from typing import Union, Sequence, Any
 import numpy as np
 
-from HHCART.metrics import (
+from HHCART_SD.metrics import (
     compute_accuracy,
     compute_coverage,
     compute_density,
     compute_f_score,
     count_total_constrained_dimensions,
-    compute_average_active_feature_count
+    compute_average_active_feature_count,
+    count_class1_leaves
 )
 
 
@@ -78,6 +79,7 @@ def evaluate_tree(
     # -------------------------------------------------------------------------
     total_active_features = count_total_constrained_dimensions(tree)
     avg_active_features = compute_average_active_feature_count(tree)
+    num_class1_leaves = count_class1_leaves(tree)
 
     # -------------------------------------------------------------------------
     # Structural attributes (if present on the tree object)
@@ -99,6 +101,7 @@ def evaluate_tree(
         # Interpretability
         "total_active_feature_count": total_active_features,
         "avg_active_feature_count": avg_active_features,
+        "class1_leaf_count": num_class1_leaves,
 
         # Structural metadata
         "depth": max_depth,

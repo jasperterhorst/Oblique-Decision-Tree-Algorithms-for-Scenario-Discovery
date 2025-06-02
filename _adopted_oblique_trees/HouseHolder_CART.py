@@ -1,20 +1,20 @@
 """
-HouseHolder CART (HHCART) – Corrected and Extended Implementation
+HouseHolder CART (HHCART_SD) – Corrected and Extended Implementation
 -----------------------------------------------------------------
 
-This module provides a revised implementation of the HouseHolder CART (HHCART) algorithm,
+This module provides a revised implementation of the HouseHolder CART (HHCART_SD) algorithm,
 originally described by Wickramarachchi et al. (2015). The version found in the
 "Ensembles of Oblique Decision Trees" package, developed by Torsha Majumder, was labelled
-as HHCART(A), but its internal logic diverged from the formal HHCART(A) methodology.
+as HHCART_SD(A), but its internal logic diverged from the formal HHCART_SD(A) methodology.
 Various aspects such as reflection construction, split generation, and selection
 strategies did not align with the original algorithm.
 
 To address these discrepancies, this implementation introduces a series of corrections
-to better reproduce HHCART(A). Additionally, it extends functionality by incorporating
-the HHCART(D) variant, as proposed by Wickramarachchi et al. (2015), which offers a more
+to better reproduce HHCART_SD(A). Additionally, it extends functionality by incorporating
+the HHCART_SD(D) variant, as proposed by Wickramarachchi et al. (2015), which offers a more
 computationally efficient alternative with minimal loss in performance — a valuable
 feature for applications like scenario discovery. Furthermore, optional sparsity has been
-added to HHCART(D) to enhance interpretability by reducing the complexity of decision boundaries.
+added to HHCART_SD(D) to enhance interpretability by reducing the complexity of decision boundaries.
 
 Key Corrections and Enhancements:
 ---------------------------------
@@ -24,7 +24,7 @@ Key Corrections and Enhancements:
      within-class geometric structure, followed by eigen decomposition to identify
      class-specific reflection directions.
 
-2. Exhaustive Reflection Search (HHCART(A)):
+2. Exhaustive Reflection Search (HHCART_SD(A)):
    - Original: Used only the first principal component as the reflection axis.
    - Revision: Iterates over all non-zero eigenvectors from each class, constructing
      Householder reflections for each to explore a richer set of oblique split orientations.
@@ -47,12 +47,12 @@ Key Corrections and Enhancements:
 
 Algorithm Variants:
 -------------------
-- `HHCartAClassifier` (HHCART(A)):
+- `HHCartAClassifier` (HHCART_SD(A)):
    - Performs exhaustive search across all class-specific eigenvectors.
    - Focuses on maximising split accuracy through comprehensive reflection evaluation.
    - Operates in dense mode only (no sparsity).
 
-- `HHCartDClassifier` (HHCART(D)):
+- `HHCartDClassifier` (HHCART_SD(D)):
    - Selects only the dominant eigenvector per class for efficiency.
 """
 
@@ -148,7 +148,7 @@ class HouseHolderCART(BaseEstimator):
         self._nodes.append(node)
         return node
 
-    # NOTE: _generate_node() in this base class will be used by HHCartAClassifier (HHCART(A))
+    # NOTE: _generate_node() in this base class will be used by HHCartAClassifier (HHCART_SD(A))
     def _generate_node(self, X, y, cur_depth):
         if self._terminate(X, y, cur_depth):
             return self._generate_leaf_node(cur_depth, y)
@@ -167,7 +167,7 @@ class HouseHolderCART(BaseEstimator):
             S = np.cov(X_c, rowvar=False)
             eigvals, eigvecs = np.linalg.eigh(S)  # ascending order
 
-            # Loop over all eigenvectors (HHCART(A))
+            # Loop over all eigenvectors (HHCART_SD(A))
             for j in range(eigvecs.shape[1]):
                 mu = eigvecs[:, j]
                 if np.allclose(mu, 0):
@@ -259,8 +259,8 @@ class HouseHolderCART(BaseEstimator):
         return correct_count / labels.shape[0]
 
 
-# The following two classes instantiate different HHCART variants.
-# HHCartAClassifier implements HHCART(A), which uses all eigenvectors from each class.
+# The following two classes instantiate different HHCART_SD variants.
+# HHCartAClassifier implements HHCART_SD(A), which uses all eigenvectors from each class.
 class HHCartAClassifier(ClassifierMixin, HouseHolderCART):
     def __init__(self, impurity, segmentor=CARTSegmentor(), max_depth=50, min_samples_split=2,
                  random_state=None, **kwargs):
@@ -269,7 +269,7 @@ class HHCartAClassifier(ClassifierMixin, HouseHolderCART):
                          min_samples_split=min_samples_split, random_state=random_state, **kwargs)
 
 
-# HHCartDClassifier implements HHCART(D), which uses only the dominant eigenvector from each class.
+# HHCartDClassifier implements HHCART_SD(D), which uses only the dominant eigenvector from each class.
 class HHCartDClassifier(ClassifierMixin, HouseHolderCART):
     def _generate_node(self, X, y, cur_depth):
         if self._terminate(X, y, cur_depth):

@@ -1,7 +1,7 @@
 """
 Decision Tree Structure (tree.py)
 ---------------------------------
-Defines the core data structures for decision trees used in HHCART.
+Defines the core data structures for decision trees used in HHCART_SD.
 Includes:
 - TreeNode: Generic node base class
 - DecisionNode: Internal split node with weights and bias
@@ -75,13 +75,16 @@ class DecisionNode(TreeNode):
         weights (np.ndarray): Weight vector for split direction.
         bias (float): Bias term for the decision threshold.
         y (np.ndarray or None): Labels at this node (used for majority voting).
+        impurity (float or None): Split impurity at this node (e.g., Gini impurity).
     """
 
-    def __init__(self, node_id: int, weights: np.ndarray = None, bias: float = 0.0, depth: int = 0):
+    def __init__(self, node_id: int, weights: np.ndarray = None, bias: float = 0.0, depth: int = 0,
+                 impurity: float = None):
         super().__init__(node_id, depth)
         self.weights = weights if weights is not None else np.array([])
         self.bias = bias
         self.y = None
+        self.impurity = impurity
 
     def decision(self, x: np.ndarray) -> int:
         """
@@ -109,7 +112,7 @@ class DecisionNode(TreeNode):
     def __repr__(self) -> str:
         return (
             f"DecisionNode(id={self.node_id}, depth={self.depth}, "
-            f"weights={self.weights}, bias={self.bias})"
+            f"impurity={self.impurity:.4f}, weights={self.weights}, bias={self.bias})"
         )
 
 
@@ -245,7 +248,8 @@ class DecisionTree:
         if isinstance(node, DecisionNode):
             terms = [f"{w:+.2f}*x{i}" for i, w in enumerate(np.ravel(node.weights)) if abs(float(w)) > 1e-6]
             condition = " ".join(terms) + f" + {node.bias:+.2f} >= 0"
-            print(f"{indent}[Node id={node.node_id}, depth={node.depth}] (split: {condition})")
+            print(f"{indent}[Node id={node.node_id}, depth={node.depth}, impurity={node.impurity:.4f}] "
+                  f"(split: {condition})")
             for i, child in enumerate(node.children):
                 branch = "├── " if i == 0 else "└── "
                 self._print_node(child, indent + branch)

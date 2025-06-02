@@ -1,7 +1,7 @@
 """
-HHCartDPruningClassifier (hhcart_d_pruning.py)
+HHCartDPruningClassifier (HHCartDPruning.py)
 -----------------------------------------------
-Implements HHCART(D): an oblique decision tree classifier using Householder reflections,
+Implements HHCART_SD(D): an oblique decision tree classifier using Householder reflections,
 followed by post hoc pruning at each depth level. Integrates cleanly with scikit-learn
 interfaces for model selection and evaluation.
 
@@ -20,14 +20,14 @@ from copy import deepcopy
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.metrics import accuracy_score
 
-from HHCART.segmentor import CARTSegmentor
-from HHCART.evaluator import evaluate_tree
-from HHCART.tree import DecisionTree, DecisionNode, LeafNode, TreeNode
+from HHCART_SD.segmentor import CARTSegmentor
+from HHCART_SD.evaluator import evaluate_tree
+from HHCART_SD.tree import DecisionTree, DecisionNode, LeafNode, TreeNode
 
 
 class HHCartDPruningClassifier(BaseEstimator, ClassifierMixin):
     """
-    Oblique decision tree using Householder reflections (HHCART-D) with bottom-up pruning.
+    Oblique decision tree using Householder reflections (HHCART_SD-D) with bottom-up pruning.
 
     After growing the tree to full depth, each depth level is pruned recursively.
     Evaluation metrics (accuracy, coverage, density, etc.) are recorded for each level.
@@ -94,7 +94,8 @@ class HHCartDPruningClassifier(BaseEstimator, ClassifierMixin):
             print("[DEBUG] Node depths:")
             for node in self.tree.root.traverse_yield():
                 print(
-                    f"  id={node.node_id}, depth={node.depth}, type={'Leaf' if isinstance(node, LeafNode) else 'Split'}")
+                    f"  id={node.node_id}, depth={node.depth}, "
+                    f"type={'Leaf' if isinstance(node, LeafNode) else 'Split'}")
 
         # Iteratively prune the full tree to every possible depth from 0 to full_depth
         for d in range(full_depth + 1):
@@ -163,13 +164,28 @@ class HHCartDPruningClassifier(BaseEstimator, ClassifierMixin):
             i, thr = rule
             weights = H[:, i]
             bias = -thr
-            node = DecisionNode(node_id=node_id, weights=weights, bias=bias, depth=depth)
-            node.y = y
-            node_id += 1
 
             proj = X @ weights + bias
-            node.add_child(build(X[proj < 0], y[proj < 0], depth + 1))
-            node.add_child(build(X[proj >= 0], y[proj >= 0], depth + 1))
+            mask_left = proj < 0
+            mask_right = ~mask_left
+            y_left, y_right = y[mask_left], y[mask_right]
+
+            # Compute impurity using the provided impurity function
+            node_impurity = self.impurity(y_left, y_right)
+
+            # Create decision node
+            node = DecisionNode(
+                node_id=node_id,
+                weights=weights,
+                bias=bias,
+                depth=depth,
+                impurity=node_impurity
+            )
+            node.y = y
+
+            node_id += 1
+            node.add_child(build(X[mask_left], y_left, depth + 1))
+            node.add_child(build(X[mask_right], y_right, depth + 1))
             return node
 
         return DecisionTree(build(X, y, 0))
