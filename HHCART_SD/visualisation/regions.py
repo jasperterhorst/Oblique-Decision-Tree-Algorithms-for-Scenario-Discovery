@@ -20,7 +20,7 @@ from .base.colors import PRIMARY_LIGHT, SECONDARY_LIGHT
 from .base.plot_settings import beautify_subplot, apply_global_plot_settings
 
 
-def plot_oblique_regions(hh, save: bool = False, filename: Optional[str] = None, title: Optional[str] = None):
+def plot_regions_2d_grid(hh, save: bool = False, filename: Optional[str] = None, title: Optional[str] = None):
     """
     Plot 2D decision regions using predictions for each pruned tree depth in an HHCartD object.
 

@@ -9,11 +9,6 @@ one of two interpretability proxies, either:
 - the number of subspaces predicted as class 1.
 
 This visualisation supports comparative analysis of performance vs. interpretability.
-
-Usage:
--------
-    hh.plot_tradeoff_path(color_by="class1_leaf_count")
-    hh.plot_tradeoff_path(color_by="depth", save=True)
 """
 
 import matplotlib.pyplot as plt
@@ -26,7 +21,7 @@ from .base.save_figure import save_figure
 from .base.colors import generate_color_gradient, PRIMARY_MIDDLE
 
 
-def plot_coverage_density_tradeoff_path(
+def plot_tradeoff_path(
     hh,
     save: bool = False,
     filename: str = None,
@@ -55,6 +50,11 @@ def plot_coverage_density_tradeoff_path(
     """
     apply_global_plot_settings()
 
+    label_map = {
+        "depth": "Tree Depth",
+        "class1_leaf_count": "Subspaces Predicted as Label 1"
+    }
+
     df = hh.metrics_df
     if not {"coverage", "density", color_by}.issubset(df.columns):
         raise ValueError(f"`metrics_df` must include columns: 'coverage', 'density', and '{color_by}'.")
@@ -72,12 +72,31 @@ def plot_coverage_density_tradeoff_path(
     if color_by == "depth":
         min_val, max_val = int(color_values.min()), int(color_values.max())
         n_levels = max_val - min_val + 1
+
+        # Colormap and normalisation
         cmap = ListedColormap(generate_color_gradient(PRIMARY_MIDDLE, n_levels))
-        norm = BoundaryNorm(np.arange(min_val - 0.5, max_val + 1.5), ncolors=n_levels)
+        boundaries = np.arange(min_val - 0.5, max_val + 1.5, 1)
+        ticks = np.arange(min_val, max_val + 1)
+        norm = BoundaryNorm(boundaries, ncolors=n_levels)
+
+        # Colorbar
+        sm = ScalarMappable(norm=norm, cmap=cmap)
+        sm.set_array([])
+        cbar = plt.colorbar(sm, ax=ax, boundaries=boundaries, ticks=ticks, spacing="proportional", pad=0.08, shrink=0.7)
+        cbar.set_label(label_map[color_by], fontsize=13)
+        cbar.ax.tick_params(labelsize=12)
+
     else:
+        # For continuous variable, just use viridis_r
         min_val, max_val = color_values.min(), color_values.max()
         cmap = get_cmap("viridis_r")
         norm = Normalize(vmin=min_val, vmax=max_val)
+
+        sm = ScalarMappable(norm=norm, cmap=cmap)
+        sm.set_array([])
+        cbar = plt.colorbar(sm, ax=ax, pad=0.08, shrink=0.7)
+        cbar.set_label(label_map[color_by], fontsize=13)
+        cbar.ax.tick_params(labelsize=12)
 
     # Scatter points
     for cov, den, val in zip(coverage, density, color_values):
@@ -104,13 +123,6 @@ def plot_coverage_density_tradeoff_path(
         xlabel="Coverage",
         ylabel="Density"
     )
-
-    # Colorbar
-    sm = ScalarMappable(norm=norm, cmap=cmap)
-    sm.set_array([])
-    cbar = plt.colorbar(sm, ax=ax, pad=0.08, shrink=0.7)
-    cbar.set_label(label_map[color_by], fontsize=13)
-    cbar.ax.tick_params(labelsize=12)
 
     fig.tight_layout()
 

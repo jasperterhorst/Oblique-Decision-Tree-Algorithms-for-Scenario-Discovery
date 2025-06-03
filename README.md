@@ -8,6 +8,11 @@ The repository contains a diverse set of models, tools for synthetic data genera
 and benchmarks. It also integrates and builds upon existing work in the field, most notably ensemble-based oblique 
 decision trees.
 
+## Installation
+
+Works stable with Python 3.11 not with 3.12.
+
+
 ---
 
 ## 📦 Repository Overview

@@ -54,7 +54,7 @@ class HHCartD:
         Binary labels (0 or 1) for each sample.
     max_depth : int, optional (default=6)
         Maximum tree depth to train.
-    min_samples_split : int, optional (default=2)
+    min_samples : int, optional (default=2)
         Minimum samples required to consider a split.
     min_purity : float, optional (default=1.0)
         Purity threshold to stop splitting.
@@ -98,7 +98,7 @@ class HHCartD:
         y,
         *,
         max_depth: int = 6,
-        min_samples_split: int = 2,
+        min_samples: int = 2,
         min_purity: float = 1,
         tau: float = 0.05,
         random_state: int = None,
@@ -111,7 +111,7 @@ class HHCartD:
         self.X = X
         self.y = y
         self.max_depth = max_depth
-        self.min_samples_split = min_samples_split
+        self.min_samples = min_samples
         self.min_purity = min_purity
         self.tau = tau
         self.random_state = random_state
@@ -146,7 +146,7 @@ class HHCartD:
         model = HHCartDPruningClassifier(
             impurity=gini,
             max_depth=self.max_depth,
-            min_samples_split=self.min_samples_split,
+            min_samples=self.min_samples,
             min_purity=self.min_purity,
             tau=self.tau,
             debug=self.debug,

@@ -36,7 +36,7 @@ class HHCartDPruningClassifier(BaseEstimator, ClassifierMixin):
         impurity (Callable): Impurity function to evaluate splits.
         segmentor (Segmentor): Object that generates axis-aligned splits (default=CARTSegmentor()).
         max_depth (int): Maximum depth for initial tree construction.
-        min_samples_split (int): Minimum number of samples required to attempt a split.
+        min_samples (int): Minimum number of samples required to attempt a split.
         min_purity (float): Purity threshold to stop splitting if exceeded.
         tau (float): Numerical tolerance to ignore near-zero rotations.
         debug (bool): If True, prints additional debug information.
@@ -45,14 +45,14 @@ class HHCartDPruningClassifier(BaseEstimator, ClassifierMixin):
                  impurity: Callable,
                  segmentor=CARTSegmentor(),
                  max_depth: int = 5,
-                 min_samples_split: int = 2,
+                 min_samples: int = 2,
                  min_purity: float = 1,
                  tau: float = 0.05,
                  debug: bool = False):
         self.impurity = impurity
         self.segmentor = segmentor
         self.max_depth = max_depth
-        self.min_samples_split = min_samples_split
+        self.min_samples = min_samples
         self.min_purity = min_purity
         self.tau = tau
         self.debug = debug
@@ -208,7 +208,7 @@ class HHCartDPruningClassifier(BaseEstimator, ClassifierMixin):
         """
         if self.max_depth is not None and depth >= self.max_depth:
             return True
-        if len(y) < self.min_samples_split:
+        if len(y) < self.min_samples:
             return True
         return np.max(np.bincount(y)) / len(y) >= self.min_purity
 

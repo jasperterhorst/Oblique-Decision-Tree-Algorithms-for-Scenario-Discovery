@@ -14,10 +14,12 @@ import matplotlib.pyplot as plt
 from shapely.geometry import box, LineString
 from shapely.ops import split as shapely_split
 from typing import Optional
+from matplotlib.colors import BoundaryNorm, ListedColormap
+from matplotlib.cm import ScalarMappable
 
 from .base.save_figure import save_figure
-from .base.colors import PRIMARY_LIGHT, SECONDARY_LIGHT
-from .base.plot_settings import beautify_subplot, apply_global_plot_settings
+from .base.colors import PRIMARY_LIGHT, SECONDARY_LIGHT, truncate_colormap
+from .base.plot_settings import beautify_plot, beautify_subplot, apply_global_plot_settings
 from ..tree import DecisionNode
 
 
@@ -88,7 +90,7 @@ def construct_region_from_constraints(constraints, initial_region):
 
 
 # === Main Plotting Function ===
-def plot_clipped_oblique_splits(hh, save: bool = False, filename: Optional[str] = None, title: Optional[str] = None):
+def plot_splits_2d_grid(hh, save: bool = True, filename: Optional[str] = None, title: Optional[str] = None):
     """
     Plot decision boundaries clipped to valid polygon regions for all depths of a trained HHCartD model.
 
@@ -99,7 +101,7 @@ def plot_clipped_oblique_splits(hh, save: bool = False, filename: Optional[str] 
         title (str, optional): Custom title for plotting. Defaults to 'clipped_oblique_splits'.
 
     Example:
-        hh.plot_clipped_oblique_splits(save=True)
+        hh.plot_splits_2d_grid()
     """
     apply_global_plot_settings()
 
@@ -195,6 +197,113 @@ def plot_clipped_oblique_splits(hh, save: bool = False, filename: Optional[str] 
 
     if save:
         filename = filename or "clipped_oblique_splits.pdf"
+        save_figure(hh, filename=filename, save=True)
+
+    plt.show()
+    plt.close(fig)
+
+
+def plot_splits_2d_overlay(
+    hh,
+    cmap: str = "YlGnBu",
+    save: bool = True,
+    filename: Optional[str] = None,
+    title: Optional[str] = None
+):
+    """
+    Plot all clipped split lines across all tree depths in a single 2D plot.
+    Splits are visualised using a colourmap encoding depth via colour intensity.
+
+    Args:
+        hh (HHCartD): A trained HHCartD object with built trees and metrics.
+        cmap (str): Matplotlib colormap name (e.g., 'Blues', 'Purples', 'YlGnBu').
+        save (bool): Whether to save the figure (default: True).
+        filename (str, optional): Custom filename (PDF).
+        title (str, optional): Custom plot title.
+    """
+    apply_global_plot_settings()
+
+    if hh.X.shape[1] != 2:
+        raise ValueError("This visualisation only supports 2D input.")
+
+    if cmap not in {"Blues", "Purples", "YlGnBu", "viridis", "cividis"}:
+        raise ValueError(f"Unsupported cmap '{cmap}'.")
+
+    X, y = hh.X, hh.y
+    scatter_colors = np.where(y == 0, SECONDARY_LIGHT, PRIMARY_LIGHT)
+    x_min, x_max = X.iloc[:, 0].min(), X.iloc[:, 0].max()
+    y_min, y_max = X.iloc[:, 1].min(), X.iloc[:, 1].max()
+    bounds = (x_min, x_max, y_min, y_max)
+
+    max_depth = max(hh.available_depths())
+
+    cmap_continuous = truncate_colormap(cmap, reverse=True, minval=0.0, maxval=0.8, n=512)
+    sample_points = np.linspace(0, 1, max_depth + 1)
+    cmap_colors = cmap_continuous(sample_points)
+
+    fig = plt.figure(figsize=(5, 5))
+    ax = plt.gca()
+    ax.set_aspect("equal", adjustable="box")
+    ax.scatter(X.iloc[:, 0], X.iloc[:, 1], c=scatter_colors, s=5)
+
+    def recurse(node, constraints, depth):
+        if not isinstance(node, DecisionNode):
+            return
+
+        region = construct_region_from_constraints(constraints, create_initial_polygon(*bounds))
+        if region is None or not region.is_valid:
+            return
+
+        w, b = node.weights, node.bias
+        try:
+            if not np.isclose(w[1], 0.0):
+                x_vals = np.linspace(x_min - 1, x_max + 1, 2)
+                y_vals = -(w[0] * x_vals + b) / w[1]
+                line = LineString(zip(x_vals, y_vals))
+            else:
+                x_split = -b / w[0]
+                y_vals = np.linspace(y_min - 1, y_max + 1, 2)
+                line = LineString([(x_split, y_vals[0]), (x_split, y_vals[1])])
+
+            clipped = region.intersection(line)
+            if not clipped.is_empty and hasattr(clipped, "xy"):
+                x_vals, y_vals = clipped.xy
+                line_color = cmap_colors[depth]
+                ax.plot(x_vals, y_vals, color=line_color, linewidth=1.8, linestyle="-")
+
+        except Exception as e:
+            print(f"[⚠️] Split plot failed at depth {depth}: {e}")
+
+        for i, child in enumerate(node.children):
+            direction = '<' if i == 0 else '>='
+            recurse(child, constraints + [(w, b, direction)], depth + 1)
+
+    final_tree = hh.get_tree_by_depth(max_depth)
+    recurse(final_tree.root, [], 0)
+
+    beautify_plot(
+        ax,
+        title=title or "Split Evolution",
+        xlabel=X.columns[0],
+        ylabel=X.columns[1]
+    )
+
+    ax.set_xlim(x_min, x_max)
+    ax.set_ylim(y_min, y_max)
+
+    cmap_listed = ListedColormap(cmap_colors)
+    bounds = np.arange(-0.5, max_depth + 1.5, 1)
+    norm = BoundaryNorm(boundaries=bounds, ncolors=cmap_listed.N)
+
+    sm = ScalarMappable(cmap=cmap_listed, norm=norm)
+    sm.set_array([])
+
+    cbar = fig.colorbar(sm, ax=ax, boundaries=bounds, ticks=np.arange(max_depth + 1), spacing="proportional",
+                        shrink=0.8)
+    cbar.set_label("Split Depth", fontsize=12)
+
+    if save:
+        filename = filename or "splits_2d_overlay.pdf"
         save_figure(hh, filename=filename, save=True)
 
     plt.show()

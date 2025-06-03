@@ -7,7 +7,9 @@ HHCART_SD decision tree visualisation tools.
 
 import numpy as np
 from matplotlib.colors import to_rgb, to_hex
+from matplotlib import cm
 import matplotlib.colors as mcolors
+from matplotlib.colors import LinearSegmentedColormap
 
 
 # === Utility: Compute midpoint color ===
@@ -65,3 +67,22 @@ def generate_color_gradient(base_color: str, n_levels: int) -> list:
 
     cmap = mcolors.LinearSegmentedColormap.from_list("custom_interp", gradient_rgb, N=n_levels)
     return [cmap(i / (n_levels - 1)) for i in range(n_levels)]
+
+
+def truncate_colormap(cmap_name: str, reverse: bool = False, minval: float = 0.2, maxval: float = 0.85, n: int = 256):
+    """
+    Truncate a matplotlib colormap to avoid very light or dark ends.
+
+    Args:
+        cmap_name (str): Name of the base matplotlib colormap.
+        reverse (bool): Whether to reverse the colormap.
+        minval (float): Minimum value of the original colormap to include (0.0–1.0).
+        maxval (float): Maximum value to include.
+        n (int): Number of discrete colours.
+
+    Returns:
+        LinearSegmentedColormap: A new colormap truncated to the specified range.
+    """
+    base_cmap = cm.get_cmap(cmap_name + "_r" if reverse else cmap_name)
+    new_colors = base_cmap(np.linspace(minval, maxval, n))
+    return LinearSegmentedColormap.from_list(f"trunc({cmap_name},{minval:.2f},{maxval:.2f})", new_colors)
