@@ -83,11 +83,13 @@ def bind_plotting_methods(obj):
         """
         return _plot_splits_2d_grid(obj, save=save, filename=filename, title=title)
 
-    def plot_splits_2d_overlay(cmap: str = "YlGnBu", save: bool = False, filename: str = None, title: str = None):
+    def plot_splits_2d_overlay(depth: int = None, cmap: str = "YlGnBu", save: bool = False, filename: str = None,
+                               title: str = None):
         """
         Plot clipped oblique decision boundaries for all trained depths in an overlay.
 
         Args:
+            depth (int, optional): Maximum depth to visualise. If None, all depths are shown.
             cmap (str, optional): Name of the colormap to use for the overlay.
             save (bool): Whether to save the figure.
             filename (str, optional): Output filename (PDF).
@@ -99,7 +101,7 @@ def bind_plotting_methods(obj):
         Side Effects:
             If `save=True`, a PDF is saved to the model’s save directory (`hh.save_dir`) with the specified filename.
         """
-        return _plot_splits_2d_overlay(obj, cmap= cmap, save=save, filename=filename, title=title)
+        return _plot_splits_2d_overlay(obj, depth=depth, cmap=cmap, save=save, filename=filename, title=title)
 
     def plot_tree_structure(depth: int = None, coloring: str = "distribution", save: bool = False,
                             filename: str = None, title: str = None):

@@ -128,7 +128,7 @@ def save_full_model(model: "HHCartD", name: Optional[str] = None) -> str:
     # Save metadata with relevant parameters and timestamp for reproducibility
     metadata = {
         "max_depth": model.max_depth,
-        "min_samples_split": model.min_samples_split,
+        "min_samples": model.min_samples,
         "min_purity": model.min_purity,
         "tau": model.tau,
         "random_state": model.random_state,
@@ -232,7 +232,7 @@ def load_full_model(path: Optional[str] = None) -> "HHCartD":
         print(f"[⚠] metadata.json not found in '{model_dir}', using defaults.")
         metadata = {
             "max_depth": max(trees_by_depth.keys()) if trees_by_depth else 6,
-            "min_samples_split": 2,
+            "min_samples": 2,
             "min_purity": 1.0,
             "tau": 0.05,
             "random_state": None,
@@ -257,7 +257,7 @@ def load_full_model(path: Optional[str] = None) -> "HHCartD":
         X=X,
         y=y,
         max_depth=metadata["max_depth"],
-        min_samples_split=metadata["min_samples_split"],
+        min_samples=metadata["min_samples"],
         min_purity=metadata["min_purity"],
         tau=metadata["tau"],
         random_state=metadata["random_state"]
@@ -272,6 +272,7 @@ def load_full_model(path: Optional[str] = None) -> "HHCartD":
     bind_plotting_methods(model)
 
     model.save_dir = Path(path)
+    model.save_dir.mkdir(parents=True, exist_ok=True)
 
     print(f"[✅] Model successfully loaded from: {model_dir}")
     return model

@@ -205,6 +205,7 @@ def plot_splits_2d_grid(hh, save: bool = True, filename: Optional[str] = None, t
 
 def plot_splits_2d_overlay(
     hh,
+    depth: Optional[int] = None,
     cmap: str = "YlGnBu",
     save: bool = True,
     filename: Optional[str] = None,
@@ -216,6 +217,7 @@ def plot_splits_2d_overlay(
 
     Args:
         hh (HHCartD): A trained HHCartD object with built trees and metrics.
+        depth (int, optional): Specific tree depth to visualise. If None, uses the maximum depth.
         cmap (str): Matplotlib colormap name (e.g., 'Blues', 'Purples', 'YlGnBu').
         save (bool): Whether to save the figure (default: True).
         filename (str, optional): Custom filename (PDF).
@@ -235,10 +237,19 @@ def plot_splits_2d_overlay(
     y_min, y_max = X.iloc[:, 1].min(), X.iloc[:, 1].max()
     bounds = (x_min, x_max, y_min, y_max)
 
-    max_depth = max(hh.available_depths())
+    available_depths = hh.available_depths()
+    deepest_available_depth = max(available_depths)
+    target_depth = depth if depth is not None else deepest_available_depth
+
+    if target_depth not in available_depths:
+        print(
+            f"[⚠️ WARNING] Requested depth {target_depth} is not available. "
+            f"Using deepest available depth {deepest_available_depth} instead."
+        )
+        target_depth = deepest_available_depth
 
     cmap_continuous = truncate_colormap(cmap, reverse=True, minval=0.0, maxval=0.8, n=512)
-    sample_points = np.linspace(0, 1, max_depth + 1)
+    sample_points = np.linspace(0, 1, target_depth + 1)
     cmap_colors = cmap_continuous(sample_points)
 
     fig = plt.figure(figsize=(5, 5))
@@ -246,8 +257,8 @@ def plot_splits_2d_overlay(
     ax.set_aspect("equal", adjustable="box")
     ax.scatter(X.iloc[:, 0], X.iloc[:, 1], c=scatter_colors, s=5)
 
-    def recurse(node, constraints, depth):
-        if not isinstance(node, DecisionNode):
+    def recurse(node, constraints, depth_level):
+        if not isinstance(node, DecisionNode) or depth_level > target_depth:
             return
 
         region = construct_region_from_constraints(constraints, create_initial_polygon(*bounds))
@@ -268,22 +279,22 @@ def plot_splits_2d_overlay(
             clipped = region.intersection(line)
             if not clipped.is_empty and hasattr(clipped, "xy"):
                 x_vals, y_vals = clipped.xy
-                line_color = cmap_colors[depth]
+                line_color = cmap_colors[depth_level]
                 ax.plot(x_vals, y_vals, color=line_color, linewidth=1.8, linestyle="-")
 
         except Exception as e:
-            print(f"[⚠️] Split plot failed at depth {depth}: {e}")
+            print(f"[⚠️] Split plot failed at depth {depth_level}: {e}")
 
         for i, child in enumerate(node.children):
             direction = '<' if i == 0 else '>='
-            recurse(child, constraints + [(w, b, direction)], depth + 1)
+            recurse(child, constraints + [(w, b, direction)], depth_level + 1)
 
-    final_tree = hh.get_tree_by_depth(max_depth)
+    final_tree = hh.get_tree_by_depth(target_depth)
     recurse(final_tree.root, [], 0)
 
     beautify_plot(
         ax,
-        title=title or "Split Evolution",
+        title=title or f"Split Evolution up to Depth {target_depth}",
         xlabel=X.columns[0],
         ylabel=X.columns[1]
     )
@@ -292,18 +303,18 @@ def plot_splits_2d_overlay(
     ax.set_ylim(y_min, y_max)
 
     cmap_listed = ListedColormap(cmap_colors)
-    bounds = np.arange(-0.5, max_depth + 1.5, 1)
+    bounds = np.arange(-0.5, target_depth + 1.5, 1)
     norm = BoundaryNorm(boundaries=bounds, ncolors=cmap_listed.N)
 
     sm = ScalarMappable(cmap=cmap_listed, norm=norm)
     sm.set_array([])
 
-    cbar = fig.colorbar(sm, ax=ax, boundaries=bounds, ticks=np.arange(max_depth + 1), spacing="proportional",
+    cbar = fig.colorbar(sm, ax=ax, boundaries=bounds, ticks=np.arange(target_depth + 1), spacing="proportional",
                         shrink=0.8)
     cbar.set_label("Split Depth", fontsize=12)
 
     if save:
-        filename = filename or "splits_2d_overlay.pdf"
+        filename = filename or f"splits_2d_overlay_depth_{target_depth}.pdf"
         save_figure(hh, filename=filename, save=True)
 
     plt.show()

@@ -42,5 +42,6 @@ def save_figure(hh, filename: str, save: bool = False) -> None:
         raise ValueError("Filename must end with '.pdf'.")
 
     save_path = Path(hh.save_dir) / filename
+
     plt.savefig(save_path, format="pdf", bbox_inches="tight")
     print(f"[💾] Figure saved to: {save_path}")

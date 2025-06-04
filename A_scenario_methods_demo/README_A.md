@@ -1,63 +1,86 @@
-# A - Scenario Methods Demo
+# A - Scenario Discovery Methods Demo
 
-This module of my thesis visually explores how three scenario discovery algorithms — PRIM, PCA-PRIM, and CART — isolate regions of interest in a 2D input space. It is useful to show the inherent limitations of these methods when the relation between input variable and the output of interest are not actually axis-aligned.
-Furthermore, looking at the plots can help at understanding how different methods trade off coverage with density across iterative refinement steps.
+This module from my thesis visually explores how three scenario discovery algorithms - **PRIM**, **PCA-PRIM**, and **CART** - identify and isolate regions of interest in a synthetic 2D input space. It is designed to demonstrate how these methods behave when the relationship between inputs and the output of interest is **not axis-aligned**, which is a known limitation of many traditional scenario discovery techniques.
+
+By visualizing their outputs, users can see how each algorithm **trades off coverage vs. density** and observe how decision boundaries evolve over **iterative refinement steps**.
 
 **Author**: Jasper ter Horst  
-**Output folder**: All figures and data are saved under `/_data/scenario_methods_demo_outputs`.
+
+---
 
 ## Overview
 
-This component of the project visualises how scenario discovery algorithms iteratively refine decision boundaries to isolate "regions of interest" in the input space.
+This module is part of a larger integration framework and is mainly accessed via the notebook:
 
-The notebook generates and saves the following visual outputs:
+📓 [visualisation_scenario_methods_demo.ipynb](./visualisation_scenario_methods_demo.ipynb)
 
-- **Sample Distribution Plots**: Visualises the original 2D data space and classification labels.
-- **Box Evolution Visualisations**: Step-by-step visualisation of PRIM and PCA–PRIM box refinements, both aggregated and per iteration.
-- **Peeling Trajectories**: Plots showing trade-offs between coverage and density as boxes evolve.
-- **Comparison Figures**: Combined plot comparing peeling trajectories between PRIM and PCA–PRIM.
-- **CART Box Output**: Full plot of decision regions learned by the CART algorithm.
+The notebook allows you to:
+- **Generate synthetic 2D datasets** with specific inclusion zones
+- **Run PRIM, PCA-PRIM, and CART analyses**
+- **Save visual outputs** of each method's results
+
+---
+
+## Key Visual Outputs
+
+All output figures are saved in [`../_data/scenario_methods_demo_outputs/`](../_data/scenario_methods_demo_outputs/). These plots visually explain how the methods work and evolve:
+
+- **Data Distribution Plot**  
+  Displays the 2D synthetic dataset with regions labeled as “of interest” or “not of interest”.
+
+- **PRIM & PCA-PRIM Box Evolution**  
+  Step-by-step visualizations of how each method refines its decision boxes. Includes both original and PCA-rotated views for PCA-PRIM.
+
+- **PRIM & PCA-PRIM Peeling Trajectories**  
+  Plots showing the trade-off between **coverage** and **density** over successive box refinements. Includes a constraint-aware variant and a comparative PRIM vs. PCA-PRIM plot.
+
+- **CART Decision Regions**  
+  Final classification map produced by the CART decision tree, showing axis-aligned partitions in the input space.
+
+---
 
 ## Getting Started
+For instructions on how to set up the environment, see [README.md](../README.md) in the root of the project.
 
-Open [`visualisation_scenario_methods_demo.ipynb`](./visualisation_scenario_methods_demo.ipynb).  
-Adjust sliders to generate datasets, run scenario discovery methods, and save results to `/_data/scenario_methods_demo_outputs/`.
+Open the notebook using:
 
+```bash
+jupyter notebook A_visualisation_scenario_methods_demo.ipynb
+```
 
-## Implementation Highlights
+Then:
+1. Use the sliders to define the region of interest.
+2. Adjust parameters like **peel fraction** and **mass thresholds**.
+3. Click buttons to generate and save plots.
 
-- **CART (via [scikit-learn](https://scikit-learn.org/stable/modules/generated/sklearn.tree.DecisionTreeClassifier.html))**: Extracts axis-aligned decision boxes from the input space.
-- **Principal Component Analysis (PCA)**: Rotates the input space for PCA-PRIM to perform oblique cuts.
-- **Matplotlib patches**: Uses [`Rectangle`](https://matplotlib.org/stable/api/_as_gen/matplotlib.patches.Rectangle.html) and [`Polygon`](https://matplotlib.org/stable/api/_as_gen/matplotlib.patches.Polygon.html) for plotting regions.
-- **Colormap interpolation**: Implements custom `interpolate_color` to create a visual gradient over the box evolution.
-- **Flexible plotting abstraction**: All plots are constructed via a shared [`generic_plot`](plotting/base_plots.py) interface.
-- **Structured output saving**: All figures and trajectories are exported using consistent folder hierarchies and naming patterns.
-- **Notebook display logic**: Inline tables and printouts use [`IPython.display`](https://ipython.readthedocs.io/en/stable/api/generated/IPython.display.html) for clarity.
-- **Cross-platform paths**: Paths are constructed using [`pathlib`](https://docs.python.org/3/library/pathlib.html) for reliability across operating systems.
+**All results are saved under** [`../_data/scenario_methods_demo_outputs/`](../_data/scenario_methods_demo_outputs/).
+
+---
 
 ## Project Structure
-
-This folder has the following structure:
 
 ```text
 A_scenario_methods_demo/
 │
-├── analysis.py                      # Runs full PRIM, PCA-PRIM, and CART pipelines
-├── prim_module.py                   # Contains functions for PRIM box selection and metrics
-├── pca_rotation_module.py           # Contains PCA rotation and inverse rotation for data and boxes
-├── cart_module.py                   # Contains CART training and decision box extraction
-├── utils.py                         # Contains color utilities and matplotlib setup
-├── notebook_helpers.py              # Runs plot updates and figure saving for all methods
-├── __init__.py
-├── plotting/                        # Contains plotting modules for PRIM, PCA-PRIM, and CART
-│   ├── base_plots.py                # Contains generic plotting and sample scatter logic
-│   ├── prim_plots.py                # Contains PRIM and PCA-PRIM box evolution visualisations
-│   ├── cart_plots.py                # Contains CART box visualisation logic
+├── analysis.py                             # Runs PRIM, PCA-PRIM, and CART experiments from start to finish
+├── prim_module.py](./prim_module.py)       # Core PRIM logic
+├── pca_rotation_module.py                  # PCA transformation handling
+├── cart_module.py                          # CART classifier setup
+├── utils.py                                # Colormap helpers, utilities
+├── notebook_helpers.py                     # Widget + save logic
+├── __init__.py  
+│                           
+├── plotting/                               # Visualization Logic by Method
+│   ├── base_plots.py                       # Base plotting routines: generic plot layout and sample distribution
+│   ├── prim_plots.py                       # PRIM and PCA-PRIM specific plotting
+│   ├── cart_plots.py                       # CART-specific plotting
 │   └── __init__.py
-└── visualisation_scenario_methods_demo.ipynb # Interactive notebook for scenario discovery methods
+└── visualisation_scenario_methods_demo.ipynb
 ```
 
-Each method (PRIM, PCA–PRIM, CART) saves output plots under:
+---
+
+## Output Folder Structure
 
 ```text
 _data/scenario_methods_demo_outputs/
@@ -69,6 +92,7 @@ _data/scenario_methods_demo_outputs/
 │   ├── peeling_trajectory_with_constraints.pdf
 │   ├── prim_box_evolution.pdf
 │   └── prim_peeling_trajectory.pdf
+│
 ├── PCA_PRIM/
 │   ├── evolution/
 │   │   ├── box_1.pdf
@@ -79,8 +103,10 @@ _data/scenario_methods_demo_outputs/
 │   ├── pcaprim_rotated_box_evolution.pdf
 │   ├── pcaprim_rotated_data.pdf
 │   └── peeling_trajectory_with_constraints.pdf
+│
 ├── CART/
 │   └── cart_plot.pdf
+│
 ├── data_plot.pdf
 └── peeling_trajectory_prim_vs_pca_prim.pdf
 ```
