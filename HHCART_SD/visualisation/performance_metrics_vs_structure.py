@@ -43,13 +43,13 @@ def plot_metrics_vs_structure(
         (matplotlib.figure.Figure, matplotlib.axes.Axes): Generated figure and axis.
     """
     if hh.metrics_df is None or hh.metrics_df.empty:
-        raise ValueError("[❌] No metrics data found. Did you run `.build_tree()`?")
+        raise ValueError("[ERROR] No metrics data found. Did you run `.build_tree()`?")
 
     df = hh.metrics_df.copy().sort_values(x_axis)
 
     required_cols = {"coverage", "density", "accuracy", x_axis}
     if not required_cols.issubset(df.columns):
-        raise ValueError(f"[❌] metrics_df must include: {required_cols}")
+        raise ValueError(f"[ERROR] metrics_df must include: {required_cols}")
 
     apply_global_plot_settings()
     fig, ax = plt.subplots(figsize=(6, 4.5))

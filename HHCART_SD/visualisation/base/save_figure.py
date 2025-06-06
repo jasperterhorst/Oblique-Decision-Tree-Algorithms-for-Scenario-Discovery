@@ -44,4 +44,4 @@ def save_figure(hh, filename: str, save: bool = False) -> None:
     save_path = Path(hh.save_dir) / filename
 
     plt.savefig(save_path, format="pdf", bbox_inches="tight")
-    print(f"[💾] Figure saved to: {save_path}")
+    print(f"[SAVED] Figure saved to: {save_path}")

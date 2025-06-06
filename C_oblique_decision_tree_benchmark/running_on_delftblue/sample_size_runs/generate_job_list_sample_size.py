@@ -52,4 +52,4 @@ for dataset_prefix in dataset_prefixes:
 with open("job_list_sample_size.txt", "w", newline="\n") as f:
     f.writelines(job_lines)
 
-print(f"[✓] Generated job_list_sample_size.txt with {len(job_lines)-1} jobs.")
+print(f"[OK] Generated job_list_sample_size.txt with {len(job_lines)-1} jobs.")

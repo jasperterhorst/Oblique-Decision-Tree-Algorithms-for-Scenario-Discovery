@@ -164,7 +164,7 @@ def save_prim_plots(
                                                    save_path=SAVE_PATHS["pcaprim_constraints"],
                                                    title="PCA–PRIM Peeling Trajectory with Dimensional Constraints")
 
-    print("[✓] Saved PRIM and PCA-PRIM plots.")
+    print("[OK] Saved PRIM and PCA-PRIM plots.")
 
 
 def save_cart_plots(
@@ -197,7 +197,7 @@ def save_cart_plots(
         save_path=str(cart_save_path), axis_limits=(0, 1, 0, 1)
     )
 
-    print("[✓] Saved CART plot.")
+    print("[OK] Saved CART plot.")
 
 
 # === Internal Helpers ===

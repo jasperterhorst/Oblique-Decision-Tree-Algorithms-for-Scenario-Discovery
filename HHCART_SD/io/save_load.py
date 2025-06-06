@@ -44,7 +44,7 @@ def select_model_folder(model_dirs: list[str]) -> str:
     Raises:
         ValueError: If user input is invalid.
     """
-    print("\n📂 Available saved models:\n")
+    print("\nAvailable saved models:\n")
     for i, name in enumerate(model_dirs):
         print(f"  [{i}] {name}")
 
@@ -60,12 +60,12 @@ def select_model_folder(model_dirs: list[str]) -> str:
             if 0 <= idx < len(model_dirs):
                 return model_dirs[idx]
             # Inform user about the valid range if they enter invalid number
-            print(f"[⚠] Invalid input. Please enter a valid integer index corresponding to the model folder "
+            print(f"[WARNING] Invalid input. Please enter a valid integer index corresponding to the model folder "
                   f"(between 0 and {len(model_dirs) - 1}).")
             sys.stdout.flush()
         except ValueError:
             # Handle non-integer input with a clear message
-            print(f"[⚠] Invalid input. Please enter a valid integer index corresponding to the model folder "
+            print(f"[WARNING] Invalid input. Please enter a valid integer index corresponding to the model folder "
                   f"(between 0 and {len(model_dirs) - 1}).")
             sys.stdout.flush()
 
@@ -111,7 +111,7 @@ def save_full_model(model: "HHCartD", name: Optional[str] = None) -> str:
     if hasattr(model, "X") and isinstance(model.X, pd.DataFrame):
         model.X.to_csv(os.path.join(model_dir, "X.csv"), index=False)
     else:
-        print("[⚠] Model has no valid 'X' attribute to save.")
+        print("[WARNING] Model has no valid 'X' attribute to save.")
 
     # Save training labels (y) if available
     if hasattr(model, "y"):
@@ -121,14 +121,15 @@ def save_full_model(model: "HHCartD", name: Optional[str] = None) -> str:
         elif isinstance(model.y, np.ndarray):
             pd.DataFrame(model.y).to_csv(y_path, index=False, header=False)
         else:
-            print("[⚠] Model 'y' attribute is not a known type (pd.Series, pd.DataFrame, np.ndarray). Skipping save.")
+            print("[WARNING] Model 'y' attribute is not a known type (pd.Series, pd.DataFrame, np.ndarray). "
+                  "Skipping save.")
     else:
-        print("[⚠] Model has no 'y' attribute to save.")
+        print("[WARNING] Model has no 'y' attribute to save.")
 
     # Save metadata with relevant parameters and timestamp for reproducibility
     metadata = {
         "max_depth": model.max_depth,
-        "min_samples": model.min_samples,
+        "mass_min": model.mass_min,
         "min_purity": model.min_purity,
         "tau": model.tau,
         "random_state": model.random_state,
@@ -137,7 +138,7 @@ def save_full_model(model: "HHCartD", name: Optional[str] = None) -> str:
     with open(os.path.join(model_dir, "metadata.json"), "w") as f:
         json.dump(metadata, f, indent=4)
 
-    print(f"[💾] HHCART_SD-D model saved to: {model_dir}")
+    print(f"[SAVED] HHCART_SD-D model saved to: {model_dir}")
     return model_root
 
 
@@ -219,7 +220,7 @@ def load_full_model(path: Optional[str] = None) -> "HHCartD":
             for _, row in metrics_df.iterrows()
         }
     except Exception as e:
-        print(f"[⚠] Warning: Failed to load metrics.csv: {e}")
+        print(f"[WARNING] Warning: Failed to load metrics.csv: {e}")
         metrics_df = pd.DataFrame()
         metrics_by_depth = {}
 
@@ -229,10 +230,10 @@ def load_full_model(path: Optional[str] = None) -> "HHCartD":
         with open(metadata_path, "r") as f:
             metadata = json.load(f)
     else:
-        print(f"[⚠] metadata.json not found in '{model_dir}', using defaults.")
+        print(f"[WARNING] metadata.json not found in '{model_dir}', using defaults.")
         metadata = {
             "max_depth": max(trees_by_depth.keys()) if trees_by_depth else 6,
-            "min_samples": 2,
+            "mass_min": 2,
             "min_purity": 1.0,
             "tau": 0.05,
             "random_state": None,
@@ -242,14 +243,14 @@ def load_full_model(path: Optional[str] = None) -> "HHCartD":
     try:
         X = pd.read_csv(os.path.join(model_dir, "X.csv"))
     except FileNotFoundError:
-        print(f"[⚠] X.csv not found in '{model_dir}', loading empty DataFrame instead.")
+        print(f"[WARNING] X.csv not found in '{model_dir}', loading empty DataFrame instead.")
         X = pd.DataFrame()
 
     try:
         y_raw = pd.read_csv(os.path.join(model_dir, "y.csv"), header=None)
         y = y_raw.squeeze()
     except FileNotFoundError:
-        print(f"[⚠] y.csv not found in '{model_dir}', loading empty Series instead.")
+        print(f"[WARNING] y.csv not found in '{model_dir}', loading empty Series instead.")
         y = pd.Series()
 
     # Instantiate model with loaded data and metadata
@@ -257,7 +258,7 @@ def load_full_model(path: Optional[str] = None) -> "HHCartD":
         X=X,
         y=y,
         max_depth=metadata["max_depth"],
-        min_samples=metadata["min_samples"],
+        mass_min=metadata["mass_min"],
         min_purity=metadata["min_purity"],
         tau=metadata["tau"],
         random_state=metadata["random_state"]
@@ -274,5 +275,5 @@ def load_full_model(path: Optional[str] = None) -> "HHCartD":
     model.save_dir = Path(path)
     model.save_dir.mkdir(parents=True, exist_ok=True)
 
-    print(f"[✅] Model successfully loaded from: {model_dir}")
+    print(f"[LOADED] Model successfully loaded from: {model_dir}")
     return model

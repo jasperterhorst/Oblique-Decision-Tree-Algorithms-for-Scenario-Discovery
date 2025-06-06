@@ -14,7 +14,7 @@ Supports:
 import graphviz
 from matplotlib import colors as mcolors
 from ..tree import LeafNode, DecisionNode
-from .base.colors import generate_color_gradient, PRIMARY_MIDDLE, SECONDARY_MIDDLE
+from .base.colors import generate_color_gradient, PRIMARY_LIGHT, PRIMARY_DARK, PRIMARY_MIDDLE
 
 
 def plot_tree_structure(hh, depth=None, coloring="class", save=False, filename=None, title=None):
@@ -51,7 +51,7 @@ def plot_tree_structure(hh, depth=None, coloring="class", save=False, filename=N
         for node in all_nodes
     )
 
-    sample_gradient = generate_color_gradient(SECONDARY_MIDDLE, 100)
+    sample_gradient = generate_color_gradient(PRIMARY_MIDDLE, 100)
 
     def compute_sample_color(sample_count):
         idx = int((sample_count / max_samples) * (len(sample_gradient) - 1))
@@ -77,8 +77,8 @@ def plot_tree_structure(hh, depth=None, coloring="class", save=False, filename=N
                 else:
                     class0_pct = node.purity
                     class1_pct = 1 - class0_pct
-                label = (f"<<TABLE BORDER='0' CELLBORDER='1' CELLSPACING='0'>\n<tr><td BGCOLOR='{SECONDARY_MIDDLE}' "
-                         f"WIDTH='{int(100 * class0_pct)}'></td><td BGCOLOR='{PRIMARY_MIDDLE}' "
+                label = (f"<<TABLE BORDER='0' CELLBORDER='1' CELLSPACING='0'>\n<tr><td BGCOLOR='{PRIMARY_LIGHT}' "
+                         f"WIDTH='{int(100 * class0_pct)}'></td><td BGCOLOR='{PRIMARY_DARK}' "
                          f"WIDTH='{int(100 * class1_pct)}'></td></tr>\n<tr><td COLSPAN='2'><FONT POINT-SIZE='2'>"
                          f"<br/></FONT>{node_label_id}<br/>Predict: {node.prediction}<br/>Samples: {node.n_samples}"
                          f"</td></tr></TABLE>>")
@@ -86,7 +86,7 @@ def plot_tree_structure(hh, depth=None, coloring="class", save=False, filename=N
             else:
                 label = f"{node_label_id}\nPrediction: {node.prediction}\nSamples: {node.n_samples}"
                 if coloring == "class":
-                    color = PRIMARY_MIDDLE if node.prediction == 1 else SECONDARY_MIDDLE
+                    color = PRIMARY_DARK if node.prediction == 1 else PRIMARY_LIGHT
                 elif coloring == "samples":
                     color = compute_sample_color(node.n_samples)
                 else:
@@ -101,7 +101,7 @@ def plot_tree_structure(hh, depth=None, coloring="class", save=False, filename=N
             label = f"{node_label_id}\n{lhs} ≤ {node.bias:.2f}\nSamples: {sample_count}"
             if coloring == "class":
                 majority = node.get_majority_class()
-                color = PRIMARY_MIDDLE if majority == 1 else SECONDARY_MIDDLE
+                color = PRIMARY_DARK if majority == 1 else PRIMARY_LIGHT
             elif coloring == "samples":
                 color = compute_sample_color(sample_count)
             else:
@@ -141,6 +141,6 @@ def plot_tree_structure(hh, depth=None, coloring="class", save=False, filename=N
             raise ValueError("Cannot save Graphviz output: `hh.save_dir` is not set.")
         filepath = f"{hh.save_dir}/{filename}"
         dot.render(filepath, format="pdf", cleanup=True)
-        print(f"[💾] Graphviz tree saved to: {filepath}.pdf")
+        print(f"[SAVE] Graphviz tree saved to: {filepath}.pdf")
 
     return dot

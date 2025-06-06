@@ -18,8 +18,8 @@ def apply_global_plot_settings() -> None:
         'text.usetex': False,
         'font.family': 'serif',
         'font.serif': ['Times New Roman'],
-        'axes.labelsize': 20,
-        'axes.titlesize': 21,
+        'axes.labelsize': 18,
+        'axes.titlesize': 20,
         'xtick.labelsize': 16,
         'ytick.labelsize': 16,
         'legend.fontsize': 15,
@@ -50,9 +50,9 @@ def beautify_plot(ax: Axes, title: str = None, xlabel: str = None,
     if title:
         ax.set_title(title, fontsize=20, pad=20, wrap=True)
     if xlabel:
-        ax.set_xlabel(xlabel or 'X-axis', fontsize=20, labelpad=10)
+        ax.set_xlabel(xlabel or 'X-axis', fontsize=18, labelpad=10)
     if ylabel:
-        ax.set_ylabel(ylabel or 'Y-axis', fontsize=20, labelpad=10)
+        ax.set_ylabel(ylabel or 'Y-axis', fontsize=18, labelpad=10)
 
     _style_axes(ax)
 

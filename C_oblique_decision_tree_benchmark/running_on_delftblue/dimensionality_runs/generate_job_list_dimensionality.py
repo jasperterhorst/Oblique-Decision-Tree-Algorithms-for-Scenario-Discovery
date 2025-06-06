@@ -51,4 +51,4 @@ for dataset_prefix in dataset_prefixes:
 with open(JOB_LIST_FILENAME, "w", newline="\n") as f:
     f.writelines(job_lines)
 
-print(f"[✓] Generated {JOB_LIST_FILENAME} with {len(job_lines)-1} jobs.")
+print(f"[OK] Generated {JOB_LIST_FILENAME} with {len(job_lines)-1} jobs.")

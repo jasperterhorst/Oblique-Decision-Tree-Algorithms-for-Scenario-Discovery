@@ -18,7 +18,7 @@ from matplotlib.colors import BoundaryNorm, ListedColormap
 from matplotlib.cm import ScalarMappable
 
 from .base.save_figure import save_figure
-from .base.colors import PRIMARY_LIGHT, SECONDARY_LIGHT, truncate_colormap
+from .base.colors import PRIMARY_LIGHT, PRIMARY_DARK, truncate_colormap
 from .base.plot_settings import beautify_plot, beautify_subplot, apply_global_plot_settings
 from ..tree import DecisionNode
 
@@ -117,7 +117,7 @@ def plot_splits_2d_grid(hh, save: bool = True, filename: Optional[str] = None, t
     y_min, y_max = X.iloc[:, 1].min(), X.iloc[:, 1].max()
     bounds = (x_min, x_max, y_min, y_max)
 
-    scatter_colors = np.where(y == 0, SECONDARY_LIGHT, PRIMARY_LIGHT)
+    scatter_colors = np.where(y == 0, PRIMARY_LIGHT, PRIMARY_DARK)
 
     n_cols = 3
     n_rows = int(np.ceil((max_depth + 1) / n_cols))
@@ -155,7 +155,7 @@ def plot_splits_2d_grid(hh, save: bool = True, filename: Optional[str] = None, t
                 ax.plot(x_vals, y_vals, 'k--', linewidth=1)
 
         except (ValueError, AttributeError, TypeError) as e:
-            print(f"[⚠️] Failed to plot split line: {e}")
+            print(f"[WARNING] Failed to plot split line: {e}")
             return
 
         if len(current_node.children) > 0:
@@ -206,7 +206,7 @@ def plot_splits_2d_grid(hh, save: bool = True, filename: Optional[str] = None, t
 def plot_splits_2d_overlay(
     hh,
     depth: Optional[int] = None,
-    cmap: str = "YlGnBu",
+    cmap: str = "Oranges",
     save: bool = True,
     filename: Optional[str] = None,
     title: Optional[str] = None
@@ -228,11 +228,11 @@ def plot_splits_2d_overlay(
     if hh.X.shape[1] != 2:
         raise ValueError("This visualisation only supports 2D input.")
 
-    if cmap not in {"Blues", "Purples", "YlGnBu", "viridis", "cividis"}:
+    if cmap not in {"Oranges", "Blues", "Purples", "YlGnBu", "viridis", "cividis"}:
         raise ValueError(f"Unsupported cmap '{cmap}'.")
 
     X, y = hh.X, hh.y
-    scatter_colors = np.where(y == 0, SECONDARY_LIGHT, PRIMARY_LIGHT)
+    scatter_colors = np.where(y == 0, PRIMARY_LIGHT, PRIMARY_DARK)
     x_min, x_max = X.iloc[:, 0].min(), X.iloc[:, 0].max()
     y_min, y_max = X.iloc[:, 1].min(), X.iloc[:, 1].max()
     bounds = (x_min, x_max, y_min, y_max)
@@ -240,16 +240,11 @@ def plot_splits_2d_overlay(
     available_depths = hh.available_depths()
     deepest_available_depth = max(available_depths)
     target_depth = depth if depth is not None else deepest_available_depth
-
     if target_depth not in available_depths:
-        print(
-            f"[⚠️ WARNING] Requested depth {target_depth} is not available. "
-            f"Using deepest available depth {deepest_available_depth} instead."
-        )
-        target_depth = deepest_available_depth
+        raise ValueError(f"Requested depth {target_depth} not in available depths: {available_depths}")
 
     cmap_continuous = truncate_colormap(cmap, reverse=True, minval=0.0, maxval=0.8, n=512)
-    sample_points = np.linspace(0, 1, target_depth + 1)
+    sample_points = np.linspace(0, 1, target_depth)
     cmap_colors = cmap_continuous(sample_points)
 
     fig = plt.figure(figsize=(5, 5))
@@ -258,7 +253,8 @@ def plot_splits_2d_overlay(
     ax.scatter(X.iloc[:, 0], X.iloc[:, 1], c=scatter_colors, s=5)
 
     def recurse(node, constraints, depth_level):
-        if not isinstance(node, DecisionNode) or depth_level > target_depth:
+        # Stop if we’ve already reached `depth_level == target_depth`
+        if not isinstance(node, DecisionNode) or depth_level >= target_depth:
             return
 
         region = construct_region_from_constraints(constraints, create_initial_polygon(*bounds))
@@ -280,10 +276,10 @@ def plot_splits_2d_overlay(
             if not clipped.is_empty and hasattr(clipped, "xy"):
                 x_vals, y_vals = clipped.xy
                 line_color = cmap_colors[depth_level]
-                ax.plot(x_vals, y_vals, color=line_color, linewidth=1.8, linestyle="-")
+                ax.plot(x_vals, y_vals, color=line_color, linewidth=1.5, linestyle="-")
 
         except Exception as e:
-            print(f"[⚠️] Split plot failed at depth {depth_level}: {e}")
+            print(f"[WARNING] Split plot failed at depth {depth_level}: {e}")
 
         for i, child in enumerate(node.children):
             direction = '<' if i == 0 else '>='
@@ -302,14 +298,18 @@ def plot_splits_2d_overlay(
     ax.set_xlim(x_min, x_max)
     ax.set_ylim(y_min, y_max)
 
+    actual_depths = list(range(target_depth))
+    sample_points = np.linspace(0, 1, target_depth)
+    cmap_colors = cmap_continuous(sample_points)
+
     cmap_listed = ListedColormap(cmap_colors)
-    bounds = np.arange(-0.5, target_depth + 1.5, 1)
+    bounds = np.arange(-0.5, target_depth + 0.5, 1)
     norm = BoundaryNorm(boundaries=bounds, ncolors=cmap_listed.N)
 
     sm = ScalarMappable(cmap=cmap_listed, norm=norm)
     sm.set_array([])
 
-    cbar = fig.colorbar(sm, ax=ax, boundaries=bounds, ticks=np.arange(target_depth + 1), spacing="proportional",
+    cbar = fig.colorbar(sm, ax=ax, boundaries=bounds, ticks=actual_depths, spacing="proportional",
                         shrink=0.8)
     cbar.set_label("Split Depth", fontsize=12)
 

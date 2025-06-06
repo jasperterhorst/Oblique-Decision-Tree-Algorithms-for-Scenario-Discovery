@@ -19,17 +19,17 @@ class SegmentorBase(ABC):
     Abstract base class for generating and evaluating axis-aligned splits.
 
     Attributes:
-        min_samples_leaf (int): Minimum number of samples allowed in each child node.
+        mass_min (int): Minimum number of samples allowed in each child node.
     """
 
-    def __init__(self, min_samples_leaf: int = 2):
+    def __init__(self, mass_min: int = 2):
         """
         Initialise the base segmentor class.
 
         Args:
-            min_samples_leaf (int): Minimum number of samples in each split subset.
+            mass_min (int): Minimum number of samples in each split subset.
         """
-        self.min_samples_leaf = min_samples_leaf
+        self.mass_min = mass_min
 
     @abstractmethod
     def _split_generator(self, X: np.ndarray):
@@ -67,7 +67,7 @@ class SegmentorBase(ABC):
 
         for left_idx, right_idx, rule in self._split_generator(X):
             # Enforce minimum leaf size
-            if len(left_idx) <= self.min_samples_leaf or len(right_idx) <= self.min_samples_leaf:
+            if len(left_idx) <= self.mass_min or len(right_idx) <= self.mass_min:
                 continue
 
             imp = impurity(y[left_idx], y[right_idx])

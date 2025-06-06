@@ -2,12 +2,12 @@
 HHCART_SD Public Interface (core.py)
 ---------------------------------
 Provides a clean API for training and inspecting Householder-reflected
-oblique decision trees (HHCART_SD-D) using the full input feature space.
+oblique decision trees (HHCART_D).
 
 Main features:
-- Progressive tree building across depths
+- Tree build with pruning back up
 - Depth-based selection for evaluation
-- Visualisation hooks for trade-offs and splits
+- Visualisation hooks for splits and trade-offs
 
 Example:
     hh = HHCartD(X_df, y_array, max_depth=6)
@@ -18,9 +18,10 @@ Example:
 """
 
 import time
+import numpy as np
 import pandas as pd
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Union
 from datetime import datetime
 
 from HHCART_SD.HHCartDPruning import HHCartDPruningClassifier
@@ -31,7 +32,7 @@ from HHCART_SD.io.save_load import save_full_model
 
 class HHCartD:
     """
-    HHCART_SD-D Interface: Oblique Decision Trees for Scenario Discovery
+    HHCART_D Interface: Oblique Decision Trees for Scenario Discovery
     ===============================================================
 
     `HHCartD` is the high-level interface for building and analyzing
@@ -54,8 +55,10 @@ class HHCartD:
         Binary labels (0 or 1) for each sample.
     max_depth : int, optional (default=6)
         Maximum tree depth to train.
-    min_samples : int, optional (default=2)
+    mass_min : int or float, optional (default=2)
         Minimum samples required to consider a split.
+        - If int ≥ 1 → absolute number of samples
+        - If float ∈ (0, 1) → fraction of total training samples
     min_purity : float, optional (default=1.0)
         Purity threshold to stop splitting.
     tau : float, optional (default=0.05)
@@ -98,34 +101,74 @@ class HHCartD:
         y,
         *,
         max_depth: int = 6,
-        min_samples: int = 2,
+        mass_min: Union[int, float] = 2,
         min_purity: float = 1,
         tau: float = 0.05,
         random_state: int = None,
         save_dir: Optional[Path] = None,
         debug: bool = False,
     ):
-
-        if not isinstance(X, pd.DataFrame):
-            print(f"[⚠] Expected X as pd.DataFrame, got {type(X)}")
         self.X = X
         self.y = y
         self.max_depth = max_depth
-        self.min_samples = min_samples
+        self.mass_min = mass_min
         self.min_purity = min_purity
         self.tau = tau
         self.random_state = random_state
         self.save_dir: Optional[Path] = None
+
+        if not isinstance(X, pd.DataFrame):
+            print(f"[WARNING] Expected X as pd.DataFrame, got {type(X)}")
+        self.X = X
+
+        # Validate y is a compatible type (optional, but helpful)
+        if not isinstance(y, (pd.Series, np.ndarray)):
+            print(f"[WARNING] Expected y as np.ndarray or pd.Series, got {type(y)}")
+        self.y = y
+
+        # Validate mass_min
+        if not (isinstance(mass_min, int) and mass_min >= 1) \
+                and not (isinstance(mass_min, float) and 0.0 < mass_min < 1.0):
+            raise ValueError("[ERROR] mass_min must be an int ≥ 1 or float ∈ (0, 1)")
+        self.mass_min = mass_min
+
+        # Validate min_purity
+        if not (0.0 < min_purity <= 1.0):
+            raise ValueError("[ERROR] min_purity must be in the range (0, 1]")
+        self.min_purity = min_purity
+
+        # Validate max_depth
+        if not (isinstance(max_depth, int) and max_depth >= 1):
+            raise ValueError("[ERROR] max_depth must be an int ≥ 1")
+        self.max_depth = max_depth
+
+        # Validate tau
+        if not (isinstance(tau, float) and tau >= 0.0):
+            raise ValueError("[ERROR] tau must be a non-negative float")
+        self.tau = tau
+
+        # Validate random_state (optional)
+        if random_state is not None and not isinstance(random_state, int):
+            print(f"[WARNING] random_state provided but not an int: {type(random_state)}")
+        self.random_state = random_state
+
+        # Validate save_dir
+        if save_dir is not None and not isinstance(save_dir, Path):
+            print(f"[WARNING] save_dir provided but not a Path object: {type(save_dir)}")
+        self.save_dir: Optional[Path] = save_dir
+
         self.debug = debug
 
-        self.model_type = "hhcart_d"  # used in folder name
+        # Model type string
+        self.model_type = "hhcart_d"
 
-        self.trees_by_depth = {}      # Stores trained trees at each depth
-        self.metrics_by_depth = {}    # Stores dict of evaluation metrics per depth
-        self.metrics_df = None        # Combined metrics table (used for plotting)
-        self.selected_depth = None    # User-specified depth for inspection
+        # Internal state
+        self.trees_by_depth = {}
+        self.metrics_by_depth = {}
+        self.metrics_df = None
+        self.selected_depth = None
 
-        # Attach plotting tools dynamically (e.g., .plot_tradeoff)
+        # Attach plotting tools dynamically
         bind_plotting_methods(self)
 
     def build_tree(self, model_title: Optional[str] = None, save: bool = True) -> None:
@@ -146,7 +189,7 @@ class HHCartD:
         model = HHCartDPruningClassifier(
             impurity=gini,
             max_depth=self.max_depth,
-            min_samples=self.min_samples,
+            mass_min=self.mass_min,
             min_purity=self.min_purity,
             tau=self.tau,
             debug=self.debug,
@@ -178,10 +221,10 @@ class HHCartD:
             timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
             final_title = model_title or f"{self.model_type}_depth_{self.max_depth}_{timestamp}"
             self.save_dir = save_full_model(self, name=final_title)
-            print(f"[✓] Tree of depth {max(self.trees_by_depth.keys())} built and saved to: {self.save_dir}")
+            print(f"[OK] Tree of depth {max(self.trees_by_depth.keys())} built and saved to: {self.save_dir}")
         else:
             self.save_dir = None
-            print(f"[✓] Tree of depth {max(self.trees_by_depth.keys())} built (not saved).")
+            print(f"[OK] Tree of depth {max(self.trees_by_depth.keys())} built (not saved).")
 
     def available_depths(self) -> list[int]:
         """
@@ -206,7 +249,7 @@ class HHCartD:
             ValueError: If no tree exists at the requested depth.
         """
         if depth not in self.trees_by_depth:
-            raise ValueError(f"[❌] No tree found at depth={depth}.")
+            raise ValueError(f"[ERROR] No tree found at depth={depth}.")
         return self.trees_by_depth[depth]
 
     @property
@@ -228,10 +271,10 @@ class HHCartD:
             ValueError: If no tree exists at the requested depth.
         """
         if depth not in self.trees_by_depth:
-            raise ValueError(f"[❌] No tree exists at depth={depth}. Did you call .build_tree()?")
+            raise ValueError(f"[ERROR] No tree exists at depth={depth}. Did you call .build_tree()?")
 
         self.selected_depth = depth
-        print(f"[✓] Selected tree at depth {depth}.")
+        print(f"[OK] Selected tree at depth {depth}.")
 
     def get_selected_tree(self):
         """
@@ -244,9 +287,9 @@ class HHCartD:
             ValueError: If no depth was selected or if the tree is missing.
         """
         if self.selected_depth is None:
-            raise ValueError("[❌] No depth selected. Use .select(depth) first.")
+            raise ValueError("[ERROR] No depth selected. Use .select(depth) first.")
         if self.selected_depth not in self.trees_by_depth:
-            raise ValueError(f"[❌] No tree found at depth={self.selected_depth}.")
+            raise ValueError(f"[ERROR] No tree found at depth={self.selected_depth}.")
         return self.trees_by_depth[self.selected_depth]
 
     def print_tree(self, depth: int) -> None:
@@ -260,8 +303,8 @@ class HHCartD:
             ValueError: If no such tree has been trained.
         """
         if depth not in self.trees_by_depth:
-            raise ValueError(f"[❌] No tree found at depth={depth}.")
-        print(f"\n[🌳] Tree structure at depth {depth}:\n")
+            raise ValueError(f"[ERROR] No tree found at depth={depth}.")
+        print(f"\n[TREE] Tree structure at depth {depth}:\n")
         self.trees_by_depth[depth].print_structure()
 
     def inspect(self) -> None:
@@ -271,5 +314,5 @@ class HHCartD:
         Raises:
             ValueError: If no tree is currently selected.
         """
-        print(f"\n[🔍] Inspecting tree at selected depth {self.selected_depth}...\n")
+        print(f"\n[INSPECT] Inspecting tree at selected depth {self.selected_depth}...\n")
         self.get_selected_tree().print_structure()

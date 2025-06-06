@@ -36,7 +36,9 @@ class HHCartDPruningClassifier(BaseEstimator, ClassifierMixin):
         impurity (Callable): Impurity function to evaluate splits.
         segmentor (Segmentor): Object that generates axis-aligned splits (default=CARTSegmentor()).
         max_depth (int): Maximum depth for initial tree construction.
-        min_samples (int): Minimum number of samples required to attempt a split.
+        mass_min (int or float): Minimum number of samples required to attempt a split.
+            - If int >= 1 → absolute number of samples
+            - If float ∈ (0, 1) → fraction of total training samples
         min_purity (float): Purity threshold to stop splitting if exceeded.
         tau (float): Numerical tolerance to ignore near-zero rotations.
         debug (bool): If True, prints additional debug information.
@@ -45,18 +47,24 @@ class HHCartDPruningClassifier(BaseEstimator, ClassifierMixin):
                  impurity: Callable,
                  segmentor=CARTSegmentor(),
                  max_depth: int = 5,
-                 min_samples: int = 2,
+                 mass_min: Union[int, float] = 2,
                  min_purity: float = 1,
                  tau: float = 0.05,
                  debug: bool = False):
         self.impurity = impurity
         self.segmentor = segmentor
         self.max_depth = max_depth
-        self.min_samples = min_samples
+        self.mass_min = mass_min
         self.min_purity = min_purity
         self.tau = tau
         self.debug = debug
 
+        # Validate mass_min
+        if not (isinstance(mass_min, int) and mass_min >= 1) \
+                and not (isinstance(mass_min, float) and 0.0 < mass_min < 1.0):
+            raise ValueError("mass_min must be an int ≥ 1 or float ∈ (0, 1)")
+
+        self.n_samples_total = None
         self.tree = None
         self.variable_names = None
         self.metrics_by_depth = {}
@@ -82,6 +90,9 @@ class HHCartDPruningClassifier(BaseEstimator, ClassifierMixin):
 
         if isinstance(y, pd.Series):
             y = y.values
+
+        # Store total number of training samples for fraction-based mass_min
+        self.n_samples_total = X.shape[0]
 
         # Build the full unpruned tree using Householder reflections
         self.tree = self._build_full_tree(X, y, depth=0)
@@ -208,8 +219,16 @@ class HHCartDPruningClassifier(BaseEstimator, ClassifierMixin):
         """
         if self.max_depth is not None and depth >= self.max_depth:
             return True
-        if len(y) < self.min_samples:
+
+        # Determine mass_min required (supports int or float)
+        if isinstance(self.mass_min, float):
+            mass_min_required = int(np.ceil(self.mass_min * self.n_samples_total))
+        else:
+            mass_min_required = int(self.mass_min)
+
+        if len(y) < mass_min_required:
             return True
+
         return np.max(np.bincount(y)) / len(y) >= self.min_purity
 
     def _compute_reflection_and_split(self, X: np.ndarray, y: np.ndarray):

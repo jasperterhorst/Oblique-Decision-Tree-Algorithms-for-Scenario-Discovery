@@ -16,7 +16,7 @@ from matplotlib.colors import ListedColormap
 from typing import Optional
 
 from .base.save_figure import save_figure
-from .base.colors import PRIMARY_LIGHT, SECONDARY_LIGHT
+from .base.colors import PRIMARY_LIGHT, PRIMARY_DARK
 from .base.plot_settings import beautify_subplot, apply_global_plot_settings
 
 
@@ -38,14 +38,14 @@ def plot_regions_2d_grid(hh, save: bool = False, filename: Optional[str] = None,
     X = hh.X
     y = hh.y
     max_depth = max(hh.available_depths())
-    custom_cmap = ListedColormap([SECONDARY_LIGHT, PRIMARY_LIGHT])
+    custom_cmap = ListedColormap([PRIMARY_LIGHT, PRIMARY_DARK])
 
     x_min, x_max = X.iloc[:, 0].min(), X.iloc[:, 0].max()
     y_min, y_max = X.iloc[:, 1].min(), X.iloc[:, 1].max()
     h = 0.01
     xx, yy = np.meshgrid(np.arange(x_min, x_max, h), np.arange(y_min, y_max, h))
 
-    scatter_colors = np.where(y == 0, SECONDARY_LIGHT, PRIMARY_LIGHT)
+    scatter_colors = np.where(y == 0, PRIMARY_LIGHT, PRIMARY_DARK)
     n_cols = 3
     n_plots = max_depth + 1
     n_rows = math.ceil(n_plots / n_cols)

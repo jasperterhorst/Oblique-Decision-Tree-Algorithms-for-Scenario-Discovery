@@ -59,14 +59,6 @@ def evaluate_tree(
         ValueError: If tree lacks a `predict()` method or if inputs are malformed.
     """
     # -------------------------------------------------------------------------
-    # Type safety and interface sanity checks
-    # -------------------------------------------------------------------------
-    if not callable(getattr(tree, "predict", None)):
-        raise ValueError("[❌] Provided tree object lacks a callable `.predict(x)` method.")
-    if not hasattr(X, "__len__") or not hasattr(y, "__len__"):
-        raise ValueError("[❌] `X` and `y` must be iterable and aligned.")
-
-    # -------------------------------------------------------------------------
     # Performance metrics
     # -------------------------------------------------------------------------
     accuracy = compute_accuracy(tree, X, y)
@@ -82,7 +74,7 @@ def evaluate_tree(
     num_class1_leaves = count_class1_leaves(tree)
 
     # -------------------------------------------------------------------------
-    # Structural attributes (if present on the tree object)
+    # Structural attributes
     # -------------------------------------------------------------------------
     max_depth = getattr(tree, "max_depth", None)
     num_splits = getattr(tree, "num_splits", None)

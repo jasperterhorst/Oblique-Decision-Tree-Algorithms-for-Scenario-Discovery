@@ -11,10 +11,10 @@ one of two interpretability proxies, either:
 This visualisation supports comparative analysis of performance vs. interpretability.
 """
 
+import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.cm import ScalarMappable, get_cmap
 from matplotlib.colors import ListedColormap, BoundaryNorm, Normalize
-import numpy as np
 
 from .base.plot_settings import apply_global_plot_settings, beautify_plot
 from .base.save_figure import save_figure
@@ -29,7 +29,7 @@ def plot_tradeoff_path(
     color_by: str = "depth"
 ):
     """
-    Plot a sequential path in coverage–density space, color-coded by either tree depth
+    Plot a sequential path in coverage–density space, color-coded an annotated by either tree depth
     or the number of subspaces predicted as class 1.
 
     Args:
@@ -70,16 +70,15 @@ def plot_tradeoff_path(
     ax.plot(coverage, density, linestyle="--", linewidth=1, color="gray", alpha=0.7, zorder=1)
 
     if color_by == "depth":
+        # Discrete colormap (for depth)
         min_val, max_val = int(color_values.min()), int(color_values.max())
         n_levels = max_val - min_val + 1
 
-        # Colormap and normalisation
         cmap = ListedColormap(generate_color_gradient(PRIMARY_MIDDLE, n_levels))
         boundaries = np.arange(min_val - 0.5, max_val + 1.5, 1)
         ticks = np.arange(min_val, max_val + 1)
         norm = BoundaryNorm(boundaries, ncolors=n_levels)
 
-        # Colorbar
         sm = ScalarMappable(norm=norm, cmap=cmap)
         sm.set_array([])
         cbar = plt.colorbar(sm, ax=ax, boundaries=boundaries, ticks=ticks, spacing="proportional", pad=0.08, shrink=0.7)
@@ -87,7 +86,7 @@ def plot_tradeoff_path(
         cbar.ax.tick_params(labelsize=12)
 
     else:
-        # For continuous variable, just use viridis_r
+        # Continuous colormap (for class1_leaf_count)
         min_val, max_val = color_values.min(), color_values.max()
         cmap = get_cmap("viridis_r")
         norm = Normalize(vmin=min_val, vmax=max_val)
@@ -106,6 +105,53 @@ def plot_tradeoff_path(
             c=[cmap(norm(val))],
             edgecolors="black",
             zorder=2
+        )
+
+    merge_tol = 0.02  # Tolerance for merging points into groups
+    groups = []
+
+    for cov, den, val in zip(coverage, density, color_values):
+        assigned = False
+        for grp in groups:
+            # Compute the existing group's centroid
+            xs, ys = zip(*grp["coords"])
+            centroid = (np.mean(xs), np.mean(ys))
+            # Distance from this point to the group's centroid
+            dist = np.hypot(cov - centroid[0], den - centroid[1])
+            if dist <= merge_tol:
+                grp["coords"].append((cov, den))
+                grp["labels"].append(val)
+                assigned = True
+                break
+
+        if not assigned:
+            # Start a new group
+            groups.append({
+                "coords": [(cov, den)],
+                "labels": [val]
+            })
+
+    x_offset = merge_tol
+    y_offset = merge_tol
+
+    # Annotate each group with a combined label
+    for grp in groups:
+        xs, ys = zip(*grp["coords"])
+        centroid = (np.mean(xs), np.mean(ys))
+        # Sort labels so that “1/2/3” is in ascending order, then join with '/'
+        sorted_labels = sorted(grp["labels"])
+        text_str = "/".join(str(l) for l in sorted_labels)
+
+        # Draw the text a little above the centroid
+        ax.text(
+            centroid[0] - x_offset,
+            centroid[1] + y_offset,
+            text_str,
+            fontsize=8,
+            ha="center",
+            va="bottom",
+            color="black",
+            zorder=3
         )
 
     # Axis styling

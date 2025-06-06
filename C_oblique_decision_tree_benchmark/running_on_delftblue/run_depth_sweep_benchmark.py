@@ -79,7 +79,7 @@ def main():
     )
 
     elapsed = time.time() - start_time
-    print(f"[✓] Completed in {elapsed:.2f} seconds")
+    print(f"[OK] Completed in {elapsed:.2f} seconds")
 
 
 if __name__ == "__main__":

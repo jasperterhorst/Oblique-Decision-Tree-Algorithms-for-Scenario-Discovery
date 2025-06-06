@@ -1,6 +1,6 @@
 # B - Test Shape Generation
 
-This module provides tools for generating **synthetic 2D and 3D geometric datasets** with controllable shape parameters and label noise. These datasets are used in the modules [C_oblique_decision_tree_benchmark](../C_oblique_decision_tree_benchmark) and [D_visual_comparisons_sd_vs_oblique](../D_visual_comparisons_sd_vs_oblique) for benchmarking oblique decision tree algorithms and established scenario discovery algorithms.
+This module provides tools for generating **synthetic 2D and 3D geometric datasets** with controllable shape parameters and label noise. These datasets are used in the modules [C_oblique_decision_tree_benchmark](../C_oblique_decision_tree_benchmark) and [D_visual_comparisons_sd_vs_oblique](../D_testing_hhcart_d_regularisation) for benchmarking oblique decision tree algorithms and established scenario discovery algorithms.
 
 **Author**: Jasper ter Horst
 

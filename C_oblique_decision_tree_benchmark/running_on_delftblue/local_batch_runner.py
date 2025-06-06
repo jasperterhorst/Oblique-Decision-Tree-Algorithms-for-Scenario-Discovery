@@ -71,4 +71,4 @@ if __name__ == "__main__":
                 pbar.update(1)
 
     elapsed = time.time() - start
-    print(f"\n✅ All jobs completed in {elapsed:.2f} seconds.")
+    print(f"\n[OK] All jobs completed in {elapsed:.2f} seconds.")
