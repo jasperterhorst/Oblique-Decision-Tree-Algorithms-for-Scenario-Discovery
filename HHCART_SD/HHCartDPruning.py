@@ -12,11 +12,12 @@ Features:
 - Detailed docstrings, logging, and type hints throughout
 """
 
-
 from typing import Callable, Union
 import numpy as np
 import pandas as pd
+import math
 from copy import deepcopy
+from tqdm import tqdm
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.metrics import accuracy_score
 
@@ -94,8 +95,16 @@ class HHCartDPruningClassifier(BaseEstimator, ClassifierMixin):
         # Store total number of training samples for fraction-based mass_min
         self.n_samples_total = X.shape[0]
 
-        # Build the full unpruned tree using Householder reflections
-        self.tree = self._build_full_tree(X, y, depth=0)
+        # Announce start of tree building
+        print(f"[INFO] Building HHCartD oblique decision tree...\n")
+
+        # Estimate max nodes for progress bar
+        max_nodes_progress_bar = self._estimate_max_nodes()
+
+        # Build the full unpruned tree using progress bar
+        with tqdm(total=max_nodes_progress_bar, desc="Building tree nodes") as progress_bar:
+            self.tree = self._build_full_tree(X, y, depth=0, progress_bar=progress_bar)
+
         self.tree.variable_names = self.variable_names
 
         # Determine how deep the unpruned tree actually grew
@@ -107,6 +116,10 @@ class HHCartDPruningClassifier(BaseEstimator, ClassifierMixin):
                 print(
                     f"  id={node.node_id}, depth={node.depth}, "
                     f"type={'Leaf' if isinstance(node, LeafNode) else 'Split'}")
+
+        # === Prune full tree to all depths and evaluate ===
+        print(f"[INFO] Pruning the full tree and evaluating metrics at each depth level; "
+              f"storing pruned trees and metrics...")
 
         # Iteratively prune the full tree to every possible depth from 0 to full_depth
         for d in range(full_depth + 1):
@@ -147,7 +160,7 @@ class HHCartDPruningClassifier(BaseEstimator, ClassifierMixin):
                 if self.debug:
                     print(f"[ERROR] Failed to evaluate metrics at depth={d}: {e}")
 
-    def _build_full_tree(self, X: np.ndarray, y: np.ndarray, depth: int) -> DecisionTree:
+    def _build_full_tree(self, X: np.ndarray, y: np.ndarray, depth: int, progress_bar=None) -> DecisionTree:
         """
         Construct the initial full-depth oblique decision tree.
 
@@ -166,11 +179,17 @@ class HHCartDPruningClassifier(BaseEstimator, ClassifierMixin):
 
         def build(X, y, depth) -> TreeNode:
             nonlocal node_id
+            current_node_id = node_id
+            node_id += 1
+            if progress_bar is not None:
+                progress_bar.update(1)
+
             if self._should_stop(y, depth):
-                return self._make_leaf(y, depth, node_id)
+                return self._make_leaf(y, depth, current_node_id)
+
             H, rule = self._compute_reflection_and_split(X, y)
             if rule is None:
-                return self._make_leaf(y, depth, node_id)
+                return self._make_leaf(y, depth, current_node_id)
 
             i, thr = rule
             weights = H[:, i]
@@ -186,7 +205,7 @@ class HHCartDPruningClassifier(BaseEstimator, ClassifierMixin):
 
             # Create decision node
             node = DecisionNode(
-                node_id=node_id,
+                node_id=current_node_id,
                 weights=weights,
                 bias=bias,
                 depth=depth,
@@ -194,7 +213,6 @@ class HHCartDPruningClassifier(BaseEstimator, ClassifierMixin):
             )
             node.y = y
 
-            node_id += 1
             node.add_child(build(X[mask_left], y_left, depth + 1))
             node.add_child(build(X[mask_right], y_right, depth + 1))
             return node
@@ -287,25 +305,52 @@ class HHCartDPruningClassifier(BaseEstimator, ClassifierMixin):
         # Return whichever is best
         return best_H, best_rule
 
-    @staticmethod
-    def _make_leaf(y: np.ndarray, depth: int, node_id: int) -> LeafNode:
+    def _estimate_max_nodes(self) -> int:
         """
-        Construct a leaf node summarising the class distribution.
+        Estimate the theoretical maximum number of nodes that the tree could build.
 
-        The leaf stores the majority class, its purity, and the number of samples.
+        The maximum number of nodes is constrained by:
+        - the maximum depth (`max_depth`), and
+        - the minimum number of samples required to split (`mass_min`), which limits how deep balanced splits can go.
 
-        Args:
-            y (np.ndarray): Target labels at this node.
-            depth (int): Depth of the leaf.
-            node_id (int): Unique identifier for the node.
+        The method computes the depth at which further splits are no longer allowed by mass_min,
+        then estimates the maximum number of nodes as the size of a full binary tree up to that depth.
 
         Returns:
-            LeafNode: A fully initialised leaf node.
+            int: Maximum number of nodes allowed given max_depth and mass_min.
         """
-        label = int(np.bincount(y).argmax())
-        purity = float(np.max(np.bincount(y)) / len(y))
-        return LeafNode(node_id=node_id, prediction=label, depth=depth,
-                        n_samples=len(y), purity=purity)
+        # Max nodes based on max_depth (full binary tree formula)
+        max_nodes_depth = 2 ** (self.max_depth + 1) - 1
+
+        # Compute mass_min_required (absolute number of samples per node)
+        if isinstance(self.mass_min, float):
+            mass_min_required = self.mass_min * self.n_samples_total
+        else:
+            mass_min_required = self.mass_min
+
+        # Handle edge cases
+        if mass_min_required >= self.n_samples_total:
+            # Cannot split → root only
+            max_nodes_mass_min = 1
+        else:
+            # Compute l_max_split = max depth where node can still have enough samples to split
+            l_max_split = math.floor(math.log2(self.n_samples_total / mass_min_required))
+
+            # Max nodes in full binary tree up to depth l_max_split
+            max_nodes_mass_min = 2 ** (l_max_split + 1) - 1
+
+        # Final progress bar limit: take the smaller of the two
+        max_nodes_progress_bar = min(max_nodes_depth, max_nodes_mass_min)
+
+        if max_nodes_progress_bar == max_nodes_depth:
+            limit_source = "maximum depth constraint"
+        else:
+            limit_source = "minimum mass constraint"
+
+        print(f"[INFO] Max number of nodes allowed by {limit_source}: {max_nodes_progress_bar} "
+              f"(used as progress bar target; actual number of splits unknown in advance).")
+
+        return max_nodes_progress_bar
 
     def _prune_tree_to_depth(self, tree: DecisionTree, prune_depth: int) -> DecisionTree:
         """
@@ -345,6 +390,26 @@ class HHCartDPruningClassifier(BaseEstimator, ClassifierMixin):
                 node.purity = leaf.purity
 
         return copy
+
+    @staticmethod
+    def _make_leaf(y: np.ndarray, depth: int, node_id: int) -> LeafNode:
+        """
+        Construct a leaf node summarising the class distribution.
+
+        The leaf stores the majority class, its purity, and the number of samples.
+
+        Args:
+            y (np.ndarray): Target labels at this node.
+            depth (int): Depth of the leaf.
+            node_id (int): Unique identifier for the node.
+
+        Returns:
+            LeafNode: A fully initialised leaf node.
+        """
+        label = int(np.bincount(y).argmax())
+        purity = float(np.max(np.bincount(y)) / len(y))
+        return LeafNode(node_id=node_id, prediction=label, depth=depth,
+                        n_samples=len(y), purity=purity)
 
     @staticmethod
     def _make_leaf_from_node(node: TreeNode) -> LeafNode:

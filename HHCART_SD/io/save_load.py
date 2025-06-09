@@ -138,7 +138,7 @@ def save_full_model(model: "HHCartD", name: Optional[str] = None) -> str:
     with open(os.path.join(model_dir, "metadata.json"), "w") as f:
         json.dump(metadata, f, indent=4)
 
-    print(f"[SAVED] HHCART_SD-D model saved to: {model_dir}")
+    print(f"[SAVED] HHCartD model saved to: {model_dir}")
     return model_root
 
 
@@ -275,5 +275,5 @@ def load_full_model(path: Optional[str] = None) -> "HHCartD":
     model.save_dir = Path(path)
     model.save_dir.mkdir(parents=True, exist_ok=True)
 
-    print(f"[LOADED] Model successfully loaded from: {model_dir}")
+    print(f"[LOADED] HHCartD model loaded from: {model_dir}")
     return model
