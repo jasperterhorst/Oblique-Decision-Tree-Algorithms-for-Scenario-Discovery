@@ -113,4 +113,4 @@ def plot_fraction_renewables(outcomes: dict, threshold: float = None, save_path:
 
         print(f"\nAt threshold the threshold of {threshold_pct:.1f}% renewables by {end_year}:\n"
               f"{pct_above:.1f}% of cases exceed threshold ({n_above} of {n_total}), "
-              f"{pct_below:.1f}% of cases below threshold ({n_below} of {n_total})\n")
+              f"{pct_below:.1f}% of cases fall below threshold ({n_below} of {n_total})\n")
