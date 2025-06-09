@@ -73,7 +73,7 @@ def pca_preprocess(experiments, y, subsets=None, exclude=set()):
         # Rotate
         subset_rotmat, subset_experiments = rotate_subset(x_subset_std, y)
 
-        rotation_matrix[j : j + len(value), j : j + len(value)] = subset_rotmat
+        rotation_matrix[j: j + len(value), j: j + len(value)] = subset_rotmat
         row_names.extend(value)
         j += len(value)
 

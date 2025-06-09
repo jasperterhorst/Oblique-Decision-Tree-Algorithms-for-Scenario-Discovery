@@ -17,7 +17,7 @@ from ..tree import LeafNode, DecisionNode
 from .base.colors import generate_color_gradient, PRIMARY_LIGHT, PRIMARY_DARK, PRIMARY_MIDDLE
 
 
-def plot_tree_structure(hh, depth=None, coloring="class", save=False, filename=None, title=None):
+def plot_tree_structure(hh, depth=None, coloring="distribution", save=False, filename=None, title=None):
     """
     Plot the oblique tree structure at a given depth using Graphviz.
 

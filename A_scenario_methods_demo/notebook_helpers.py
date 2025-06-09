@@ -141,7 +141,7 @@ def save_prim_plots(
     plot_original_with_boxes(results["samples"], results["y_labels"], results["boxes_history_rot"], results["V"],
                              results["mu"], results["quadrilateral"], save_path=SAVE_PATHS["pcaprim_spatial_orig"])
     plot_peeling_trajectory(results["pcaprim_cov"], results["pcaprim_dens"], save_path=SAVE_PATHS["pcaprim_peeling"],
-                            title="PCA–PRIM Peeling Trajectory")
+                            title="PCA-PRIM Peeling Trajectory")
     plot_overlayed_peeling_trajectories(results["prim_orig_cov"], results["prim_orig_dens"], results["pcaprim_cov"],
                                         results["pcaprim_dens"], save_path=SAVE_PATHS["overlay"])
 
@@ -162,7 +162,7 @@ def save_prim_plots(
     plot_peeling_trajectory_with_constraint_colors(results["pcaprim_cov"], results["pcaprim_dens"],
                                                    results["boxes_history_rot"], pcaprim_bounds,
                                                    save_path=SAVE_PATHS["pcaprim_constraints"],
-                                                   title="PCA–PRIM Peeling Trajectory with Dimensional Constraints")
+                                                   title="PCA-PRIM Peeling Trajectory with Dimensional Constraints")
 
     print("[OK] Saved PRIM and PCA-PRIM plots.")
 

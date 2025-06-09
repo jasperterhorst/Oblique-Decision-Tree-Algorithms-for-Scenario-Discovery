@@ -25,7 +25,7 @@ def generic_plot(
     save_path: Optional[str],
     draw_func: Callable[..., None],
     display_figsize: Tuple[float, float] = (4, 3),
-    save_figsize: Tuple[float, float] = (4.7, 3.7),
+    save_figsize: Tuple[float, float] = (4, 4),
     grid: bool = True
 ) -> None:
     """

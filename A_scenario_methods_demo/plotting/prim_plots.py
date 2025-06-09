@@ -247,4 +247,4 @@ def plot_peeling_trajectory_with_constraint_colors(
         dummy_none = ax.scatter([], [], color=QUADRILATERAL_COLOR, s=60, label="No Constraint")
         ax.legend(handles=[dummy_both, dummy_one, dummy_none], loc="lower right")
 
-    generic_plot(title, "Coverage", "Density", "", save_path, draw, save_figsize=(4.7, 3.7))
+    generic_plot(title, "Coverage", "Density", "", save_path, draw, save_figsize=(4, 4))
