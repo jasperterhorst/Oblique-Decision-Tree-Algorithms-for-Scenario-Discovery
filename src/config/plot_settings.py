@@ -70,7 +70,7 @@ def beautify_plot(ax: Axes, title: str = None, xlabel: str = None,
             text.set_fontsize(15)
         legend._legend_box.sep = 8
         legend.get_frame().set_facecolor("white")
-        legend.get_frame().set_edgecolor("gray")
+        legend.get_frame().set_edgecolor("grey")
 
     if save_path:
         dir_name = os.path.dirname(save_path)
