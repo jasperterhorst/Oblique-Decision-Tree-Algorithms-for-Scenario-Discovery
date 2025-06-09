@@ -1,8 +1,7 @@
 """
 Hamarat Scenario Data Cleaner (load_hamarat_results.py)
 ------------------------------------------------------
-Cleans scenario discovery input data from Hamarat et al. (2013) LHS results
-archive for analysis and scenario discovery.
+Cleans scenario discovery input data from Hamarat et al. (2013) model from EMA workbench.
 
 Provides cleaned features DataFrame and target outcome for final year.
 """
@@ -44,11 +43,14 @@ def clean_results(
     categorical_cols = [col for col in X_df.columns if col.lower().startswith("switch")]
     X_df[categorical_cols] = X_df[categorical_cols].astype("category")
 
+    # --- Clean column names ---
+    X_df = X_df.rename(columns=lambda col: " ".join(word.capitalize() for word in col.replace("_", " ").split()))
+
     # Optionally drop SWITCH variables entirely
     if drop_switch:
         X_df = X_df.drop(columns=categorical_cols)
 
-    # --- Extract target y ---
+    # --- Extract target variable y from outcomes ---
     fraction_renewables_over_time = outcomes.get("fraction_renewables", None)
     if fraction_renewables_over_time is None or len(fraction_renewables_over_time.shape) != 2:
         raise ValueError(

@@ -1,7 +1,7 @@
 """
 HHCartDPruningClassifier (HHCartDPruning.py)
 -----------------------------------------------
-Implements HHCART_SD(D): an oblique decision tree classifier using Householder reflections,
+Implements HHCartDPruningClassifier: an oblique decision tree classifier using Householder reflections,
 followed by post hoc pruning at each depth level. Integrates cleanly with scikit-learn
 interfaces for model selection and evaluation.
 
@@ -96,10 +96,10 @@ class HHCartDPruningClassifier(BaseEstimator, ClassifierMixin):
         self.n_samples_total = X.shape[0]
 
         # Announce start of tree building
-        print(f"[INFO] Building HHCartD oblique decision tree...\n")
+        print(f"[INFO] Building HHCartD oblique decision tree...")
 
         # Estimate max nodes for progress bar
-        max_nodes_progress_bar = self._estimate_max_nodes()
+        max_nodes_progress_bar = self._calculate_max_nodes()
 
         # Build the full unpruned tree using progress bar
         with tqdm(total=max_nodes_progress_bar, desc="Building tree nodes") as progress_bar:
@@ -181,14 +181,22 @@ class HHCartDPruningClassifier(BaseEstimator, ClassifierMixin):
             nonlocal node_id
             current_node_id = node_id
             node_id += 1
+
             if progress_bar is not None:
                 progress_bar.update(1)
 
+            if self.debug:
+                print(f"[BUILD] Entering node_id={current_node_id}, depth={depth}, n_samples={len(y)}")
+
             if self._should_stop(y, depth):
+                if self.debug:
+                    print(f"[STOP] node_id={current_node_id}, depth={depth}, reason=stopping criteria met")
                 return self._make_leaf(y, depth, current_node_id)
 
             H, rule = self._compute_reflection_and_split(X, y)
             if rule is None:
+                if self.debug:
+                    print(f"[STOP] node_id={current_node_id}, depth={depth}, reason=no valid split")
                 return self._make_leaf(y, depth, current_node_id)
 
             i, thr = rule
@@ -198,12 +206,15 @@ class HHCartDPruningClassifier(BaseEstimator, ClassifierMixin):
             proj = X @ weights + bias
             mask_left = proj < 0
             mask_right = ~mask_left
+
             y_left, y_right = y[mask_left], y[mask_right]
 
-            # Compute impurity using the provided impurity function
             node_impurity = self.impurity(y_left, y_right)
 
-            # Create decision node
+            if self.debug:
+                print(
+                    f"[SPLIT] node_id={current_node_id}, depth={depth}, feature_rotated_axis={i}, threshold={thr:.4f}, impurity={node_impurity:.4f}")
+
             node = DecisionNode(
                 node_id=current_node_id,
                 weights=weights,
@@ -236,18 +247,27 @@ class HHCartDPruningClassifier(BaseEstimator, ClassifierMixin):
             bool: True if splitting should stop.
         """
         if self.max_depth is not None and depth >= self.max_depth:
+            if self.debug:
+                print(f"[STOP] Reached max_depth={self.max_depth}")
             return True
 
-        # Determine mass_min required (supports int or float)
         if isinstance(self.mass_min, float):
             mass_min_required = int(np.ceil(self.mass_min * self.n_samples_total))
         else:
             mass_min_required = int(self.mass_min)
 
         if len(y) < mass_min_required:
+            if self.debug:
+                print(f"[STOP] Too few samples (n={len(y)} < mass_min={mass_min_required})")
             return True
 
-        return np.max(np.bincount(y)) / len(y) >= self.min_purity
+        purity = np.max(np.bincount(y)) / len(y)
+        if purity >= self.min_purity:
+            if self.debug:
+                print(f"[STOP] Purity threshold reached (purity={purity:.4f} >= min_purity={self.min_purity})")
+            return True
+
+        return False
 
     def _compute_reflection_and_split(self, X: np.ndarray, y: np.ndarray):
         """
@@ -265,19 +285,19 @@ class HHCartDPruningClassifier(BaseEstimator, ClassifierMixin):
         """
         d = X.shape[1]
 
-        # Add this at the start
         best_H = np.eye(d)
         best_rule = None
         best_imp = float("inf")
 
-        # First: try identity (axis-aligned)
         imp_identity, rule_identity, _, _ = self.segmentor(X, y, self.impurity)
+        if self.debug:
+            print(f"[SPLIT] Identity split: impurity={imp_identity:.4f}, rule={rule_identity}")
+
         if rule_identity is not None:
             best_H = np.eye(d)
             best_rule = rule_identity
             best_imp = imp_identity
 
-        # Try reflected subspaces from dominant eigenvector per class
         for c in np.unique(y):
             Xc = X[y == c]
             if len(Xc) <= 1:
@@ -297,60 +317,35 @@ class HHCartDPruningClassifier(BaseEstimator, ClassifierMixin):
                 H = np.eye(d) - 2 * np.outer(w, w)
                 imp, rule, _, _ = self.segmentor(X @ H, y, self.impurity)
 
+                if self.debug:
+                    print(f"[SPLIT] Reflection class={c}: impurity={imp:.4f}, rule={rule}")
+
                 if rule is not None and imp < best_imp:
                     best_H = H
                     best_rule = rule
                     best_imp = imp
 
-        # Return whichever is best
         return best_H, best_rule
 
-    def _estimate_max_nodes(self) -> int:
+    def _calculate_max_nodes(self) -> int:
         """
         Estimate the theoretical maximum number of nodes that the tree could build.
 
-        The maximum number of nodes is constrained by:
-        - the maximum depth (`max_depth`), and
-        - the minimum number of samples required to split (`mass_min`), which limits how deep balanced splits can go.
+        The estimate is based purely on the maximum depth (`max_depth`), as this is a hard constraint.
+        The number of nodes in a full binary tree of depth `max_depth` is:
 
-        The method computes the depth at which further splits are no longer allowed by mass_min,
-        then estimates the maximum number of nodes as the size of a full binary tree up to that depth.
+            2^(max_depth + 1) - 1
 
         Returns:
-            int: Maximum number of nodes allowed given max_depth and mass_min.
+            int: Maximum number of nodes allowed given max_depth.
         """
         # Max nodes based on max_depth (full binary tree formula)
         max_nodes_depth = 2 ** (self.max_depth + 1) - 1
 
-        # Compute mass_min_required (absolute number of samples per node)
-        if isinstance(self.mass_min, float):
-            mass_min_required = self.mass_min * self.n_samples_total
-        else:
-            mass_min_required = self.mass_min
-
-        # Handle edge cases
-        if mass_min_required >= self.n_samples_total:
-            # Cannot split → root only
-            max_nodes_mass_min = 1
-        else:
-            # Compute l_max_split = max depth where node can still have enough samples to split
-            l_max_split = math.floor(math.log2(self.n_samples_total / mass_min_required))
-
-            # Max nodes in full binary tree up to depth l_max_split
-            max_nodes_mass_min = 2 ** (l_max_split + 1) - 1
-
-        # Final progress bar limit: take the smaller of the two
-        max_nodes_progress_bar = min(max_nodes_depth, max_nodes_mass_min)
-
-        if max_nodes_progress_bar == max_nodes_depth:
-            limit_source = "maximum depth constraint"
-        else:
-            limit_source = "minimum mass constraint"
-
-        print(f"[INFO] Max number of nodes allowed by {limit_source}: {max_nodes_progress_bar} "
+        print(f"[INFO] Max number of nodes allowed by maximum depth constraint: {max_nodes_depth} "
               f"(used as progress bar target; actual number of splits unknown in advance).")
 
-        return max_nodes_progress_bar
+        return max_nodes_depth
 
     def _prune_tree_to_depth(self, tree: DecisionTree, prune_depth: int) -> DecisionTree:
         """

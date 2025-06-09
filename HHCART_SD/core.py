@@ -117,9 +117,14 @@ class HHCartD:
         self.random_state = random_state
         self.save_dir: Optional[Path] = None
 
+        # Validate that X is a DataFrame
         if not isinstance(X, pd.DataFrame):
             print(f"[WARNING] Expected X as pd.DataFrame, got {type(X)}")
         self.X = X
+
+        # Validate that X contains only numeric columns
+        if not np.issubdtype(X.values.dtype, np.number):
+            raise ValueError("[ERROR] X must contain only numeric columns.")
 
         # Validate y is a compatible type (optional, but helpful)
         if not isinstance(y, (pd.Series, np.ndarray)):

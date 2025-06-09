@@ -106,7 +106,7 @@ def plot_splits_2d_grid(hh, save: bool = True, filename: Optional[str] = None, t
     apply_global_plot_settings()
 
     if hh.X.shape[1] != 2:
-        raise ValueError("Clipped oblique splits can only be visualised for 2D input.")
+        raise ValueError("This visualisation only supports 2D input.")
 
     X = hh.X
     y = hh.y

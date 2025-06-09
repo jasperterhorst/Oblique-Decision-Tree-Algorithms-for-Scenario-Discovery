@@ -45,8 +45,8 @@ def plot_fraction_renewables(outcomes: dict, threshold: float = None, save_path:
 
     # Time axis
     time_resolution = 0.0625
-    start_year = 2000
-    end_year = 2100
+    start_year = 2010
+    end_year = 2050
     n_timesteps = fraction_renewables_over_time.shape[1]
     years = np.linspace(start_year, end_year, n_timesteps)
 
