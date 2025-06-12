@@ -91,14 +91,59 @@ def plot_tree_structure(hh, depth=None, coloring="distribution", save=False, fil
                     color = compute_sample_color(node.n_samples)
                 else:
                     color = "white"
+        # elif isinstance(node, DecisionNode):
+        #     # parts = [
+        #     #     f"{w:+.2f}·{feature_names[i]}"
+        #     #     for i, w in enumerate(node.weights)
+        #     # ]
+        #     # lhs = " ".join(parts)
+        #     # sample_count = len(node.y) if node.y is not None else 0
+        #     # label = f"{node_label_id}\n{lhs} ≤ {node.bias:.2f}\nSamples: {sample_count}"
+        #
+        #     parts = [
+        #         f"{w:+.2f}·{feature_names[i]}"
+        #         for i, w in enumerate(node.weights)
+        #     ]
+        #
+        #     # Group into rows of two
+        #     lines = []
+        #     for i in range(0, len(parts), 2):
+        #         line = " ".join(parts[i:i + 2])
+        #         lines.append(line)
+        #
+        #     lhs = "<br/>".join(lines)
+        #     sample_count = len(node.y) if node.y is not None else 0
+        #
+        #     label = f"<<{node_label_id}<br/>{lhs} ≤ {node.bias:.2f}<br/>Samples: {sample_count}>>"
+        #
+        #     if coloring == "class":
+        #         majority = node.get_majority_class()
+        #         color = PRIMARY_DARK if majority == 1 else PRIMARY_LIGHT
+        #     elif coloring == "samples":
+        #         color = compute_sample_color(sample_count)
+        #     else:
+        #         color = "white"
+        # else:
+        #     label = "Unknown node"
+        #     color = "white"
+
         elif isinstance(node, DecisionNode):
             parts = [
                 f"{w:+.2f}·{feature_names[i]}"
                 for i, w in enumerate(node.weights)
+                if abs(w) > 1e-4  # safe exclusion of near-zero weights
             ]
-            lhs = " ".join(parts)
+
+            # One part per line
+            lines = parts
+            lefths = "<br/>".join(lines)
+
             sample_count = len(node.y) if node.y is not None else 0
-            label = f"{node_label_id}\n{lhs} ≤ {node.bias:.2f}\nSamples: {sample_count}"
+
+            # SAFE label → wrap in <FONT> to avoid Graphviz error
+            label = (f"<<FONT POINT-SIZE='12'>{node_label_id}<br/>{lefths} ≤ {node.bias:.2f}"
+                     f"<br/>Samples: {sample_count}</FONT>>")
+
             if coloring == "class":
                 majority = node.get_majority_class()
                 color = PRIMARY_DARK if majority == 1 else PRIMARY_LIGHT
@@ -106,9 +151,6 @@ def plot_tree_structure(hh, depth=None, coloring="distribution", save=False, fil
                 color = compute_sample_color(sample_count)
             else:
                 color = "white"
-        else:
-            label = "Unknown node"
-            color = "white"
 
         if coloring == "distribution" and isinstance(node, LeafNode) and node.purity is not None:
             dot.node(node_id, label=label, shape='box', style='filled', fillcolor="white", margin="0")

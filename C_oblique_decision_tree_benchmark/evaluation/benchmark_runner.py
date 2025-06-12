@@ -55,7 +55,7 @@ class DepthSweepRunner:
     def build_registry(
             random_state=None, impurity=gini, segmentor=CARTSegmentor(), n_restarts=20, bias_steps=20,
             tau=0.05, nu=1.0, eta=0.01, tol=1e-3, n_rotations=1, max_features='all', min_features_split=1,
-            min_samples_split=2, max_iter=1000, max_iter_global=1000000, max_iter_wodt=None, max_iter_co2=None,
+            min_samples_split=2, max_iter_global=1000000, max_iter_wodt=None, max_iter_co2=None,
     ):
         """
         Constructs a registry of oblique decision tree classifiers, each wrapped in a lambda

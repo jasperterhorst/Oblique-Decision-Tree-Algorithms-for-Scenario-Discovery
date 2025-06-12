@@ -37,7 +37,8 @@ def apply_global_plot_settings() -> None:
 
 
 def beautify_plot(ax: Axes, title: str = None, xlabel: str = None,
-                  ylabel: str = None, save_path: str = None) -> None:
+                  ylabel: str = None, save_path: str = None,
+                  show_grid: bool = True) -> None:
     """
     Apply standardized beautification to a Matplotlib plot.
 
@@ -47,6 +48,7 @@ def beautify_plot(ax: Axes, title: str = None, xlabel: str = None,
         xlabel (str, optional): Label for the x-axis.
         ylabel (str, optional): Label for the y-axis.
         save_path (str, optional): Path to save the figure (PDF).
+        show_grid (bool, optional): Whether to show the grid (default is True).
     """
     fig = ax.get_figure()
 
@@ -61,7 +63,7 @@ def beautify_plot(ax: Axes, title: str = None, xlabel: str = None,
     else:
         ax.set_ylabel(ax.get_ylabel() or 'Y-axis', fontsize=20, labelpad=10)
 
-    _style_axes(ax)
+    _style_axes(ax, show_grid=show_grid)
 
     legend = ax.get_legend()
     if legend:
@@ -110,12 +112,13 @@ def beautify_subplot(ax: Axes, title: str = None, xlabel: str = None,
     _style_axes(ax)
 
 
-def _style_axes(ax: Axes) -> None:
+def _style_axes(ax: Axes, show_grid: bool = True) -> None:
     """
     Apply spine, grid, tick, and face color styling to an axis.
 
     Parameters:
         ax (Axes): The axis to style.
+        show_grid (bool): Whether to show the grid.
     """
     ax.set_facecolor("white")
 
@@ -125,4 +128,8 @@ def _style_axes(ax: Axes) -> None:
     ax.spines['bottom'].set_color(AXIS_LINE_COLOR)
 
     ax.tick_params(axis='both', colors=AXIS_LINE_COLOR, labelsize=13)
-    ax.grid(True, linestyle='dashed', color='grey', linewidth=0.5)
+
+    if show_grid:
+        ax.grid(True, linestyle='dashed', color='grey', linewidth=0.5)
+    else:
+        ax.grid(False)
