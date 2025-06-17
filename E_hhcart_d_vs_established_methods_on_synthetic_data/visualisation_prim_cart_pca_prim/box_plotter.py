@@ -91,7 +91,7 @@ def plot_boxes(obj=None, boxes=None, X=None, y=None, selected_indices=None,
             boxes_df = extract_cart_boxes(obj)
             boxes_df["source"] = "CART"
             boxes_df["source_algorithm"] = "CART"
-            boxes_df["box_display_id"] = boxes_df["box_id"] + 1  # add this line
+            boxes_df["box_display_id"] = boxes_df["box_id"]  # add this line
             source_labels = ["CART"]
 
         elif any(name in str(type(obj)) for name in ["Prim", "PrimBox"]):

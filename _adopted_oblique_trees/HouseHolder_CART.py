@@ -2,19 +2,18 @@
 HouseHolder CART (HHCART_SD) – Corrected and Extended Implementation
 -----------------------------------------------------------------
 
-This module provides a revised implementation of the HouseHolder CART (HHCART_SD) algorithm,
+This module provides a revised implementation of the HouseHolder CART algorithm,
 originally described by Wickramarachchi et al. (2015). The version found in the
 "Ensembles of Oblique Decision Trees" package, developed by Torsha Majumder, was labelled
-as HHCART_SD(A), but its internal logic diverged from the formal HHCART_SD(A) methodology.
+as HHCART(A), but its internal logic diverged from the formal HHCART(A) methodology.
 Various aspects such as reflection construction, split generation, and selection
 strategies did not align with the original algorithm.
 
 To address these discrepancies, this implementation introduces a series of corrections
-to better reproduce HHCART_SD(A). Additionally, it extends functionality by incorporating
-the HHCART_SD(D) variant, as proposed by Wickramarachchi et al. (2015), which offers a more
-computationally efficient alternative with minimal loss in performance — a valuable
-feature for applications like scenario discovery. Furthermore, optional sparsity has been
-added to HHCART_SD(D) to enhance interpretability by reducing the complexity of decision boundaries.
+to better reproduce HHCART(A). Additionally, it extends functionality by incorporating
+the HHCART(D) variant, as proposed by Wickramarachchi et al. (2015), which offers a more
+computationally efficient alternative with minimal loss in performance, a valuable
+feature for applications like scenario discovery.
 
 Key Corrections and Enhancements:
 ---------------------------------
@@ -47,12 +46,12 @@ Key Corrections and Enhancements:
 
 Algorithm Variants:
 -------------------
-- `HHCartAClassifier` (HHCART_SD(A)):
+- `HHCartAClassifier` (HHCART(A)):
    - Performs exhaustive search across all class-specific eigenvectors.
    - Focuses on maximising split accuracy through comprehensive reflection evaluation.
    - Operates in dense mode only (no sparsity).
 
-- `HHCartDClassifier` (HHCART_SD(D)):
+- `HHCartDClassifier` (HHCART(D)):
    - Selects only the dominant eigenvector per class for efficiency.
 """
 

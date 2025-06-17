@@ -4,7 +4,7 @@ from src.load_shapes import load_shape_dataset
 # Configuration
 FOLDER_NAME = "shapes_sample_size_tests"
 SUBFOLDER_NAME = "label_noise_003"
-SEED_INDICES = [0, 1, 2]
+SEED_INDICES = [0, 1, 2, 3, 4]
 MODELS_WITH_SEEDS = ["moc1"]
 MODELS_SINGLE_RUN = ["hhcart_d"]
 

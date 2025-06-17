@@ -60,8 +60,8 @@ def plot_2d_shape(samples, y, title="2D Shape", save_path=None, note="", show_no
     ax.set_xlabel('X1', fontsize=20)
     ax.set_ylabel('X2', fontsize=20)
     ax.legend(loc='upper right', fontsize=15)
-    ax.xaxis.set_tick_params(labelsize=16)
-    ax.yaxis.set_tick_params(labelsize=16)
+    ax.xaxis.set_tick_params(labelsize=18)
+    ax.yaxis.set_tick_params(labelsize=18)
 
     ax.set_xlim(0, 1)
     ax.set_ylim(0, 1)
@@ -109,9 +109,9 @@ def plot_3d_shape(samples, y, title="3D Shape", save_path=None, note="", show_no
     ax.set_zlabel('X3', fontsize=18, labelpad=8)
     ax.legend(loc='upper right', fontsize=14)
 
-    ax.xaxis.set_tick_params(labelsize=14, colors=AXIS_LINE_COLOR)
-    ax.yaxis.set_tick_params(labelsize=14, colors=AXIS_LINE_COLOR)
-    ax.zaxis.set_tick_params(labelsize=14, colors=AXIS_LINE_COLOR)
+    ax.xaxis.set_tick_params(labelsize=16, colors=AXIS_LINE_COLOR)
+    ax.yaxis.set_tick_params(labelsize=16, colors=AXIS_LINE_COLOR)
+    ax.zaxis.set_tick_params(labelsize=16, colors=AXIS_LINE_COLOR)
 
     ax.xaxis.line.set_color(AXIS_LINE_COLOR)
     ax.yaxis.line.set_color(AXIS_LINE_COLOR)

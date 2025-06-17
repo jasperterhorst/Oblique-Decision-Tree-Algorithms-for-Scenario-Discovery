@@ -54,8 +54,8 @@ class DepthSweepRunner:
     @staticmethod
     def build_registry(
             random_state=None, impurity=gini, segmentor=CARTSegmentor(), n_restarts=20, bias_steps=20,
-            tau=0.05, nu=1.0, eta=0.01, tol=1e-3, n_rotations=1, max_features='all', min_features_split=1,
-            min_samples_split=2, max_iter_global=1000000, max_iter_wodt=None, max_iter_co2=None,
+            tau=0.05, nu=1.0, eta=0.01, tol=1e-3, n_rotations=1, max_features='all', min_samples_split=2,
+            max_iter_global=1000000, max_iter_wodt=None, max_iter_co2=None,
     ):
         """
         Constructs a registry of oblique decision tree classifiers, each wrapped in a lambda
@@ -87,10 +87,6 @@ class DepthSweepRunner:
         # MOC1 Hyperparameters
             n_restarts (int, default=20):
                 Number of random restarts (≥ 1) to escape local minima.
-
-
-            min_features_split (int, default=1):
-                Minimum non-zero coefficients per split. Must be ≥ 1.
 
         # HHCART_SD (A and D) Controls
             tau (float, default=1e-6):
@@ -140,8 +136,7 @@ class DepthSweepRunner:
                          max_iter=max_iter_wodt if max_iter_wodt is not None else max_iter_global,),
             "cart": make(CARTClassifier, impurity=impurity),
             "ridge_cart": make(RidgeCARTClassifier, impurity=impurity, segmentor=segmentor),
-            "moc1": make(ModifiedObliqueClassifier1, n_restarts=n_restarts, bias_steps=bias_steps,
-                         min_features_split=min_features_split),
+            "moc1": make(ModifiedObliqueClassifier1, n_restarts=n_restarts, bias_steps=bias_steps),
             "co2": make(CO2Classifier, impurity=impurity, segmentor=segmentor,
                         max_iter_per_node=max_iter_co2 if max_iter_co2 is not None else max_iter_global,
                         nu=nu, eta=eta, tol=tol),
