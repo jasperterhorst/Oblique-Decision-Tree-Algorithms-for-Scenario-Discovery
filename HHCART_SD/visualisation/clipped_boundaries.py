@@ -249,7 +249,8 @@ def plot_splits_2d_overlay(
 
     fig = plt.figure(figsize=(5, 5))
     ax = plt.gca()
-    ax.set_aspect("equal", adjustable="box")
+    # ax.set_aspect("equal", adjustable="box")
+    ax.set_box_aspect(1)
     ax.scatter(X.iloc[:, 0], X.iloc[:, 1], c=scatter_colors, s=5)
 
     def recurse(node, constraints, depth_level):

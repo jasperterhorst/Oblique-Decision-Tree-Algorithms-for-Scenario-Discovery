@@ -85,6 +85,7 @@ class DecisionNode(TreeNode):
         self.bias = bias
         self.y = None
         self.impurity = impurity
+        self.is_axis_aligned = False
 
     def decision(self, x: np.ndarray) -> int:
         """
@@ -110,9 +111,10 @@ class DecisionNode(TreeNode):
         return 0
 
     def __repr__(self) -> str:
+        split_type = "axis-aligned" if self.is_axis_aligned else "oblique"
         return (
             f"DecisionNode(id={self.node_id}, depth={self.depth}, "
-            f"impurity={self.impurity:.4f}, weights={self.weights}, bias={self.bias})"
+            f"impurity={self.impurity:.4f}, weights={self.weights}, bias={self.bias}, {split_type})"
         )
 
 
@@ -248,8 +250,9 @@ class DecisionTree:
         if isinstance(node, DecisionNode):
             terms = [f"{w:+.2f}*x{i}" for i, w in enumerate(np.ravel(node.weights)) if abs(float(w)) > 1e-6]
             condition = " ".join(terms) + f" + {node.bias:+.2f} >= 0"
-            print(f"{indent}[Node id={node.node_id}, depth={node.depth}, impurity={node.impurity:.4f}] "
-                  f"(split: {condition})")
+            split_type = "axis-aligned" if node.is_axis_aligned else "oblique"
+            print(f"{indent}[Node id={node.node_id}, depth={node.depth}, impurity={node.impurity:.4f}, "
+                  f"{split_type}] (split: {condition})")
             for i, child in enumerate(node.children):
                 branch = "├── " if i == 0 else "└── "
                 self._print_node(child, indent + branch)

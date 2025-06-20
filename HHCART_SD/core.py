@@ -65,6 +65,8 @@ class HHCartD:
         Tolerance for numerical stability in split calculation.
     random_state : int, optional
         Seed for reproducible results.
+    force_oblique: bool = False
+        If True, forces oblique splits even if axis-aligned splits are possible.
     save_dir : pathlib.Path, optional
         Directory to save trained models.
     debug : bool, optional
@@ -105,6 +107,7 @@ class HHCartD:
         min_purity: float = 1,
         tau: float = 0.05,
         random_state: int = None,
+        force_oblique: bool = False,
         save_dir: Optional[Path] = None,
         debug: bool = False,
     ):
@@ -116,6 +119,7 @@ class HHCartD:
         self.tau = tau
         self.random_state = random_state
         self.save_dir: Optional[Path] = None
+        self.force_oblique = force_oblique
 
         # Validate that X is a DataFrame
         if not isinstance(X, pd.DataFrame):
@@ -197,6 +201,7 @@ class HHCartD:
             mass_min=self.mass_min,
             min_purity=self.min_purity,
             tau=self.tau,
+            force_oblique=self.force_oblique,
             debug=self.debug,
         )
         start_time = time.perf_counter()

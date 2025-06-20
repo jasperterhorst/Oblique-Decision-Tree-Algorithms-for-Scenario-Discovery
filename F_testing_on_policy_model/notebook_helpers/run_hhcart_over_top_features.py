@@ -21,7 +21,6 @@ from typing import Union, Tuple
 
 from HHCART_SD import HHCartD
 
-
 def run_hhcart_over_top_features(
     X_full: pd.DataFrame,
     y: Union[np.ndarray, pd.Series],
@@ -31,6 +30,8 @@ def run_hhcart_over_top_features(
     max_depth: int,
     mass_min: Union[int, float],
     min_purity: float,
+    color_axis_aligned=False,
+    force_oblique=False,
     appendix: str = "",
     debug: bool = False
 ) -> None:
@@ -58,6 +59,10 @@ def run_hhcart_over_top_features(
             mass_min parameter for HHCartD.
         min_purity (float):
             min_purity parameter for HHCartD.
+        color_axis_aligned (bool, optional):
+            Whether to color axis-aligned plots. Default is False.
+        force_oblique (bool, optional):
+            Whether to force oblique splits. Default is False.
         appendix (str, optional):
             Optional appendix to append to model titles. Default is "".
         debug (bool, optional):
@@ -97,8 +102,8 @@ def run_hhcart_over_top_features(
         model_title = (
             f"hhcart_top{n_feats}f_"
             f"dep_{max_depth}_mass_{str(mass_min).replace('.', '_')}"
-            f"_pur_{str(min_purity).replace('.', '_')}_"
-            f"{feature_name_str}"
+            f"_pur_{str(min_purity).replace('.', '_')}"
+            f"_{feature_name_str}"
             f"{appendix}"
         )
 
@@ -113,7 +118,8 @@ def run_hhcart_over_top_features(
             min_purity=min_purity,
             mass_min=mass_min,
             max_depth=max_depth,
-            debug=debug
+            debug=debug,
+            force_oblique=force_oblique
         )
 
         # Build and save model
@@ -123,7 +129,7 @@ def run_hhcart_over_top_features(
         # -- Tree structure plots for each depth
         for depth in hh.available_depths():
             hh.select(depth=depth)
-            hh.plot_tree_structure(depth=depth, save=True)
+            hh.plot_tree_structure(depth=depth, save=True, color_axis_aligned=color_axis_aligned)
 
         # -- Metrics plots
         hh.plot_metrics_vs_structure(save=True)
