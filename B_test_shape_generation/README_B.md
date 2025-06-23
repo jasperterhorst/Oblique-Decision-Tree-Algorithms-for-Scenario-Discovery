@@ -82,7 +82,7 @@ B_test_shape_generation/
 │
 └── noise_dimensionality_and_sample_size/
     ├── __init__.py
-    ├── helpers_dataset_conversion.py                   # Converts and downsamples datasets, appends noise dims
+    ├── helpers_dataset_conversion.py                   # Converts and down-samples datasets, appends noise dims
     └── set_noise_dimensionality_and_sample_size.py     # Script to generate dataset variants with more noise/features
 ```
 
