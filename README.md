@@ -1,154 +1,136 @@
-# Oblique Decision Tree Algorithms for Scenario Discovery
+# Oblique Decision Trees for Scenario Discovery
 
-Welcome to the repository for **Oblique Decision Tree Algorithms for Scenario Discovery**. This project presents a 
-modular, extensible framework for experimenting with **oblique decision trees**, particularly for use in **scenario 
-discovery** and **decision-making under deep uncertainty**.
+This repository implements, benchmarks, and evaluates decision tree algorithms for scenario discovery. It includes both 
+axis-aligned methods (PRIM and CART), globally rotated methods (PCA-PRIM), and oblique decision trees adapted. 
+These methods are tested on a set of synthetic benchmark datasets and a high-dimensional European Union energy transition model.
 
-The repository contains a diverse set of models, tools for synthetic data generation, visualization notebooks, 
-and benchmarks. It also integrates and builds upon existing work in the field, most notably ensemble-based oblique 
-decision trees.
-
-## Installation
-
-Works stable with Python 3.11 not with 3.12.
-
+The codebase is organised around distinct phases of the research, with each older capturing a specific part of the 
+research, from initial demonstrations and shape generation to algorithm benchmarking and policy model application.
 
 ---
 
-## 📦 Repository Overview
+## Python Compatibility
 
-The repository is organized into modular folders. Each serves a distinct role in supporting experimentation, algorithm 
-development, and scenario discovery workflows:
-
-### `A_scenario_methods_demo/` – 📊 Scenario Discovery Methods
-Implements and demonstrates the use of scenario discovery techniques:
-- **PRIM** (Patient Rule Induction Method)
-- **PCA-PRIM** (a PCA-enhanced version of PRIM)
-- **CART** (Classification and Regression Trees)
-
-Includes plotting utilities and helper functions to visualize boxes and peeling trajectories. This module is ideal 
-mainly used for visualization of scenario discovery techniques and their limitations in the thesis.
+This project is tested and stable under Python 3.11.
 
 ---
 
-### `B_test_shape_generation/` – 🧪 Shape Generator
-A tool to generate **synthetic 2D and 3D geometric shapes** like bars, radial segments, and stars. These synthetic 
-datasets are used to:
-- Test model robustness
-- Provide interpretable visual feedback
-- Simulate scenario boundaries
+## Quick Start
 
-Includes an **interactive Jupyter notebook** interface to explore and modify shape characteristics.
-
----
-
-### `C_test_shape_experiments/` – 🧬 Shape-based Experiments
-Builds on synthetic shapes from module B to:
-- Run scenario discovery algorithms
-- Validate tree models on well-defined decision boundaries
-- Compare algorithmic behavior on complex vs. simple scenarios
-
-This is where theory meets controlled benchmarking.
-
----
-
-### `C_oblique_decision_trees/` – 🌲 Core Tree Implementations
-Implements several types of **oblique decision trees**, such as:
-- **OC1**
-- **Householder CART (HHCART)**
-- **Randomized CART (RandCART)**
-- **Weighted Oblique Decision Trees (WODT)**
-- **CO2 Trees**
-
-These are ran and using converters put into a standard tree structure. So that the different trees can be compared
-evaluated and ran against each other on different datasets.
-
-
-[//]: # (### `E_TAO_algorithm/` – 🔧 TAO Optimization)
-
-[//]: # (Implements **Tree Alternating Optimization &#40;TAO&#41;** for training oblique decision trees using:)
-
-[//]: # (- Custom loss functions)
-
-[//]: # (- Regularizers)
-
-[//]: # (- Gradient-based optimization logic)
-
-[//]: # ()
-[//]: # (Provides a notebook to showcase how TAO improves oblique split quality over traditional methods.)
-
----
-
-### `Ensembles_of_Oblique_Decision_Trees/` – 🤝 External Module Integration
-This folder integrates the work from **[Ensembles of Oblique Decision Trees](https://github.com/jasperterhorst/Oblique-Decision-Tree-Algorithms-for-Scenario-Discovery/tree/main/Ensembles_of_Oblique_Decision_Trees)** 
-by Torsha Majumder.
-
-It includes:
-- Implementations of ensemble methods for oblique decision trees (OC1, HHCART, RandCART, WODT, CO2 Trees)
-- Several classic datasets like *breast cancer*, *diabetes*, *glass*, *vehicle*, etc.
-
-> 🧾 **Citation:**  
-> Majumder, T. (2020). *Ensembles of Oblique Decision Trees* [Master's Thesis, University of Texas, Dallas]. UTD Theses and Dissertations.
-
----
-
-### `_data/` – 📁 Datasets and Outputs
-This folder includes:
-- Generated 2D/3D shape files (CSV and PDF)
-- Model outputs and evaluation results
-- Pickled tree models
-- Visual output figures (e.g., box evolution, peeling trajectories)
-
-Organized by experiment or shape type.
-
----
-
-### `notebooks/` – 📓 Notebooks & Demos
-Jupyter notebooks that walk through:
-- Scenario method visualizations
-- Interactive shape generation
-- Model behavior explanations
-
-These are perfect for learning, teaching, and sharing your findings.
-
----
-
-### `src/` – ⚙️ Utilities and Configuration
-Contains:
-- Configuration settings (paths, colors, plotting)
-- Data loading utilities
-
-Used across the entire project for clean code reuse.
-
----
-
-### `requirements.txt`
-Defines the required Python dependencies. Install with:
-
-pip install -r requirements.txt
-
-
----
-
-## 🚀 Quick Start
-
-To get started:
+To get started locally:
 
 1. Clone the repository:
+
     ```
     git clone https://github.com/jasperterhorst/Oblique-Decision-Tree-Algorithms-for-Scenario-Discovery.git
     cd Oblique-Decision-Tree-Algorithms-for-Scenario-Discovery
     ```
 
-2. Install the dependencies:
+2. Set up a virtual environment and activate it:
+
+    ```
+    python3.11 -m venv .venv
+    source .venv/bin/activate       # on Linux/macOS
+    .venv\Scripts\activate          # on Windows
+    ```
+
+3. Install the required packages:
+
+    ```
+    pip install uv
+    uv pip install -r requirements.txt
+    ```
+   
+    If you encounter issues with uv pip, you can use the standard pip command:
+
     ```
     pip install -r requirements.txt
     ```
 
-3. Launch notebooks from the `notebooks/` directory:
+4. You are set up and can now run all code in this repository.
 
-## 📬 Contact
+---
 
-Questions, feedback, or collaboration ideas?  
-Open an issue or connect via GitHub.
+## Repository Modules
+
+The repository is organised into several modules, each serving a specific purpose in the research process. 
+Keep in mind each of these separate modules has its own `README_{letter}.md` file with more detailed information.
+
+### A - Scenario Methods Demo
+This module provides an interactive demonstration of scenario discovery using three established methods: PRIM, PCA-PRIM, 
+and CART. The focus is on visualising how each method generates subspaces on a single synthetic dataset (a rotated 
+quadrilateral). The notebook interface allows users to interactively change the shape and inspect subspace coverage and 
+density, observe rules that are created, and save outputs automatically. 
+
+### B - Test Shape Generation
+This module is responsible for generating a set of synthetic classification problems used throughout the study. 
+It includes both 2D and 3D benchmark shapes, such as barbell, radial segment, and rectangle classes. These datasets are 
+parametrised by sample size, shape-specific parameters, label noise, and irrelevant dimensional noise, allowing for 
+systematic control over the problem. All benchmark datasets follow a consistent naming convention and are stored 
+for reuse across benchmarking workflows.
+
+### C - Oblique Decision Tree Benchmark
+This module benchmarks a range of oblique decision tree algorithms, such as MOC1, RandCART, RidgeCART, WODT, and HHCART 
+variants, on the synthetic benchmark shapes. Each algorithm is tested across increasing tree depth, boundary noise, 
+and dimensional noise. The benchmarking system includes batch runners for both local execution and large-scale parallel 
+experiments using SLURM on DelftBlue. Output metrics include classification accuracy, subspace coverage and density, 
+average number of features used per split, sparsity of decision vectors, and runtime.
+
+### D - Testing HHCART(D) Regularisation
+This module investigates how the HHCART(D) algorithm responds to regularisation constraints, specifically the min_purity 
+and mass_min parameters. These constraints control when nodes are allowed to split and affect both the number and shape 
+of discovered subspaces. The experiments systematically vary these parameters and evaluate the resulting impact on tree 
+depth, subspace complexity, and performance metrics. All model outputs are saved using the HHCART_SD format, which includes 
+both metric logs and annotated decision trees.
+
+### E - Comparison on Benchmark Shapes
+This module visualises and compares the subspaces identified by PRIM, PCA-PRIM, CART, and HHCART(D) on the same benchmark 
+shapes. Each method is applied independently, and their results are visualised as overlaid box regions or oblique 
+partitions in the input space. The comparison highlights structural differences between axis-aligned and oblique 
+approaches in terms of boundary alignment, rule compactness, and coverage–density trade-offs. The module includes shared 
+plotting utilities and supports reproducible generation of all comparison figures.
+
+### F - Testing on Policy Model
+This module applies the PRIM, PCA-PRIM, CART, and HHCART(D) algorithms to a high-dimensional EU energy transition model 
+originally developed by Hamarat et al. (2013) The experiments assess the coverage, density and interpretability of different 
+algorithms when applied to realistic policy data. For the HHCART(D), the model uses Extra Trees-based feature importance 
+scores to rank input variables and run targeted experiments with top-k feature subsets. The outputs include visualised 
+decision trees, subspace diagnostics, and comparative metrics across selected configurations. This module represents 
+the final application phase of the research.
+
+### _adopted_oblique_trees – Adapted Algorithm Implementations
+This package contains standardised and revised implementations of all oblique decision tree algorithms used in the 
+research up to C. Each algorithm has been partly aligned with its original academic formulation and revised where 
+necessary to ensure compatibility with the benchmarking framework and for scenario discover (for example in terms of 
+runtime tractability (see thesis)). Included models are CART, RandCART, RidgeCART, WODT, MOC1 (modified OC1), and 
+both HHCART(A) and HHCART(D). Reproducibility is ensured through consistent use of random_state controls for seeding.
+
+### HHCART_SD – Modular Oblique Tree Framework
+This module contains the full implementation of HHCART(D) used from D onwards. It exposes a high-level HHCartD class 
+with methods for training, inspection, visualisation, and exporting results. It includes both oblique and axis-aligned 
+splitting strategies, supports depth-wise tree construction, and logs key scenario discovery metrics such as coverage 
+and density. Visual outputs include decision boundaries, region overlays, trade-off curves, and performance traces 
+across tree depths.
+
+### src – Shared Configuration and Utilities
+This module provides shared utilities for path handling, plotting configuration, and shape loading. It ensures consistent 
+saving, styling, and access to datasets across all other modules.
+
+
+
+
+## Outputs and File Types
+
+Output files are saved in the global `_data/` folder (for experiments from A-C) and local `data/` folder (for modules D–F).  
+Common formats include
+- `.pdf`: For all visualisations
+- `.csv`: Tabular outputs for features, metrics, and input data
+- `.json`: Metadata about models and parameters
+- `.pkl`: Saved decision tree objects in unified format
+
+---
+
+## Citation
+
+Ter Horst, J. (2025). Thinking Outside the Box: A Critical Evaluation of Oblique Decision Tree Algorithms for Scenario Discovery. MSc Thesis, TU Delft.
 
