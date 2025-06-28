@@ -86,6 +86,7 @@ class DecisionNode(TreeNode):
         self.y = None
         self.impurity = impurity
         self.is_axis_aligned = False
+        self.split_metadata = {}
 
     def decision(self, x: np.ndarray) -> int:
         """

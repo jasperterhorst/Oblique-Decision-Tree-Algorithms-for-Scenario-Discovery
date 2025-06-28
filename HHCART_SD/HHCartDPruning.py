@@ -202,7 +202,7 @@ class HHCartDPruningClassifier(BaseEstimator, ClassifierMixin):
                     print(f"[STOP] node_id={current_node_id}, depth={depth}, reason=stopping criteria met")
                 return self._make_leaf(y, depth, current_node_id)
 
-            H, rule, rule_identity = self._compute_reflection_and_split(X, y)
+            H, rule, rule_identity, mu, c = self._compute_reflection_and_split(X, y)
 
             if rule is None:
                 if self.debug:
@@ -227,8 +227,19 @@ class HHCartDPruningClassifier(BaseEstimator, ClassifierMixin):
                 else:
                     print(f"[DEBUG/OK] Axis-aligned split confirmed: feature x{nonzero[0]}")
 
-            proj = X @ weights + bias
-            mask_left = proj < 0
+            # proj = X @ weights + bias
+            # mask_left = proj < 0
+            # mask_right = ~mask_left
+
+            # Apply full reflection to X
+            X_reflected = X @ H
+
+            # Extract the axis and threshold from the split rule (in reflected space)
+            i, thr = rule
+
+            # Define the split mask *in reflected space*
+            proj = X_reflected[:, i]
+            mask_left = proj < thr
             mask_right = ~mask_left
 
             y_left, y_right = y[mask_left], y[mask_right]
@@ -249,6 +260,17 @@ class HHCartDPruningClassifier(BaseEstimator, ClassifierMixin):
             )
             node.is_axis_aligned = is_axis_aligned
             node.y = y
+
+            node.split_metadata = {
+                "H_used": H,
+                "axis_rule": (i, thr),
+                "rule_identity": rule_identity,
+                "X_orig": X,
+                "y_orig": y,
+                "X_reflected": X_reflected,
+                "dominant_vector": mu,
+                "dominant_class": c
+            }
 
             node.add_child(build(X[mask_left], y_left, depth + 1))
             node.add_child(build(X[mask_right], y_right, depth + 1))
@@ -314,6 +336,8 @@ class HHCartDPruningClassifier(BaseEstimator, ClassifierMixin):
         best_H = np.eye(d)
         best_rule = None
         best_imp = float("inf")
+        best_mu = None
+        best_c = None
 
         imp_identity, rule_identity, _, _ = self.segmentor(X, y, self.impurity)
         if self.debug:
@@ -331,6 +355,7 @@ class HHCartDPruningClassifier(BaseEstimator, ClassifierMixin):
             cov = np.cov(Xc, rowvar=False)
             _, eigvecs = np.linalg.eigh(cov)
             mu = eigvecs[:, -1]
+
             if np.allclose(mu, 0):
                 continue
 
@@ -350,8 +375,14 @@ class HHCartDPruningClassifier(BaseEstimator, ClassifierMixin):
                     best_H = H
                     best_rule = rule
                     best_imp = imp
+                    best_mu = mu
+                    best_c = c
 
-        return best_H, best_rule, rule_identity
+                    if self.debug and rule is not None and imp < best_imp:
+                        print(f"[SELECTED] Class {c} gave best split: imp={imp:.4f}, "
+                              f"axis={rule[0]}, threshold={rule[1]:.3f}")
+
+        return best_H, best_rule, rule_identity, best_mu, best_c
 
     def _calculate_max_nodes(self) -> int:
         """
@@ -393,7 +424,6 @@ class HHCartDPruningClassifier(BaseEstimator, ClassifierMixin):
         copy = deepcopy(tree)
 
         if prune_depth == 0:
-            # Special case: return a tree with a single root leaf
             root = copy.root
             leaf = self._make_leaf_from_node(root)
             return DecisionTree(leaf)
@@ -401,14 +431,20 @@ class HHCartDPruningClassifier(BaseEstimator, ClassifierMixin):
         root = copy.root
         for node in root.traverse_yield():
             if node.depth == prune_depth:
-                # Node's children are at depth `prune_depth` → remove them
+                # Store split_metadata before converting to leaf
+                saved_metadata = getattr(node, "split_metadata", None)
+
+                # Convert node to leaf in-place
                 node.children = []
                 leaf = self._make_leaf_from_node(node)
-                # Replace fields in-place
                 node.__class__ = LeafNode
                 node.prediction = leaf.prediction
                 node.n_samples = leaf.n_samples
                 node.purity = leaf.purity
+
+                # Retain split_metadata for interpretability
+                if saved_metadata:
+                    node.split_metadata = saved_metadata
 
         return copy
 

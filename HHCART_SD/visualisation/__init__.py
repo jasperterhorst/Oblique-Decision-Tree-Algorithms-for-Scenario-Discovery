@@ -13,6 +13,7 @@ Modules:
 - performance_metrics_vs_structure.py   -       Metrics across depths
 - regions.py                            -       Polygonal regions per tree
 - tree_structure.py                     -       Tree architecture plots
+- split_explanation.py                  -       Visualize oblique split construction
 
 Usage Example:
 --------------
@@ -30,6 +31,7 @@ from .clipped_boundaries import (plot_splits_2d_grid as _plot_splits_2d_grid,
 from .coverage_density_path import plot_tradeoff_path as _plot_tradeoff_path
 from .performance_metrics_vs_structure import plot_metrics_vs_structure as _plot_metrics_vs_structure
 from .node_size_distribution import plot_node_size_distribution as _plot_node_size_distribution
+from .split_explanation import plot_split_explanation_2d as _plot_split_explanation_2d
 
 
 def bind_plotting_methods(obj):
@@ -55,6 +57,9 @@ def bind_plotting_methods(obj):
     )
     obj.plot_splits_2d_overlay = functools.wraps(_plot_splits_2d_overlay)(
         lambda *args, **kwargs: _plot_splits_2d_overlay(obj, *args, **kwargs)
+    )
+    obj.plot_split_explanation = functools.wraps(_plot_split_explanation_2d)(
+        lambda *args, **kwargs: _plot_split_explanation_2d(obj, *args, **kwargs)
     )
 
     # === Metrics plots ===

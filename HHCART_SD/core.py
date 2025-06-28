@@ -26,6 +26,7 @@ from datetime import datetime
 
 from HHCART_SD.HHCartDPruning import HHCartDPruningClassifier
 from HHCART_SD.split_criteria import gini
+from HHCART_SD.tree import DecisionTree
 from HHCART_SD.visualisation import bind_plotting_methods
 from HHCART_SD.io.save_load import save_full_model
 
@@ -120,6 +121,7 @@ class HHCartD:
         self.random_state = random_state
         self.save_dir: Optional[Path] = None
         self.force_oblique = force_oblique
+        self._full_tree: Optional[DecisionTree] = None
 
         # Validate that X is a DataFrame
         if not isinstance(X, pd.DataFrame):
@@ -206,6 +208,7 @@ class HHCartD:
         )
         start_time = time.perf_counter()
         model.fit(self.X, self.y)
+        self._full_tree = model.get_tree()
         end_time = time.perf_counter()
         train_duration = end_time - start_time
 
@@ -244,23 +247,6 @@ class HHCartD:
             list[int]: Sorted list of trained depths.
         """
         return sorted(self.trees_by_depth.keys())
-
-    def get_tree_by_depth(self, depth: int):
-        """
-        Return the decision tree pruned to a specific depth.
-
-        Args:
-            depth (int): Tree depth to retrieve.
-
-        Returns:
-            DecisionTree: Pruned decision tree.
-
-        Raises:
-            ValueError: If no tree exists at the requested depth.
-        """
-        if depth not in self.trees_by_depth:
-            raise ValueError(f"[ERROR] No tree found at depth={depth}.")
-        return self.trees_by_depth[depth]
 
     @property
     def coverage_by_depth(self) -> dict[int, float]:
@@ -301,6 +287,33 @@ class HHCartD:
         if self.selected_depth not in self.trees_by_depth:
             raise ValueError(f"[ERROR] No tree found at depth={self.selected_depth}.")
         return self.trees_by_depth[self.selected_depth]
+
+    def get_tree_by_depth(self, depth: int):
+        """
+        Return the decision tree pruned to a specific depth.
+
+        Args:
+            depth (int): Tree depth to retrieve.
+
+        Returns:
+            DecisionTree: Pruned decision tree.
+
+        Raises:
+            ValueError: If no tree exists at the requested depth.
+        """
+        if depth not in self.trees_by_depth:
+            raise ValueError(f"[ERROR] No tree found at depth={depth}.")
+        return self.trees_by_depth[depth]
+
+    def get_deepest_tree(self) -> DecisionTree:
+        """
+        Return the deepest pruned tree available. Used as a proxy for the unpruned full tree.
+
+        Returns:
+            DecisionTree: Deepest version of the tree.
+        """
+        max_depth = max(self.trees_by_depth.keys())
+        return self.get_tree_by_depth(max_depth)
 
     def print_tree(self, depth: int) -> None:
         """
