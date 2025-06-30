@@ -132,5 +132,5 @@ Common formats include
 
 ## Citation
 
-Ter Horst, J. (2025). Thinking Outside the Box: A Critical Evaluation of Oblique Decision Tree Algorithms for Scenario Discovery. MSc Thesis, TU Delft.
+Ter Horst, J. T. (2025). Thinking Outside the Box: A Critical Evaluation of Oblique Decision Tree Algorithms for Scenario Discovery. MSc Thesis, TU Delft.
 
