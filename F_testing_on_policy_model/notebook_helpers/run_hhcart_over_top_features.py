@@ -21,6 +21,7 @@ from typing import Union, Tuple
 
 from HHCART_SD import HHCartD
 
+
 def run_hhcart_over_top_features(
     X_full: pd.DataFrame,
     y: Union[np.ndarray, pd.Series],
@@ -129,11 +130,14 @@ def run_hhcart_over_top_features(
         # -- Tree structure plots for each depth
         for depth in hh.available_depths():
             hh.select(depth=depth)
-            hh.plot_tree_structure(depth=depth, save=True, color_axis_aligned=color_axis_aligned)
+            hh.plot_tree_structure(depth=depth, decimals=4, save=True, color_axis_aligned=color_axis_aligned)
 
-        # -- Metrics plots
-        hh.plot_metrics_vs_structure(save=True)
-        hh.plot_metrics_vs_structure(save=True, x_axis="class1_leaf_count")
+        # -- Metrics plots with custom titles
+        title_depth = f"Performance vs. Depth\n(Top {n_feats} Features)"
+        hh.plot_metrics_vs_structure(save=True, title=title_depth)
+
+        title_subspaces = f"Performance vs. Subspaces\n(Top {n_feats} Features)"
+        hh.plot_metrics_vs_structure(save=True, x_axis="class1_leaf_count", title=title_subspaces)
 
         # -- Tradeoff plots
         hh.plot_tradeoff_path(save=True)
