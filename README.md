@@ -1,11 +1,16 @@
 # Oblique Decision Trees for Scenario Discovery
 
 This repository implements, benchmarks, and evaluates decision tree algorithms for scenario discovery. It includes both 
-axis-aligned methods (PRIM and CART), globally rotated methods (PCA-PRIM), and oblique decision trees adapted. 
+axis-aligned methods (PRIM and CART), globally rotated methods (PCA-PRIM), and adapted oblique decision tree algorithms. 
 These methods are tested on a set of synthetic benchmark datasets and a high-dimensional European Union energy transition model.
 
-The codebase is organised around distinct phases of the research, with each older capturing a specific part of the 
+The codebase is organised around distinct phases of the research, with each capturing a specific part of the 
 research, from initial demonstrations and shape generation to algorithm benchmarking and policy model application.
+
+Further explanation and the complete research can be found in the accompanying MSc thesis:
+
+Ter Horst, J. T. (2025). Thinking Outside the Box: A Critical Evaluation of Oblique Decision Tree Algorithms for Scenario Discovery. MSc Thesis, TU Delft.
+https://repository.tudelft.nl/record/uuid:ae251f06-e4bf-444f-b3f2-c7e1a6f8254f
 
 ---
 
@@ -128,9 +133,4 @@ Common formats include
 - `.json`: Metadata about models and parameters
 - `.pkl`: Saved decision tree objects in unified format
 
----
-
-## Citation
-
-Ter Horst, J. T. (2025). Thinking Outside the Box: A Critical Evaluation of Oblique Decision Tree Algorithms for Scenario Discovery. MSc Thesis, TU Delft.
 
