@@ -26,8 +26,9 @@ Three types of benchmark sweeps are supported:
 ## Recommended Workflow
 
 1. **Run Benchmarks on DelftBlue**
-   Navigate to [`running_on_delftblue`](./running_on_delftblue/) and submit SLURM jobs for each benchmark type using the appropriate scripts.
-
+   Navigate to [`running_on_delftblue`](./running_on_delftblue/) folder and subsequent subfolders and submit SLURM jobs for each benchmark type using the appropriate scripts.
+   - Install packages Python server you are using (see main README.md file of this project).
+   
 2. **Merge Results Locally**
    After jobs complete, use [`merge_delft_blue_runs.py`](../_data/depth_sweep_batch_results/merge_delft_blue_runs.py) 
    in the `_data` folder to merge the output CSVs into one file per benchmark type.
