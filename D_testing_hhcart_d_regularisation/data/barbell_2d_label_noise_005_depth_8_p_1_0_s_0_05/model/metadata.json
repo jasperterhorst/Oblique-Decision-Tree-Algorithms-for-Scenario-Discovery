@@ -1,0 +1,8 @@
+{
+    "max_depth": 8,
+    "mass_min": 0.05,
+    "min_purity": 1.0,
+    "tau": 0.05,
+    "random_state": null,
+    "saved_at": "2025-06-28_18-14-22"
+}

@@ -1,0 +1,60 @@
+# CART Scenarios Summary (class 1, Density > 0.5)
+
+=== Combined Statistics (for shown scenarios) ===
+Combined coverage: 0.659
+Combined density:  0.645
+
+=== Individual Scenarios (Density > 0.5) ===
+
+Scenario 1 (Original Box ID 2):
+  Coverage: 0.122
+  Density:  0.574
+  Bounds:
+    Time Of Nuclear Power Plant Ban: [2013.002, 2029.676]
+    Uncertainty Initial Gross Fuel Costs: [0.500, 0.996]
+
+Scenario 2 (Original Box ID 3):
+  Coverage: 0.156
+  Density:  0.779
+  Bounds:
+    Time Of Nuclear Power Plant Ban: [2013.002, 2029.676]
+    Uncertainty Initial Gross Fuel Costs: [0.996, 1.500]
+
+Scenario 3 (Original Box ID 9):
+  Coverage: 0.140
+  Density:  0.771
+  Bounds:
+    Starting Construction Time: [0.100, 1.318]
+    Switch Economic Growth: categories = [3, 4, 6]
+    Switch Physical Limits: categories = [2]
+    Time Of Nuclear Power Plant Ban: [2029.676, 2099.999]
+
+Scenario 4 (Original Box ID 11):
+  Coverage: 0.073
+  Density:  0.515
+  Bounds:
+    Starting Construction Time: [1.318, 3.000]
+    Switch Economic Growth: categories = [3, 4, 6]
+    Switch Physical Limits: categories = [2]
+    Time Of Nuclear Power Plant Ban: [2029.676, 2099.999]
+    Uncertainty Initial Gross Fuel Costs: [0.500, 1.061]
+
+Scenario 5 (Original Box ID 12):
+  Coverage: 0.075
+  Density:  0.693
+  Bounds:
+    Starting Construction Time: [1.318, 3.000]
+    Switch Economic Growth: categories = [3, 4, 6]
+    Switch Physical Limits: categories = [2]
+    Time Of Nuclear Power Plant Ban: [2029.676, 2099.999]
+    Uncertainty Initial Gross Fuel Costs: [1.061, 1.500]
+
+Scenario 12 (Original Box ID 23):
+  Coverage: 0.092
+  Density:  0.523
+  Bounds:
+    Starting Construction Time: [0.100, 1.260]
+    Switch Economic Growth: categories = [3, 4, 6]
+    Switch Physical Limits: categories = [2]
+    Time Of Nuclear Power Plant Ban: [2029.676, 2099.999]
+    Uncertainty Initial Gross Fuel Costs: [1.026, 1.500]
